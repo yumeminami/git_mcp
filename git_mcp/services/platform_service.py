@@ -1,0 +1,502 @@
+"""Platform service - shared business logic for CLI and MCP."""
+
+import re
+from typing import List, Dict, Any, Optional, Tuple
+from urllib.parse import urlparse
+
+from ..core.config import get_config
+
+
+class PlatformService:
+    """Shared service for platform operations."""
+
+    @staticmethod
+    def get_adapter(platform_name: str):
+        """Get platform adapter based on configuration."""
+        config = get_config()
+        platform_config = config.get_platform(platform_name)
+
+        if not platform_config:
+            raise ValueError(f"Platform '{platform_name}' not found")
+
+        if platform_config.type == "gitlab":
+            from ..platforms.gitlab import GitLabAdapter
+
+            return GitLabAdapter(platform_config.url, platform_config.token)
+        else:
+            raise ValueError(
+                f"Platform type '{platform_config.type}' not supported yet"
+            )
+
+    @staticmethod
+    def parse_issue_url(url: str) -> Tuple[str, str, str]:
+        """
+        Parse an issue URL to extract platform info, project ID, and issue ID.
+
+        Supports formats like:
+        - https://gitlab.com/group/project/-/issues/123
+        - https://gitlab.example.com/group/subgroup/project/-/issues/456
+        - https://github.com/user/repo/issues/789
+
+        Returns:
+            Tuple[platform_name, project_id, issue_id]
+        """
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path
+
+        # Find configured platform by URL
+        config = get_config()
+        platform_name = None
+
+        for name in config.list_platforms():
+            platform_config = config.get_platform(name)
+            if platform_config and host in platform_config.url:
+                platform_name = name
+                break
+
+        if not platform_name:
+            raise ValueError(f"No configured platform found for host: {host}")
+
+        platform_config = config.get_platform(platform_name)
+
+        if platform_config.type == "gitlab":
+            # GitLab URL format: /group/project/-/issues/123
+            match = re.search(r"/([^/]+(?:/[^/]+)*?)/-/issues/(\d+)", path)
+            if match:
+                project_path, issue_id = match.groups()
+                return platform_name, project_path, issue_id
+        elif platform_config.type == "github":
+            # GitHub URL format: /user/repo/issues/123
+            match = re.search(r"/([^/]+/[^/]+)/issues/(\d+)", path)
+            if match:
+                project_path, issue_id = match.groups()
+                return platform_name, project_path, issue_id
+
+        raise ValueError(f"Could not parse issue URL: {url}")
+
+    @staticmethod
+    def parse_project_url(url: str) -> Tuple[str, str]:
+        """
+        Parse a project URL to extract platform info and project ID.
+
+        Returns:
+            Tuple[platform_name, project_id]
+        """
+        parsed = urlparse(url)
+        host = parsed.netloc
+        path = parsed.path.strip("/")
+
+        # Find configured platform by URL
+        config = get_config()
+        platform_name = None
+
+        for name in config.list_platforms():
+            platform_config = config.get_platform(name)
+            if platform_config and host in platform_config.url:
+                platform_name = name
+                break
+
+        if not platform_name:
+            raise ValueError(f"No configured platform found for host: {host}")
+
+        # For most Git platforms, the path is the project ID
+        project_id = path
+        return platform_name, project_id
+
+    @staticmethod
+    async def list_platforms() -> List[Dict[str, str]]:
+        """List all configured platforms."""
+        config = get_config()
+        platforms = config.list_platforms()
+
+        result = []
+        for platform_name in platforms:
+            platform_config = config.get_platform(platform_name)
+            result.append(
+                {
+                    "name": platform_name,
+                    "type": platform_config.type,
+                    "url": platform_config.url,
+                    "username": platform_config.username or "",
+                }
+            )
+        return result
+
+    @staticmethod
+    async def test_platform_connection(platform_name: str) -> Dict[str, Any]:
+        """Test connection to a platform."""
+        try:
+            adapter = PlatformService.get_adapter(platform_name)
+            success = await adapter.test_connection()
+
+            return {
+                "platform": platform_name,
+                "success": success,
+                "message": f"Connection to '{platform_name}' successful"
+                if success
+                else f"Connection to '{platform_name}' failed",
+            }
+        except Exception as e:
+            return {
+                "platform": platform_name,
+                "success": False,
+                "message": f"Connection test failed: {str(e)}",
+            }
+
+    @staticmethod
+    async def list_projects(
+        platform_name: str, limit: Optional[int] = 20, **filters
+    ) -> List[Dict[str, Any]]:
+        """List projects from a platform."""
+        adapter = PlatformService.get_adapter(platform_name)
+
+        # Prepare filters
+        if limit:
+            filters["per_page"] = limit
+
+        projects = await adapter.list_projects(**filters)
+
+        return [
+            {
+                "id": project.id,
+                "name": project.title,
+                "description": project.metadata.get("description", "")
+                if project.metadata
+                else "",
+                "url": project.url,
+                "visibility": project.metadata.get("visibility", "")
+                if project.metadata
+                else "",
+                "created_at": project.created_at.isoformat()
+                if project.created_at
+                else None,
+                "updated_at": project.updated_at.isoformat()
+                if project.updated_at
+                else None,
+                "platform": platform_name,
+            }
+            for project in projects
+        ]
+
+    @staticmethod
+    async def get_project_details(
+        platform_name: str, project_id: str
+    ) -> Dict[str, Any]:
+        """Get detailed project information."""
+        adapter = PlatformService.get_adapter(platform_name)
+        project = await adapter.get_project(project_id)
+
+        if not project:
+            raise ValueError(f"Project '{project_id}' not found")
+
+        return {
+            "id": project.id,
+            "name": project.title,
+            "description": project.metadata.get("description", "")
+            if project.metadata
+            else "",
+            "url": project.url,
+            "visibility": project.metadata.get("visibility", "")
+            if project.metadata
+            else "",
+            "default_branch": project.metadata.get("default_branch", "")
+            if project.metadata
+            else "",
+            "created_at": project.created_at.isoformat()
+            if project.created_at
+            else None,
+            "updated_at": project.updated_at.isoformat()
+            if project.updated_at
+            else None,
+            "author": project.author,
+            "platform": platform_name,
+            "full_info": project.metadata or {},
+        }
+
+    @staticmethod
+    async def create_project(platform_name: str, name: str, **kwargs) -> Dict[str, Any]:
+        """Create a new project."""
+        adapter = PlatformService.get_adapter(platform_name)
+        project = await adapter.create_project(name, **kwargs)
+
+        return {
+            "id": project.id,
+            "name": project.title,
+            "description": project.metadata.get("description", "")
+            if project.metadata
+            else "",
+            "url": project.url,
+            "platform": platform_name,
+            "message": f"Project '{name}' created successfully",
+        }
+
+    @staticmethod
+    async def delete_project(platform_name: str, project_id: str) -> Dict[str, Any]:
+        """Delete a project."""
+        adapter = PlatformService.get_adapter(platform_name)
+        success = await adapter.delete_project(project_id)
+
+        return {
+            "project_id": project_id,
+            "platform": platform_name,
+            "success": success,
+            "message": f"Project '{project_id}' deleted successfully"
+            if success
+            else f"Failed to delete project '{project_id}'",
+        }
+
+    @staticmethod
+    async def list_issues(
+        platform_name: str,
+        project_id: str,
+        state: str = "opened",
+        limit: Optional[int] = 20,
+        **filters,
+    ) -> List[Dict[str, Any]]:
+        """List issues in a project."""
+        adapter = PlatformService.get_adapter(platform_name)
+
+        # Prepare filters
+        filters["state"] = state
+        if limit:
+            filters["per_page"] = limit
+
+        issues = await adapter.list_issues(project_id, **filters)
+
+        return [
+            {
+                "id": issue.id,
+                "title": issue.title,
+                "description": issue.description or "",
+                "state": issue.state.value if issue.state else "unknown",
+                "url": issue.url,
+                "author": issue.author,
+                "assignee": issue.assignee,
+                "created_at": issue.created_at.isoformat()
+                if issue.created_at
+                else None,
+                "updated_at": issue.updated_at.isoformat()
+                if issue.updated_at
+                else None,
+                "labels": issue.metadata.get("labels", []) if issue.metadata else [],
+                "platform": platform_name,
+                "project_id": project_id,
+            }
+            for issue in issues
+        ]
+
+    @staticmethod
+    async def get_issue_details(
+        platform_name: str, project_id: str, issue_id: str
+    ) -> Dict[str, Any]:
+        """Get detailed issue information including comments."""
+        adapter = PlatformService.get_adapter(platform_name)
+        issue = await adapter.get_issue(project_id, issue_id)
+
+        if not issue:
+            raise ValueError(f"Issue '{issue_id}' not found in project '{project_id}'")
+
+        result = {
+            "id": issue.id,
+            "title": issue.title,
+            "description": issue.description or "",
+            "state": issue.state.value if issue.state else "unknown",
+            "url": issue.url,
+            "author": issue.author,
+            "assignee": issue.assignee,
+            "created_at": issue.created_at.isoformat() if issue.created_at else None,
+            "updated_at": issue.updated_at.isoformat() if issue.updated_at else None,
+            "labels": issue.metadata.get("labels", []) if issue.metadata else [],
+            "platform": platform_name,
+            "project_id": project_id,
+            "comments": [],
+        }
+
+        # Add comments if available
+        if issue.metadata and "comments" in issue.metadata:
+            result["comments"] = issue.metadata["comments"]
+
+        return result
+
+    @staticmethod
+    async def get_issue_by_url(url: str) -> Dict[str, Any]:
+        """Get issue details by URL."""
+        platform_name, project_id, issue_id = PlatformService.parse_issue_url(url)
+        return await PlatformService.get_issue_details(
+            platform_name, project_id, issue_id
+        )
+
+    @staticmethod
+    async def create_issue(
+        platform_name: str,
+        project_id: str,
+        title: str,
+        description: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        assignee: Optional[str] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Create a new issue."""
+        adapter = PlatformService.get_adapter(platform_name)
+
+        # Prepare kwargs
+        if description:
+            kwargs["description"] = description
+        if labels:
+            kwargs["labels"] = ",".join(labels)
+        if assignee:
+            kwargs["assignee_username"] = assignee
+
+        issue = await adapter.create_issue(project_id, title, **kwargs)
+
+        return {
+            "id": issue.id,
+            "title": issue.title,
+            "description": issue.description or "",
+            "state": issue.state.value if issue.state else "unknown",
+            "url": issue.url,
+            "author": issue.author,
+            "assignee": issue.assignee,
+            "created_at": issue.created_at.isoformat() if issue.created_at else None,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Issue '{title}' created successfully",
+        }
+
+    @staticmethod
+    async def update_issue(
+        platform_name: str, project_id: str, issue_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Update an issue."""
+        adapter = PlatformService.get_adapter(platform_name)
+        issue = await adapter.update_issue(project_id, issue_id, **kwargs)
+
+        return {
+            "id": issue.id,
+            "title": issue.title,
+            "state": issue.state.value if issue.state else "unknown",
+            "url": issue.url,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Issue '{issue_id}' updated successfully",
+        }
+
+    @staticmethod
+    async def close_issue(
+        platform_name: str, project_id: str, issue_id: str
+    ) -> Dict[str, Any]:
+        """Close an issue."""
+        adapter = PlatformService.get_adapter(platform_name)
+        issue = await adapter.close_issue(project_id, issue_id)
+
+        return {
+            "id": issue.id,
+            "title": issue.title,
+            "state": issue.state.value if issue.state else "unknown",
+            "url": issue.url,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Issue '{issue_id}' closed successfully",
+        }
+
+    @staticmethod
+    async def list_merge_requests(
+        platform_name: str,
+        project_id: str,
+        state: str = "opened",
+        limit: Optional[int] = 20,
+        **filters,
+    ) -> List[Dict[str, Any]]:
+        """List merge requests in a project."""
+        adapter = PlatformService.get_adapter(platform_name)
+
+        # Prepare filters
+        filters["state"] = state
+        if limit:
+            filters["per_page"] = limit
+
+        mrs = await adapter.list_merge_requests(project_id, **filters)
+
+        return [
+            {
+                "id": mr.id,
+                "title": mr.title,
+                "description": mr.description or "",
+                "state": mr.state.value if mr.state else "unknown",
+                "url": mr.url,
+                "author": mr.author,
+                "assignee": mr.assignee,
+                "source_branch": mr.metadata.get("source_branch", "")
+                if mr.metadata
+                else "",
+                "target_branch": mr.metadata.get("target_branch", "")
+                if mr.metadata
+                else "",
+                "created_at": mr.created_at.isoformat() if mr.created_at else None,
+                "updated_at": mr.updated_at.isoformat() if mr.updated_at else None,
+                "platform": platform_name,
+                "project_id": project_id,
+            }
+            for mr in mrs
+        ]
+
+    @staticmethod
+    async def get_merge_request_details(
+        platform_name: str, project_id: str, mr_id: str
+    ) -> Dict[str, Any]:
+        """Get detailed merge request information."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr = await adapter.get_merge_request(project_id, mr_id)
+
+        if not mr:
+            raise ValueError(
+                f"Merge request '{mr_id}' not found in project '{project_id}'"
+            )
+
+        return {
+            "id": mr.id,
+            "title": mr.title,
+            "description": mr.description or "",
+            "state": mr.state.value if mr.state else "unknown",
+            "url": mr.url,
+            "author": mr.author,
+            "assignee": mr.assignee,
+            "source_branch": mr.metadata.get("source_branch", "")
+            if mr.metadata
+            else "",
+            "target_branch": mr.metadata.get("target_branch", "")
+            if mr.metadata
+            else "",
+            "created_at": mr.created_at.isoformat() if mr.created_at else None,
+            "updated_at": mr.updated_at.isoformat() if mr.updated_at else None,
+            "platform": platform_name,
+            "project_id": project_id,
+            "full_info": mr.metadata or {},
+        }
+
+    @staticmethod
+    async def create_merge_request(
+        platform_name: str,
+        project_id: str,
+        title: str,
+        source_branch: str,
+        target_branch: str = "main",
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """Create a new merge request."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr = await adapter.create_merge_request(
+            project_id, title, source_branch, target_branch, **kwargs
+        )
+
+        return {
+            "id": mr.id,
+            "title": mr.title,
+            "url": mr.url,
+            "source_branch": source_branch,
+            "target_branch": target_branch,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Merge request '{title}' created successfully",
+        }

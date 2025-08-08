@@ -1,15 +1,22 @@
 # Git MCP Server
 
-A unified command-line tool for managing Git repositories across GitHub and GitLab platforms.
+A unified command-line tool and **MCP (Model Context Protocol) Server** for managing Git repositories across GitHub and GitLab platforms.
 
 ## Features
 
+### Core Functionality
 - 🚀 **Multi-Platform Support** - Unified management for GitHub and GitLab platforms
 - 🔐 **Secure Authentication** - Uses system keyring for secure token storage
 - 📊 **Rich Output** - Support for table, JSON, and YAML output formats
 - 🔧 **Project Management** - Create, delete, and list projects
 - 🎯 **Issue Tracking** - Complete issue management with comments and full details
 - 🚀 **CI/CD Integration** - Manage pipelines and deployments
+
+### MCP Server Integration
+- 🤖 **Claude Code Integration** - Works as an MCP server for Claude Code
+- 🛠️ **Tool-based Interface** - Expose Git operations as MCP tools
+- 📚 **Resource Access** - Provide Git data as MCP resources
+- 🔄 **Real-time Operations** - Async support for responsive interactions
 
 ## Installation
 
@@ -281,6 +288,184 @@ git_mpc/
 
 ```bash
 uv run pytest
+```
+
+## MCP Server Usage
+
+### Installation and Setup
+
+#### Quick Install (Recommended)
+
+```bash
+# Clone and run the installation script
+git clone <repository-url>
+cd git_mcp
+./install.sh
+```
+
+The script will:
+- Install Git MCP Server globally using `uv tool`
+- Add it to Claude Code with user scope
+- Provide next steps for configuration
+
+#### Option 1: Manual Global Installation
+
+Install Git MCP Server globally using `uv tool`:
+
+```bash
+# Clone and install globally
+git clone <repository-url>
+cd git_mcp
+uv tool install --from . git-mcp
+
+# Verify installation
+git-mcp-server --help
+```
+
+Then add to Claude Code:
+
+```bash
+# Add to Claude Code (user scope - available in all projects)
+claude mcp add -s user git-mcp-server git-mcp-server
+```
+
+#### Option 2: Local Development Setup
+
+For development or local-only usage:
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd git_mcp
+
+# Install dependencies
+uv sync
+
+# Run locally
+uv run git-mcp-server
+```
+
+Add to Claude Code with absolute path:
+
+```bash
+# Add to Claude Code (local scope - current project only)
+claude mcp add git-mcp-server "uv run --project /absolute/path/to/git_mcp git-mcp-server"
+
+# Or for user scope with absolute path
+claude mcp add -s user git-mcp-server "uv run --project /absolute/path/to/git_mcp git-mcp-server"
+```
+
+### Running as an MCP Server
+
+```bash
+# If installed globally
+git-mcp-server
+
+# If running locally
+uv run git-mcp-server
+
+# Test interactively during development
+uv run mcp dev git_mcp/mcp_server.py
+```
+
+### MCP Scopes Explained
+
+- **Local scope** (`-s local`): Only available in the current project directory
+- **User scope** (`-s user`): Available across all projects for the current user
+- **Project scope** (`-s project`): Shared via `.mcp.json` file in the project
+
+For most users, **user scope with global installation** is recommended.
+
+### Available MCP Tools
+
+When running as an MCP server, the following tools are available:
+
+#### Platform Management
+- `list_platforms()` - List all configured Git platforms
+- `test_platform_connection(platform)` - Test connection to a platform
+
+#### Project Operations
+- `list_projects(platform, limit=20)` - List projects from a platform
+- `get_project_details(platform, project_id)` - Get detailed project information
+
+#### Issue Management
+- `list_issues(platform, project_id, state='opened', limit=20)` - List issues in a project
+- `get_issue_details(platform, project_id, issue_id)` - Get issue details with comments
+- `create_issue(platform, project_id, title, description?, labels?, assignee?)` - Create new issue
+
+#### Merge Request Operations
+- `list_merge_requests(platform, project_id, state='opened', limit=20)` - List merge requests
+
+#### Resources
+- `config://platforms` - Get current platform configuration
+- `project://{platform}/{project_id}` - Get project information as a resource
+
+### MCP Integration Examples
+
+```python
+# Example: Using the MCP tools through Claude Code
+# These operations will be available when the server is configured
+
+# List all configured platforms
+platforms = list_platforms()
+
+# Get projects from a specific platform
+projects = list_projects("my-gitlab", limit=10)
+
+# Create a new issue
+new_issue = create_issue(
+    platform="my-gitlab",
+    project_id="123",
+    title="Bug in login system",
+    description="Users cannot login with valid credentials",
+    labels=["bug", "urgent"]
+)
+```
+
+### Troubleshooting
+
+#### Verify Installation
+
+```bash
+# Check if globally installed
+which git-mcp-server
+git-mcp-server --help
+
+# Check Claude Code configuration
+claude mcp list
+
+# Test MCP connection
+echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
+```
+
+#### Common Issues
+
+1. **"Command not found" after global installation**
+   ```bash
+   # Reinstall with uv tool
+   uv tool uninstall git-mcp
+   uv tool install --from /path/to/git_mcp git-mcp
+   ```
+
+2. **MCP server not working in different directories**
+   - Make sure you used `-s user` scope for global availability
+   - Use global installation instead of local project paths
+
+3. **Configuration issues**
+   ```bash
+   # First configure a platform
+   git-mcp config add my-gitlab gitlab --url https://gitlab.com
+
+   # Then test the MCP tools
+   ```
+
+#### Update Global Installation
+
+```bash
+# Update to latest version
+cd /path/to/git_mcp
+git pull
+uv tool install --from . git-mcp --force
 ```
 
 ## Supported Platforms
