@@ -306,6 +306,7 @@ cd git_mcp
 The script will:
 - Install Git MCP Server globally using `uv tool`
 - Add it to Claude Code with user scope
+- Install issue-to-code workflow slash commands globally
 - Provide next steps for configuration
 
 #### Option 1: Manual Global Installation
@@ -423,6 +424,35 @@ When running as an MCP server, the following tools are available:
 #### Resources
 - `config://platforms` - Get current platform configuration
 - `project://{platform}/{project_id}` - Get project information as a resource
+
+### Issue-to-Code Workflow
+
+After installation, use these slash commands in Claude Code for complete issue-driven development:
+
+```bash
+# Workflow Option 1: Start with my issues dashboard
+/issue                                              # List my assigned issues
+# (select an issue from the list)
+/issue https://gitlab.com/group/project/-/issues/123  # Analyze selected issue
+/plan                                               # Generate dev plan
+/implement                                         # Write code
+/test                                             # Generate tests
+/doc                                             # Update documentation
+/pr 123                                         # Create PR/MR & close issue
+
+# Workflow Option 2: Direct issue analysis
+/issue https://gitlab.com/group/project/-/issues/456  # Analyze specific issue
+/plan                                                 # Generate dev plan
+# ... continue with implement/test/doc/pr
+```
+
+**Available Commands:**
+- `/issue` - List my assigned issues (no args) or analyze specific issue (with args)
+- `/plan` - Generate development plans based on issue analysis
+- `/implement` - Implement planned functionality with best practices
+- `/test` - Generate comprehensive test suites
+- `/doc` - Update documentation and API docs
+- `/pr` - Create pull/merge requests with automatic issue closing
 
 ### MCP Integration Examples
 
