@@ -1,7 +1,7 @@
 [project]
 name = "git-mcp"
 version = "0.1.0"
-description = "Git Multi-Platform Controller - Unified management tool for GitLab, GitHub, and other Git platforms"
+description = "Git MCP Server - Unified command-line tool for managing Git repositories across GitHub and GitLab"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -16,14 +16,14 @@ dependencies = [
 ]
 
 [project.scripts]
-git-mcp = "git_mpc.cli:main"
+git-mcp = "git_mcp.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["git_mpc"]
+packages = ["git_mcp"]
 
 [project.optional-dependencies]
 dev = [

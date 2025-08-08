@@ -1,10 +1,10 @@
-# Git MCP (Multi-Platform Controller)
+# Git MCP Server
 
-A unified command-line tool for managing Git repositories across multiple platforms including GitLab, GitHub, and Bitbucket.
+A unified command-line tool for managing Git repositories across GitHub and GitLab platforms.
 
 ## Features
 
-- 🚀 **Multi-Platform Support** - Unified management for GitLab, GitHub, and other platforms
+- 🚀 **Multi-Platform Support** - Unified management for GitHub and GitLab platforms
 - 🔐 **Secure Authentication** - Uses system keyring for secure token storage
 - 📊 **Rich Output** - Support for table, JSON, and YAML output formats
 - 🔧 **Project Management** - Create, delete, and list projects
@@ -287,7 +287,6 @@ uv run pytest
 
 - ✅ **GitLab** - Full support (GitLab.com and private instances)
 - 🚧 **GitHub** - Planned support
-- 🚧 **Bitbucket** - Planned support
 
 ## Contributing
 

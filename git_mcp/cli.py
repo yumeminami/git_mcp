@@ -37,7 +37,7 @@ class CLIContext:
 @click.option("--config-dir", type=click.Path(), help="Configuration directory path")
 @click.pass_context
 def cli(ctx, output_format, platform, config_dir):
-    """Git Multi-Platform Controller - Unified management for GitLab, GitHub, and more."""
+    """Git MCP Server - Unified management for GitHub and GitLab."""
     ctx.ensure_object(CLIContext)
 
     if config_dir:
