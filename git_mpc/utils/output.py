@@ -224,6 +224,39 @@ class OutputFormatter:
                 if hasattr(resource, "default_branch"):
                     project_info.add(f"Default Branch: {resource.default_branch}")
 
+        elif resource.resource_type == ResourceType.ISSUE:
+            # Show due date and milestone for issues
+            if hasattr(resource, "due_date") and resource.due_date:
+                issue_info = tree.add("[bold]Issue Info[/bold]")
+                issue_info.add(f"Due Date: {self._format_datetime(resource.due_date)}")
+            if hasattr(resource, "milestone") and resource.milestone:
+                if not hasattr(self, "_issue_info_added"):  # Avoid duplicate sections
+                    issue_info = tree.add("[bold]Issue Info[/bold]")
+                    self._issue_info_added = True
+                issue_info.add(f"Milestone: {resource.milestone}")
+
+            # Show comments if available
+            if resource.metadata and "comments" in resource.metadata:
+                comments = resource.metadata["comments"]
+                if comments:
+                    comments_info = tree.add(f"[bold]Comments ({len(comments)})[/bold]")
+                    for comment in comments:
+                        comment_time = (
+                            self._format_datetime(comment["created_at"])
+                            if comment["created_at"]
+                            else "Unknown time"
+                        )
+                        comment_node = comments_info.add(
+                            f"💬 {comment['author']} - {comment_time}"
+                        )
+                        # Truncate long comments
+                        body = (
+                            comment["body"][:150] + "..."
+                            if len(comment["body"]) > 150
+                            else comment["body"]
+                        )
+                        comment_node.add(body)
+
         elif resource.resource_type == ResourceType.MERGE_REQUEST:
             if hasattr(resource, "source_branch") and resource.source_branch:
                 mr_info = tree.add("[bold]Merge Request Info[/bold]")

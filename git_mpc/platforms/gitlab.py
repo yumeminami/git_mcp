@@ -141,14 +141,45 @@ class GitLabAdapter(PlatformAdapter):
     async def get_issue(
         self, project_id: str, issue_id: str
     ) -> Optional[IssueResource]:
-        """Get a specific GitLab issue."""
+        """Get a specific GitLab issue with comments."""
         if not self.client:
             await self.authenticate()
 
         try:
             project = self.client.projects.get(project_id)
             issue = project.issues.get(issue_id)
-            return self._convert_to_issue_resource(issue, project_id)
+
+            # Get issue comments/notes
+            try:
+                notes = issue.notes.list(all=True)
+                # Filter out system notes (keep only user comments)
+                user_comments = [
+                    {
+                        "id": str(note.id),
+                        "author": note.author.get("username")
+                        if note.author
+                        else "Unknown",
+                        "created_at": self._parse_datetime(note.created_at),
+                        "updated_at": self._parse_datetime(note.updated_at)
+                        if hasattr(note, "updated_at")
+                        else None,
+                        "body": note.body,
+                        "system": getattr(note, "system", False),
+                    }
+                    for note in notes
+                    if not getattr(note, "system", False)  # Only include user comments
+                ]
+                # Store comments in metadata
+                issue_resource = self._convert_to_issue_resource(issue, project_id)
+                if not issue_resource.metadata:
+                    issue_resource.metadata = {}
+                issue_resource.metadata["comments"] = user_comments
+                return issue_resource
+            except Exception as e:
+                # If getting comments fails, still return the issue without comments
+                print(f"Warning: Could not fetch comments for issue {issue_id}: {e}")
+                return self._convert_to_issue_resource(issue, project_id)
+
         except GitlabError as e:
             if e.response_code == 404:
                 return None

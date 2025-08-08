@@ -8,7 +8,7 @@ A unified command-line tool for managing Git repositories across multiple platfo
 - 🔐 **Secure Authentication** - Uses system keyring for secure token storage
 - 📊 **Rich Output** - Support for table, JSON, and YAML output formats
 - 🔧 **Project Management** - Create, delete, and list projects
-- 🎯 **Issue Tracking** - Manage issues and merge requests
+- 🎯 **Issue Tracking** - Complete issue management with comments and full details
 - 🚀 **CI/CD Integration** - Manage pipelines and deployments
 
 ## Installation
@@ -77,8 +77,13 @@ uv run git-mpc issue create 123 "Bug in login system" \\
   --labels "bug,urgent" \\
   --assignee johndoe
 
-# Get issue details
+# Get issue details with comments
 uv run git-mpc issue get 123 45 --platform my-gitlab
+# This displays comprehensive issue information including:
+# - Basic info (ID, state, dates, author)
+# - Labels and milestones
+# - Full description
+# - All user comments with timestamps and authors
 
 # Update an issue
 uv run git-mpc issue update 123 45 \\
@@ -161,7 +166,7 @@ git-mpc project delete <project_id>              # Delete project
 
 ```bash
 git-mpc issue list <project_id> [OPTIONS]        # List issues in a project
-git-mpc issue get <project_id> <issue_id>        # Get issue details
+git-mpc issue get <project_id> <issue_id>        # Get issue details with comments
 git-mpc issue create <project_id> <title> [OPTIONS] # Create new issue
 git-mpc issue update <project_id> <issue_id> [OPTIONS] # Update issue
 git-mpc issue close <project_id> <issue_id>      # Close issue
