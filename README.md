@@ -64,7 +64,33 @@ uv run git-mpc project create "My New Project" \\
 uv run git-mpc project delete 123 --platform my-gitlab
 ```
 
-### 3. Output Formats
+### 3. Issue Management
+
+```bash
+# List issues in a project
+uv run git-mpc issue list 123 --platform my-gitlab
+
+# Create a new issue
+uv run git-mpc issue create 123 "Bug in login system" \\
+  --platform my-gitlab \\
+  --description "Users cannot login with valid credentials" \\
+  --labels "bug,urgent" \\
+  --assignee johndoe
+
+# Get issue details
+uv run git-mpc issue get 123 45 --platform my-gitlab
+
+# Update an issue
+uv run git-mpc issue update 123 45 \\
+  --platform my-gitlab \\
+  --state closed \\
+  --comment "Fixed in v1.2.0"
+
+# Search issues
+uv run git-mpc issue search --project 123 --query "login" --platform my-gitlab
+```
+
+### 4. Output Formats
 
 ```bash
 # Table format (default)
@@ -103,6 +129,17 @@ git-mpc project create <name> [OPTIONS]          # Create project
 git-mpc project delete <project_id>              # Delete project
 ```
 
+### Issue Management
+
+```bash
+git-mpc issue list <project_id> [OPTIONS]        # List issues in a project
+git-mpc issue get <project_id> <issue_id>        # Get issue details
+git-mpc issue create <project_id> <title> [OPTIONS] # Create new issue
+git-mpc issue update <project_id> <issue_id> [OPTIONS] # Update issue
+git-mpc issue close <project_id> <issue_id>      # Close issue
+git-mpc issue search --project <id> --query <text> # Search issues
+```
+
 #### Project List Options
 
 - `--visibility [public|internal|private]` - Project visibility
@@ -111,6 +148,16 @@ git-mpc project delete <project_id>              # Delete project
 - `--starred [true|false]` - Only show starred projects
 - `--search <term>` - Search keyword
 - `--limit <number>` - Limit result count
+
+#### Issue Management Options
+
+- `--state [opened|closed|all]` - Filter by issue state
+- `--assignee <username>` - Filter by assignee
+- `--author <username>` - Filter by author
+- `--labels <label1,label2>` - Filter by labels
+- `--milestone <name>` - Filter by milestone
+- `--search <term>` - Search in title and description
+- `--sort [created_asc|created_desc|updated_asc|updated_desc]` - Sort order
 
 ## Configuration File
 

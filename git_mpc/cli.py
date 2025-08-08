@@ -4,6 +4,7 @@ import asyncio
 import click
 
 from .commands.project import project_commands
+from .commands.issue import issue_commands
 from .core.config import get_config
 from .core.exceptions import GitMPCError
 from .utils.output import OutputFormatter
@@ -204,6 +205,17 @@ def project():
 # Add project commands
 for cmd in project_commands:
     project.add_command(cmd)
+
+
+@cli.group()
+def issue():
+    """Manage issues."""
+    pass
+
+
+# Add issue commands
+for cmd in issue_commands:
+    issue.add_command(cmd)
 
 
 def main():
