@@ -1,4 +1,4 @@
-"""Output formatting utilities for git-mpc."""
+"""Output formatting utilities for git-mcp."""
 
 import json
 import yaml
@@ -13,7 +13,7 @@ from ..platforms.base import Resource
 
 
 class OutputFormatter:
-    """Handles different output formats for git-mpc."""
+    """Handles different output formats for git-mcp."""
 
     def __init__(self, format_type: str = "table"):
         self.format_type = format_type.lower()

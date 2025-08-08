@@ -1,1 +1,1 @@
-"""Command handlers for git-mpc CLI."""
+"""Command handlers for git-mcp CLI."""

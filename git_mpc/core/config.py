@@ -1,4 +1,4 @@
-"""Configuration management for git-mpc."""
+"""Configuration management for git-mcp."""
 
 import yaml
 from pathlib import Path
@@ -27,7 +27,7 @@ class PlatformConfig:
 
 
 class DefaultSettings(BaseModel):
-    """Default settings for git-mpc."""
+    """Default settings for git-mcp."""
 
     platform: str = "gitlab"
     output_format: str = Field(default="table", pattern="^(table|json|yaml)$")
@@ -44,11 +44,11 @@ class Alias(BaseModel):
     description: Optional[str] = None
 
 
-class GitMPCConfig:
-    """Main configuration manager for git-mpc."""
+class GitMCPConfig:
+    """Main configuration manager for git-mcp."""
 
     def __init__(self, config_dir: Optional[Path] = None):
-        self.config_dir = config_dir or Path.home() / ".git-mpc"
+        self.config_dir = config_dir or Path.home() / ".git-mcp"
         self.config_file = self.config_dir / "config.yaml"
         self.platforms: Dict[str, PlatformConfig] = {}
         self.defaults = DefaultSettings()
@@ -149,18 +149,18 @@ class GitMPCConfig:
 
     def set_token(self, platform_name: str, token: str) -> None:
         """Store token securely in keyring."""
-        keyring.set_password("git-mpc", platform_name, token)
+        keyring.set_password("git-mcp", platform_name, token)
         if platform_name in self.platforms:
             self.platforms[platform_name].token = token
 
     def get_token(self, platform_name: str) -> Optional[str]:
         """Retrieve token from keyring."""
-        return keyring.get_password("git-mpc", platform_name)
+        return keyring.get_password("git-mcp", platform_name)
 
     def remove_token(self, platform_name: str) -> None:
         """Remove token from keyring."""
         try:
-            keyring.delete_password("git-mpc", platform_name)
+            keyring.delete_password("git-mcp", platform_name)
         except keyring.errors.PasswordDeleteError:
             pass  # Token didn't exist
 
@@ -201,19 +201,19 @@ class GitMPCConfig:
 
 
 # Global configuration instance
-_config_instance: Optional[GitMPCConfig] = None
+_config_instance: Optional[GitMCPConfig] = None
 
 
-def get_config() -> GitMPCConfig:
+def get_config() -> GitMCPConfig:
     """Get the global configuration instance."""
     global _config_instance
     if _config_instance is None:
-        _config_instance = GitMPCConfig()
+        _config_instance = GitMCPConfig()
     return _config_instance
 
 
-def init_config(config_dir: Optional[Path] = None) -> GitMPCConfig:
+def init_config(config_dir: Optional[Path] = None) -> GitMCPConfig:
     """Initialize configuration with custom directory."""
     global _config_instance
-    _config_instance = GitMPCConfig(config_dir)
+    _config_instance = GitMCPConfig(config_dir)
     return _config_instance

@@ -1,4 +1,4 @@
-# Git MPC (Multi-Platform Controller)
+# Git MCP (Multi-Platform Controller)
 
 A unified command-line tool for managing Git repositories across multiple platforms including GitLab, GitHub, and Bitbucket.
 
@@ -33,52 +33,52 @@ pip install -e .
 
 ```bash
 # Add GitLab configuration
-uv run git-mpc config add my-gitlab gitlab --url https://gitlab.com
+uv run git-mcp config add my-gitlab gitlab --url https://gitlab.com
 
 # Add private GitLab instance
-uv run git-mpc config add company-gitlab gitlab --url https://git.company.com
+uv run git-mcp config add company-gitlab gitlab --url https://git.company.com
 
 # List configured platforms
-uv run git-mpc config list
+uv run git-mcp config list
 
 # Test connection
-uv run git-mpc config test my-gitlab
+uv run git-mcp config test my-gitlab
 ```
 
 ### 2. Project Management
 
 ```bash
 # List projects
-uv run git-mpc project list --platform my-gitlab
+uv run git-mcp project list --platform my-gitlab
 
 # Get project details
-uv run git-mpc project get 123 --platform my-gitlab
+uv run git-mcp project get 123 --platform my-gitlab
 
 # Create new project
-uv run git-mpc project create "My New Project" \\
+uv run git-mcp project create "My New Project" \\
   --platform my-gitlab \\
   --visibility private \\
   --description "Project description"
 
 # Delete project
-uv run git-mpc project delete 123 --platform my-gitlab
+uv run git-mcp project delete 123 --platform my-gitlab
 ```
 
 ### 3. Issue Management
 
 ```bash
 # List issues in a project
-uv run git-mpc issue list 123 --platform my-gitlab
+uv run git-mcp issue list 123 --platform my-gitlab
 
 # Create a new issue
-uv run git-mpc issue create 123 "Bug in login system" \\
+uv run git-mcp issue create 123 "Bug in login system" \\
   --platform my-gitlab \\
   --description "Users cannot login with valid credentials" \\
   --labels "bug,urgent" \\
   --assignee johndoe
 
 # Get issue details with comments
-uv run git-mpc issue get 123 45 --platform my-gitlab
+uv run git-mcp issue get 123 45 --platform my-gitlab
 # This displays comprehensive issue information including:
 # - Basic info (ID, state, dates, author)
 # - Labels and milestones
@@ -86,23 +86,23 @@ uv run git-mpc issue get 123 45 --platform my-gitlab
 # - All user comments with timestamps and authors
 
 # Update an issue
-uv run git-mpc issue update 123 45 \\
+uv run git-mcp issue update 123 45 \\
   --platform my-gitlab \\
   --state closed \\
   --comment "Fixed in v1.2.0"
 
 # Search issues
-uv run git-mpc issue search --project 123 --query "login" --platform my-gitlab
+uv run git-mcp issue search --project 123 --query "login" --platform my-gitlab
 ```
 
 ### 4. Merge Request Workflow
 
 ```bash
 # List merge requests in a project
-uv run git-mpc mr list --project 123 --platform my-gitlab --state opened
+uv run git-mcp mr list --project 123 --platform my-gitlab --state opened
 
 # Create a merge request (auto-detects current branch as source)
-uv run git-mpc mr create 123 \\
+uv run git-mcp mr create 123 \\
   --platform my-gitlab \\
   --target main \\
   --title "Implement user authentication" \\
@@ -111,13 +111,13 @@ uv run git-mpc mr create 123 \\
   --labels "feature,security"
 
 # Get merge request details
-uv run git-mpc mr get 123 45 --platform my-gitlab
+uv run git-mcp mr get 123 45 --platform my-gitlab
 
 # Approve a merge request
-uv run git-mpc mr approve 123 45 --platform my-gitlab --comment "LGTM!"
+uv run git-mcp mr approve 123 45 --platform my-gitlab --comment "LGTM!"
 
 # Merge a merge request
-uv run git-mpc mr merge 123 45 \\
+uv run git-mcp mr merge 123 45 \\
   --platform my-gitlab \\
   --should-remove-source-branch \\
   --squash
@@ -127,13 +127,13 @@ uv run git-mpc mr merge 123 45 \\
 
 ```bash
 # Table format (default)
-uv run git-mpc project list --format table
+uv run git-mcp project list --format table
 
 # JSON format
-uv run git-mpc --format json project list --platform my-gitlab
+uv run git-mcp --format json project list --platform my-gitlab
 
 # YAML format
-uv run git-mpc --format yaml project list --platform my-gitlab
+uv run git-mcp --format yaml project list --platform my-gitlab
 ```
 
 ## Command Reference
@@ -147,42 +147,42 @@ uv run git-mpc --format yaml project list --platform my-gitlab
 ### Configuration Management
 
 ```bash
-git-mpc config add <name> <type> --url <url>     # Add platform configuration
-git-mpc config list                              # List platform configurations
-git-mpc config remove <name>                     # Remove platform configuration
-git-mpc config test [name]                       # Test platform connection
+git-mcp config add <name> <type> --url <url>     # Add platform configuration
+git-mcp config list                              # List platform configurations
+git-mcp config remove <name>                     # Remove platform configuration
+git-mcp config test [name]                       # Test platform connection
 ```
 
 ### Project Management
 
 ```bash
-git-mpc project list [OPTIONS]                   # List projects
-git-mpc project get <project_id>                 # Get project details
-git-mpc project create <name> [OPTIONS]          # Create project
-git-mpc project delete <project_id>              # Delete project
+git-mcp project list [OPTIONS]                   # List projects
+git-mcp project get <project_id>                 # Get project details
+git-mcp project create <name> [OPTIONS]          # Create project
+git-mcp project delete <project_id>              # Delete project
 ```
 
 ### Issue Management
 
 ```bash
-git-mpc issue list <project_id> [OPTIONS]        # List issues in a project
-git-mpc issue get <project_id> <issue_id>        # Get issue details with comments
-git-mpc issue create <project_id> <title> [OPTIONS] # Create new issue
-git-mpc issue update <project_id> <issue_id> [OPTIONS] # Update issue
-git-mpc issue close <project_id> <issue_id>      # Close issue
-git-mpc issue search --project <id> --query <text> # Search issues
+git-mcp issue list <project_id> [OPTIONS]        # List issues in a project
+git-mcp issue get <project_id> <issue_id>        # Get issue details with comments
+git-mcp issue create <project_id> <title> [OPTIONS] # Create new issue
+git-mcp issue update <project_id> <issue_id> [OPTIONS] # Update issue
+git-mcp issue close <project_id> <issue_id>      # Close issue
+git-mcp issue search --project <id> --query <text> # Search issues
 ```
 
 ### Merge Request Management
 
 ```bash
-git-mpc mr list --project <id> [OPTIONS]         # List MRs in a project
-git-mpc mr get <project_id> <mr_id>               # Get MR details
-git-mpc mr create <project_id> [OPTIONS]         # Create new MR
-git-mpc mr update <project_id> <mr_id> [OPTIONS] # Update MR
-git-mpc mr approve <project_id> <mr_id>           # Approve MR
-git-mpc mr merge <project_id> <mr_id> [OPTIONS]  # Merge MR
-git-mpc mr close <project_id> <mr_id>             # Close MR
+git-mcp mr list --project <id> [OPTIONS]         # List MRs in a project
+git-mcp mr get <project_id> <mr_id>               # Get MR details
+git-mcp mr create <project_id> [OPTIONS]         # Create new MR
+git-mcp mr update <project_id> <mr_id> [OPTIONS] # Update MR
+git-mcp mr approve <project_id> <mr_id>           # Approve MR
+git-mcp mr merge <project_id> <mr_id> [OPTIONS]  # Merge MR
+git-mcp mr close <project_id> <mr_id>             # Close MR
 ```
 
 #### Project List Options
@@ -225,7 +225,7 @@ git-mpc mr close <project_id> <mr_id>             # Close MR
 
 ## Configuration File
 
-Configuration file is located at `~/.git-mpc/config.yaml`:
+Configuration file is located at `~/.git-mcp/config.yaml`:
 
 ```yaml
 platforms:

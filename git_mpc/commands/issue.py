@@ -1,9 +1,9 @@
-"""Issue management commands for git-mpc."""
+"""Issue management commands for git-mcp."""
 
 import asyncio
 import click
 
-from ..core.exceptions import GitMPCError
+from ..core.exceptions import GitMCPError
 
 
 def get_adapter(platform_config):
@@ -110,7 +110,7 @@ def list_issues(
 
     try:
         asyncio.run(_list_issues())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -152,7 +152,7 @@ def get_issue(ctx, project_id, issue_id, platform):
 
     try:
         asyncio.run(_get_issue())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -233,7 +233,7 @@ def create_issue(
 
     try:
         asyncio.run(_create_issue())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -325,7 +325,7 @@ def update_issue(
 
     try:
         asyncio.run(_update_issue())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -369,7 +369,7 @@ def close_issue(ctx, project_id, issue_id, platform, comment):
 
     try:
         asyncio.run(_close_issue())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -429,7 +429,7 @@ def search_issues(ctx, platform, query, project, scope, limit):
 
     try:
         asyncio.run(_search_issues())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)

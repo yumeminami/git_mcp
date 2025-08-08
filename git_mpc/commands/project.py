@@ -1,9 +1,9 @@
-"""Project management commands for git-mpc."""
+"""Project management commands for git-mcp."""
 
 import asyncio
 import click
 
-from ..core.exceptions import GitMPCError
+from ..core.exceptions import GitMCPError
 
 
 def get_adapter(platform_config):
@@ -73,7 +73,7 @@ def list_projects(ctx, platform, visibility, archived, owned, starred, search, l
 
     try:
         asyncio.run(_list_projects())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -112,7 +112,7 @@ def get_project(ctx, project_id, platform):
 
     try:
         asyncio.run(_get_project())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -166,7 +166,7 @@ def create_project(
 
     try:
         asyncio.run(_create_project())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -206,7 +206,7 @@ def delete_project(ctx, project_id, platform):
 
     try:
         asyncio.run(_delete_project())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)

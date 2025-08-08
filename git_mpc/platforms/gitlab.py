@@ -1,4 +1,4 @@
-"""GitLab platform adapter for git-mpc."""
+"""GitLab platform adapter for git-mcp."""
 
 import gitlab
 from gitlab.exceptions import GitlabError, GitlabAuthenticationError

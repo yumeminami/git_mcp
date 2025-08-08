@@ -1,1 +1,1 @@
-"""Utility functions and helpers for git-mpc."""
+"""Utility functions and helpers for git-mcp."""

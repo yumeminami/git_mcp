@@ -1,1 +1,1 @@
-"""Core functionality for git-mpc."""
+"""Core functionality for git-mcp."""

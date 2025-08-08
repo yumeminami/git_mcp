@@ -1,9 +1,9 @@
-"""Merge Request (MR) management commands for git-mpc."""
+"""Merge Request (MR) management commands for git-mcp."""
 
 import asyncio
 import click
 
-from ..core.exceptions import GitMPCError
+from ..core.exceptions import GitMCPError
 
 
 def get_adapter(platform_config):
@@ -159,7 +159,7 @@ def list_mrs(
 
     try:
         asyncio.run(_list_mrs())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -201,7 +201,7 @@ def get_mr(ctx, project_id, mr_id, platform):
 
     try:
         asyncio.run(_get_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -306,7 +306,7 @@ def create_mr(
 
     try:
         asyncio.run(_create_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -418,7 +418,7 @@ def update_mr(
 
     try:
         asyncio.run(_update_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -469,7 +469,7 @@ def approve_mr(ctx, project_id, mr_id, platform, comment, sha):
 
     try:
         asyncio.run(_approve_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -541,7 +541,7 @@ def merge_mr(
 
     try:
         asyncio.run(_merge_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -589,7 +589,7 @@ def close_mr(ctx, project_id, mr_id, platform, comment):
 
     try:
         asyncio.run(_close_mr())
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)

@@ -1,25 +1,25 @@
-"""Custom exceptions for git-mpc."""
+"""Custom exceptions for git-mcp."""
 
 
-class GitMPCError(Exception):
-    """Base exception for all git-mpc errors."""
+class GitMCPError(Exception):
+    """Base exception for all git-mcp errors."""
 
     pass
 
 
-class ConfigurationError(GitMPCError):
+class ConfigurationError(GitMCPError):
     """Configuration related errors."""
 
     pass
 
 
-class AuthenticationError(GitMPCError):
+class AuthenticationError(GitMCPError):
     """Authentication related errors."""
 
     pass
 
 
-class PlatformError(GitMPCError):
+class PlatformError(GitMCPError):
     """Platform specific errors."""
 
     def __init__(self, message: str, platform: str, status_code: int = None):
@@ -28,7 +28,7 @@ class PlatformError(GitMPCError):
         self.status_code = status_code
 
 
-class ResourceNotFoundError(GitMPCError):
+class ResourceNotFoundError(GitMCPError):
     """Resource not found errors."""
 
     def __init__(self, resource_type: str, resource_id: str, platform: str = None):
@@ -41,19 +41,19 @@ class ResourceNotFoundError(GitMPCError):
         self.platform = platform
 
 
-class PermissionError(GitMPCError):
+class PermissionError(GitMCPError):
     """Permission denied errors."""
 
     pass
 
 
-class NetworkError(GitMPCError):
+class NetworkError(GitMCPError):
     """Network related errors."""
 
     pass
 
 
-class ValidationError(GitMPCError):
+class ValidationError(GitMCPError):
     """Data validation errors."""
 
     pass

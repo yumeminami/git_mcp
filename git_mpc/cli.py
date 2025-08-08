@@ -1,4 +1,4 @@
-"""Command-line interface for git-mpc."""
+"""Command-line interface for git-mcp."""
 
 import asyncio
 import click
@@ -7,7 +7,7 @@ from .commands.project import project_commands
 from .commands.issue import issue_commands
 from .commands.mr import mr_commands
 from .core.config import get_config
-from .core.exceptions import GitMPCError
+from .core.exceptions import GitMCPError
 from .utils.output import OutputFormatter
 
 
@@ -60,7 +60,7 @@ def cli(ctx, output_format, platform, config_dir):
 
 @cli.group()
 def config():
-    """Manage git-mpc configuration."""
+    """Manage git-mcp configuration."""
     pass
 
 
@@ -77,7 +77,7 @@ def config_add(ctx, name, type, url, token, username):
         ctx.obj.config.add_platform(name, type, url, token, username)
         formatter = ctx.obj.get_formatter()
         formatter.print_success(f"Platform '{name}' added successfully")
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -140,7 +140,7 @@ def config_remove(ctx, name):
         ctx.obj.config.remove_platform(name)
         formatter = ctx.obj.get_formatter()
         formatter.print_success(f"Platform '{name}' removed successfully")
-    except GitMPCError as e:
+    except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
         ctx.exit(1)
@@ -234,7 +234,7 @@ def main():
     """Main entry point for the CLI."""
     try:
         cli()
-    except GitMPCError as e:
+    except GitMCPError as e:
         click.echo(f"Error: {e}", err=True)
         exit(1)
     except KeyboardInterrupt:

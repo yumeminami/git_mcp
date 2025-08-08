@@ -1,4 +1,4 @@
-"""Base platform adapter for git-mpc."""
+"""Base platform adapter for git-mcp."""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
