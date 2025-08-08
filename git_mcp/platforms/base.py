@@ -163,6 +163,11 @@ class PlatformAdapter(ABC):
         pass
 
     @abstractmethod
+    async def list_all_issues(self, **filters) -> List[IssueResource]:
+        """List issues across all projects (global search)."""
+        pass
+
+    @abstractmethod
     async def get_issue(
         self, project_id: str, issue_id: str
     ) -> Optional[IssueResource]:

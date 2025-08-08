@@ -84,6 +84,42 @@ async def list_issues(
 
 
 @mcp.tool()
+async def list_all_issues(
+    platform: str,
+    state: str = "opened",
+    limit: Optional[int] = 20,
+    **filters,
+) -> List[Dict[str, Any]]:
+    """List issues across all projects (global search). No project_id needed."""
+    return await PlatformService.list_all_issues(platform, state, limit, **filters)
+
+
+@mcp.tool()
+async def list_my_issues(
+    platform: str,
+    state: str = "opened",
+    limit: Optional[int] = 20,
+    **filters,
+) -> List[Dict[str, Any]]:
+    """List issues assigned to me across all projects."""
+    # Add assignee filter automatically using configured username
+    try:
+        config = await PlatformService.get_platform_config(platform)
+        if not config.get("found") or not config.get("username"):
+            return [
+                {
+                    "error": f"No username configured for platform '{platform}'. "
+                    f"Use 'refresh_platform_username' tool to fetch it automatically."
+                }
+            ]
+
+        filters["assignee"] = config["username"]
+        return await PlatformService.list_all_issues(platform, state, limit, **filters)
+    except Exception as e:
+        return [{"error": f"Failed to list my issues: {str(e)}"}]
+
+
+@mcp.tool()
 async def get_issue_details(
     platform: str, project_id: str, issue_id: str
 ) -> Dict[str, Any]:
@@ -152,20 +188,6 @@ async def update_issue(
 async def close_issue(platform: str, project_id: str, issue_id: str) -> Dict[str, Any]:
     """Close an issue"""
     return await PlatformService.close_issue(platform, project_id, issue_id)
-
-
-@mcp.tool()
-async def list_my_issues(
-    platform: str,
-    project_id: str,
-    state: str = "opened",
-    limit: Optional[int] = 20,
-    **filters,
-) -> List[Dict[str, Any]]:
-    """List issues assigned to the current user (automatically uses configured username)"""
-    return await PlatformService.list_my_issues(
-        platform, project_id, state, limit, **filters
-    )
 
 
 # Merge Request Management Tools

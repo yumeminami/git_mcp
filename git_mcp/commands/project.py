@@ -4,6 +4,7 @@ import asyncio
 import click
 
 from ..core.exceptions import GitMCPError
+from ..utils.platform import resolve_platform
 
 
 def get_adapter(platform_config):
@@ -36,17 +37,7 @@ def list_projects(ctx, platform, visibility, archived, owned, starred, search, l
         formatter = ctx.obj.get_formatter()
 
         # Determine which platform to use
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         # Build filters
         filters = {}

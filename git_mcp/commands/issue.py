@@ -4,6 +4,7 @@ import asyncio
 import click
 
 from ..core.exceptions import GitMCPError
+from ..utils.platform import resolve_platform
 
 
 def get_adapter(platform_config):
@@ -11,7 +12,9 @@ def get_adapter(platform_config):
     if platform_config.type == "gitlab":
         from ..platforms.gitlab import GitLabAdapter
 
-        return GitLabAdapter(platform_config.url, platform_config.token)
+        return GitLabAdapter(
+            platform_config.url, platform_config.token, platform_config.username
+        )
     else:
         raise ValueError(f"Platform type '{platform_config.type}' not supported yet")
 
@@ -57,17 +60,7 @@ def list_issues(
         formatter = ctx.obj.get_formatter()
 
         # Determine which platform to use
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         # Build filters
         filters = {}
@@ -128,17 +121,7 @@ def get_issue(ctx, project_id, issue_id, platform):
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         adapter = get_adapter(platform_config)
         issue = await adapter.get_issue(project_id, issue_id)
@@ -196,17 +179,7 @@ def create_issue(
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         # Build issue data
         issue_data = {}
@@ -272,17 +245,7 @@ def update_issue(
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         # Build update data
         update_data = {}
@@ -344,17 +307,7 @@ def close_issue(ctx, project_id, issue_id, platform, comment):
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         # Build close data
         close_data = {}
@@ -372,6 +325,92 @@ def close_issue(ctx, project_id, issue_id, platform, comment):
     except GitMCPError as e:
         formatter = ctx.obj.get_formatter()
         formatter.print_error(str(e))
+        ctx.exit(1)
+
+
+@click.command("my")
+@click.option("--platform", help="Platform name")
+@click.option(
+    "--state",
+    type=click.Choice(["opened", "closed", "all"]),
+    default="opened",
+    help="Issue state filter",
+)
+@click.option("--limit", type=int, default=20, help="Maximum number of results")
+@click.pass_context
+def list_my_issues(ctx, platform, state, limit):
+    """List issues assigned to me across all projects."""
+
+    async def _list_my_issues():
+        formatter = ctx.obj.get_formatter()
+
+        # Determine platform
+        platform_name, platform_config = resolve_platform(ctx, platform)
+
+        if not platform_config.username:
+            raise ValueError(
+                f"No username configured for platform '{platform_name}'. Please configure username first."
+            )
+
+        # Use the global search from PlatformService
+        from ..services.platform_service import PlatformService
+
+        filters = {"assignee": platform_config.username}
+        issues = await PlatformService.list_all_issues(
+            platform_name, state=state, limit=limit, **filters
+        )
+
+        if issues:
+            from ..platforms.base import ResourceType
+
+            # Convert issues dict to proper resource objects
+            resource_objects = []
+            for issue in issues:
+                # Create a proper resource-like object
+                obj = type(
+                    "IssueResource",
+                    (),
+                    {
+                        "id": issue["id"],
+                        "title": issue["title"],
+                        "description": issue.get("description", ""),
+                        "url": issue.get("url", ""),
+                        "author": issue.get("author"),
+                        "assignee": issue.get("assignee"),
+                        "state": type("State", (), {"value": issue["state"]})()
+                        if issue.get("state")
+                        else None,
+                        "created_at": issue.get("created_at"),
+                        "updated_at": issue.get("updated_at"),
+                        "metadata": {
+                            "labels": issue.get("labels", []),
+                            "project_id": issue.get("project_id"),
+                        },
+                        "resource_type": ResourceType.ISSUE,
+                        "platform": "gitlab",
+                        "project_id": issue.get("project_id", ""),
+                    },
+                )()
+                resource_objects.append(obj)
+
+            formatter.format_resources(resource_objects)
+            formatter.print_info(
+                f"Found {len(issues)} issues assigned to {platform_config.username}"
+            )
+        else:
+            formatter.print_info(
+                f"No {state} issues assigned to {platform_config.username}"
+            )
+
+    try:
+        asyncio.run(_list_my_issues())
+    except GitMCPError as e:
+        formatter = ctx.obj.get_formatter()
+        formatter.print_error(str(e))
+        ctx.exit(1)
+    except Exception as e:
+        formatter = ctx.obj.get_formatter()
+        formatter.print_error(f"Error: {str(e)}")
         ctx.exit(1)
 
 
@@ -394,17 +433,7 @@ def search_issues(ctx, platform, query, project, scope, limit):
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
-        platform_name = platform or ctx.obj.platform
-        if not platform_name:
-            available_platforms = ctx.obj.config.list_platforms()
-            if len(available_platforms) == 1:
-                platform_name = available_platforms[0]
-            else:
-                raise ValueError("Please specify --platform or set a default platform")
-
-        platform_config = ctx.obj.config.get_platform(platform_name)
-        if not platform_config:
-            raise ValueError(f"Platform '{platform_name}' not configured")
+        platform_name, platform_config = resolve_platform(ctx, platform)
 
         adapter = get_adapter(platform_config)
 
@@ -422,10 +451,73 @@ def search_issues(ctx, platform, query, project, scope, limit):
             else:
                 formatter.print_info(f"No issues found for query: '{query}'")
         else:
-            formatter.print_warning(
-                "Global search across all projects not yet implemented"
+            # Global search across all projects
+            from ..services.platform_service import PlatformService
+
+            # Parse query for special filters like assignee:username
+            filters = {}
+            search_query = query  # Make a copy to avoid variable scoping issues
+            if "assignee:" in search_query:
+                # Extract assignee from query like "assignee:username"
+                parts = search_query.split()
+                for part in parts:
+                    if part.startswith("assignee:"):
+                        assignee_value = part.split(":", 1)[1]
+                        if (
+                            assignee_value == "me"
+                            or assignee_value == platform_config.username
+                        ):
+                            filters["assignee"] = platform_config.username
+                        else:
+                            filters["assignee"] = assignee_value
+                        # Remove this part from search query
+                        search_query = search_query.replace(part, "").strip()
+                        break
+
+            if search_query.strip():
+                filters["search"] = search_query.strip()
+
+            # Use the global search from PlatformService
+            issues = await PlatformService.list_all_issues(
+                platform_name, limit=limit or 20, **filters
             )
-            formatter.print_info("Please specify a --project for now")
+
+            if issues:
+                from ..platforms.base import ResourceType
+
+                # Convert issues dict to proper resource objects
+                resource_objects = []
+                for issue in issues:
+                    # Create a proper resource-like object
+                    obj = type(
+                        "IssueResource",
+                        (),
+                        {
+                            "id": issue["id"],
+                            "title": issue["title"],
+                            "description": issue.get("description", ""),
+                            "url": issue.get("url", ""),
+                            "author": issue.get("author"),
+                            "assignee": issue.get("assignee"),
+                            "state": type("State", (), {"value": issue["state"]})()
+                            if issue.get("state")
+                            else None,
+                            "created_at": issue.get("created_at"),
+                            "updated_at": issue.get("updated_at"),
+                            "metadata": {
+                                "labels": issue.get("labels", []),
+                                "project_id": issue.get("project_id"),
+                            },
+                            "resource_type": ResourceType.ISSUE,
+                            "platform": "gitlab",
+                            "project_id": issue.get("project_id", ""),
+                        },
+                    )()
+                    resource_objects.append(obj)
+
+                formatter.format_resources(resource_objects)
+            else:
+                formatter.print_info(f"No issues found for query: '{search_query}'")
 
     try:
         asyncio.run(_search_issues())
@@ -438,6 +530,7 @@ def search_issues(ctx, platform, query, project, scope, limit):
 # Commands to be added to the main CLI
 issue_commands = [
     list_issues,
+    list_my_issues,
     get_issue,
     create_issue,
     update_issue,

@@ -138,6 +138,73 @@ class GitLabAdapter(PlatformAdapter):
         except GitlabError as e:
             raise PlatformError(f"Failed to list issues: {e}", self.platform_name)
 
+    async def list_all_issues(self, **filters) -> List[IssueResource]:
+        """List issues across all projects (global search)."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            gitlab_filters = self._normalize_issue_filters(filters)
+
+            # Handle assignee filter - use optimal approach
+            assignee_filter = None
+            if "assignee" in filters:
+                assignee_filter = filters["assignee"]
+
+                # Check if searching for current user - use scope=assigned_to_me for optimal performance
+                if assignee_filter == self.username:
+                    # Use the most efficient approach for current user
+                    gitlab_filters = {
+                        "scope": "assigned_to_me",
+                        "state": gitlab_filters.get("state", "opened"),
+                        "all": False,
+                        "per_page": 100,
+                    }
+                    # Add other filters if present
+                    if "labels" in gitlab_filters:
+                        gitlab_filters["labels"] = gitlab_filters["labels"]
+                else:
+                    # For other users, try to get assignee ID
+                    try:
+                        users = self.client.users.list(username=assignee_filter)
+                        if users:
+                            gitlab_filters["assignee_id"] = users[0].id
+                            # Remove the username-based filter
+                            gitlab_filters.pop("assignee_username", None)
+                        else:
+                            # User not found, will return empty results
+                            return []
+                    except Exception:
+                        # If we can't get the user ID, fall back to client-side filtering
+                        assignee_filter = (
+                            assignee_filter  # Keep for client-side filtering
+                        )
+
+            # Use GitLab's global issues endpoint
+            issues = self.client.issues.list(**gitlab_filters)
+
+            # Convert to IssueResource objects
+            issue_resources = [
+                self._convert_to_issue_resource(issue, str(issue.project_id))
+                for issue in issues
+            ]
+
+            # Apply client-side assignee filtering if needed (for non-current user cases where API filtering failed)
+            if (
+                assignee_filter
+                and assignee_filter != self.username
+                and "assignee_id" not in gitlab_filters
+            ):
+                issue_resources = [
+                    issue
+                    for issue in issue_resources
+                    if issue.assignee == assignee_filter
+                ]
+
+            return issue_resources
+        except GitlabError as e:
+            raise PlatformError(f"Failed to list all issues: {e}", self.platform_name)
+
     async def get_issue(
         self, project_id: str, issue_id: str
     ) -> Optional[IssueResource]:
@@ -479,8 +546,8 @@ class GitLabAdapter(PlatformAdapter):
         filter_mapping = {
             "state": "state",
             "labels": "labels",
-            "assignee": "assignee_username",
-            "author": "author_username",
+            "assignee": "assignee_username",  # For project-specific searches
+            "author": "author_username",  # For project-specific searches
             "milestone": "milestone",
             "order_by": "order_by",
             "sort": "sort",

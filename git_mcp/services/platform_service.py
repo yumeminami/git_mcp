@@ -22,7 +22,9 @@ class PlatformService:
         if platform_config.type == "gitlab":
             from ..platforms.gitlab import GitLabAdapter
 
-            return GitLabAdapter(platform_config.url, platform_config.token)
+            return GitLabAdapter(
+                platform_config.url, platform_config.token, platform_config.username
+            )
         else:
             raise ValueError(
                 f"Platform type '{platform_config.type}' not supported yet"
@@ -415,6 +417,43 @@ class PlatformService:
                 "labels": issue.metadata.get("labels", []) if issue.metadata else [],
                 "platform": platform_name,
                 "project_id": project_id,
+            }
+            for issue in issues
+        ]
+
+    @staticmethod
+    async def list_all_issues(
+        platform_name: str,
+        state: str = "opened",
+        limit: Optional[int] = 20,
+        **filters,
+    ) -> List[Dict[str, Any]]:
+        """List issues across all projects (global search)."""
+        adapter = PlatformService.get_adapter(platform_name)
+        # Prepare filters
+        filters["state"] = state
+        if limit:
+            filters["per_page"] = limit
+
+        issues = await adapter.list_all_issues(**filters)
+        return [
+            {
+                "id": issue.id,
+                "title": issue.title,
+                "description": issue.description or "",
+                "state": issue.state.value if issue.state else "unknown",
+                "url": issue.url,
+                "author": issue.author,
+                "assignee": issue.assignee,
+                "created_at": issue.created_at.isoformat()
+                if issue.created_at
+                else None,
+                "updated_at": issue.updated_at.isoformat()
+                if issue.updated_at
+                else None,
+                "labels": issue.metadata.get("labels", []) if issue.metadata else [],
+                "platform": platform_name,
+                "project_id": issue.project_id,
             }
             for issue in issues
         ]
