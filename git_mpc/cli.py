@@ -5,6 +5,7 @@ import click
 
 from .commands.project import project_commands
 from .commands.issue import issue_commands
+from .commands.mr import mr_commands
 from .core.config import get_config
 from .core.exceptions import GitMPCError
 from .utils.output import OutputFormatter
@@ -216,6 +217,17 @@ def issue():
 # Add issue commands
 for cmd in issue_commands:
     issue.add_command(cmd)
+
+
+@cli.group()
+def mr():
+    """Manage merge requests."""
+    pass
+
+
+# Add MR commands
+for cmd in mr_commands:
+    mr.add_command(cmd)
 
 
 def main():

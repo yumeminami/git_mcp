@@ -90,7 +90,35 @@ uv run git-mpc issue update 123 45 \\
 uv run git-mpc issue search --project 123 --query "login" --platform my-gitlab
 ```
 
-### 4. Output Formats
+### 4. Merge Request Workflow
+
+```bash
+# List merge requests in a project
+uv run git-mpc mr list --project 123 --platform my-gitlab --state opened
+
+# Create a merge request (auto-detects current branch as source)
+uv run git-mpc mr create 123 \\
+  --platform my-gitlab \\
+  --target main \\
+  --title "Implement user authentication" \\
+  --description "Added JWT-based authentication system" \\
+  --assignee revieweruser \\
+  --labels "feature,security"
+
+# Get merge request details
+uv run git-mpc mr get 123 45 --platform my-gitlab
+
+# Approve a merge request
+uv run git-mpc mr approve 123 45 --platform my-gitlab --comment "LGTM!"
+
+# Merge a merge request
+uv run git-mpc mr merge 123 45 \\
+  --platform my-gitlab \\
+  --should-remove-source-branch \\
+  --squash
+```
+
+### 5. Output Formats
 
 ```bash
 # Table format (default)
@@ -140,6 +168,18 @@ git-mpc issue close <project_id> <issue_id>      # Close issue
 git-mpc issue search --project <id> --query <text> # Search issues
 ```
 
+### Merge Request Management
+
+```bash
+git-mpc mr list --project <id> [OPTIONS]         # List MRs in a project
+git-mpc mr get <project_id> <mr_id>               # Get MR details
+git-mpc mr create <project_id> [OPTIONS]         # Create new MR
+git-mpc mr update <project_id> <mr_id> [OPTIONS] # Update MR
+git-mpc mr approve <project_id> <mr_id>           # Approve MR
+git-mpc mr merge <project_id> <mr_id> [OPTIONS]  # Merge MR
+git-mpc mr close <project_id> <mr_id>             # Close MR
+```
+
 #### Project List Options
 
 - `--visibility [public|internal|private]` - Project visibility
@@ -158,6 +198,24 @@ git-mpc issue search --project <id> --query <text> # Search issues
 - `--milestone <name>` - Filter by milestone
 - `--search <term>` - Search in title and description
 - `--sort [created_asc|created_desc|updated_asc|updated_desc]` - Sort order
+
+#### Merge Request Management Options
+
+**List Options:**
+- `--project <id>` - Project scope (required)
+- `--state [opened|closed|merged|all]` - Filter by MR state
+- `--assignee <username>` - Filter by assignee
+- `--author <username>` - Filter by author
+- `--source-branch <branch>` - Filter by source branch
+- `--target-branch <branch>` - Filter by target branch
+- `--labels <label1,label2>` - Filter by labels
+
+**Create Options:**
+- `--source <branch>` - Source branch (auto-detected if not specified)
+- `--target <branch>` - Target branch (default: main)
+- `--draft` - Create as draft MR
+- `--remove-source-branch` - Remove source branch when merged
+- `--squash` - Squash commits when merging
 
 ## Configuration File
 
