@@ -69,18 +69,38 @@ def config():
 @click.argument("type", type=click.Choice(["gitlab", "github", "bitbucket"]))
 @click.option("--url", required=True, help="Platform URL")
 @click.option("--token", prompt=True, hide_input=True, help="Access token")
-@click.option("--username", help="Username (optional)")
+@click.option("--username", help="Username (optional, will auto-fetch if not provided)")
+@click.option(
+    "--no-auto-username", is_flag=True, help="Disable automatic username fetching"
+)
 @click.pass_context
-def config_add(ctx, name, type, url, token, username):
+def config_add(ctx, name, type, url, token, username, no_auto_username):
     """Add a new platform configuration."""
-    try:
-        ctx.obj.config.add_platform(name, type, url, token, username)
-        formatter = ctx.obj.get_formatter()
-        formatter.print_success(f"Platform '{name}' added successfully")
-    except GitMCPError as e:
-        formatter = ctx.obj.get_formatter()
-        formatter.print_error(str(e))
-        ctx.exit(1)
+
+    async def add_platform():
+        try:
+            await ctx.obj.config.add_platform(
+                name,
+                type,
+                url,
+                token,
+                username,
+                auto_fetch_username=not no_auto_username,
+            )
+            formatter = ctx.obj.get_formatter()
+            platform_config = ctx.obj.config.get_platform(name)
+            if platform_config and platform_config.username:
+                formatter.print_success(
+                    f"Platform '{name}' added successfully with username '{platform_config.username}'"
+                )
+            else:
+                formatter.print_success(f"Platform '{name}' added successfully")
+        except Exception as e:
+            formatter = ctx.obj.get_formatter()
+            formatter.print_error(f"Failed to add platform: {e}")
+            ctx.exit(1)
+
+    asyncio.run(add_platform())
 
 
 @config.command("list")
@@ -195,6 +215,34 @@ def config_test(ctx, name):
                 )
         except Exception as e:
             formatter.print_error(f"Error testing '{platform_name}': {e}")
+
+
+@config.command("refresh-username")
+@click.argument("name")
+@click.pass_context
+def config_refresh_username(ctx, name):
+    """Refresh username for a platform configuration."""
+
+    async def refresh_username():
+        try:
+            success = await ctx.obj.config.refresh_username(name)
+            formatter = ctx.obj.get_formatter()
+            if success:
+                platform_config = ctx.obj.config.get_platform(name)
+                username = platform_config.username if platform_config else "Unknown"
+                formatter.print_success(
+                    f"Username for platform '{name}' updated to '{username}'"
+                )
+            else:
+                formatter.print_warning(
+                    f"Could not fetch username for platform '{name}'"
+                )
+        except Exception as e:
+            formatter = ctx.obj.get_formatter()
+            formatter.print_error(f"Failed to refresh username: {e}")
+            ctx.exit(1)
+
+    asyncio.run(refresh_username())
 
 
 @cli.group()

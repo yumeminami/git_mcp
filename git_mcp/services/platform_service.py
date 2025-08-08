@@ -124,6 +124,139 @@ class PlatformService:
         return result
 
     @staticmethod
+    async def list_my_issues(
+        platform_name: str,
+        project_id: str,
+        state: str = "opened",
+        limit: Optional[int] = 20,
+        **filters,
+    ) -> List[Dict[str, Any]]:
+        """List issues assigned to the current user."""
+        try:
+            config = get_config()
+            platform_config = config.get_platform(platform_name)
+
+            if not platform_config or not platform_config.username:
+                raise ValueError(
+                    f"No username configured for platform '{platform_name}'. "
+                    f"Use 'refresh_platform_username' to fetch it automatically."
+                )
+
+            # Add assignee filter for current user
+            filters["assignee"] = platform_config.username
+
+            return await PlatformService.list_issues(
+                platform_name, project_id, state, limit, **filters
+            )
+        except Exception as e:
+            raise Exception(f"Failed to list my issues: {str(e)}")
+
+    @staticmethod
+    async def list_my_merge_requests(
+        platform_name: str,
+        project_id: str,
+        state: str = "opened",
+        limit: Optional[int] = 20,
+        **filters,
+    ) -> List[Dict[str, Any]]:
+        """List merge requests created by the current user."""
+        try:
+            config = get_config()
+            platform_config = config.get_platform(platform_name)
+
+            if not platform_config or not platform_config.username:
+                raise ValueError(
+                    f"No username configured for platform '{platform_name}'. "
+                    f"Use 'refresh_platform_username' to fetch it automatically."
+                )
+
+            # Add author filter for current user
+            filters["author"] = platform_config.username
+
+            return await PlatformService.list_merge_requests(
+                platform_name, project_id, state, limit, **filters
+            )
+        except Exception as e:
+            raise Exception(f"Failed to list my merge requests: {str(e)}")
+
+    @staticmethod
+    async def get_platform_config(platform_name: str) -> Dict[str, Any]:
+        """Get configuration for a specific platform."""
+        try:
+            config = get_config()
+            platform_config = config.get_platform(platform_name)
+
+            if not platform_config:
+                return {
+                    "platform": platform_name,
+                    "found": False,
+                    "message": f"Platform '{platform_name}' not found",
+                }
+
+            return {
+                "platform": platform_name,
+                "found": True,
+                "type": platform_config.type,
+                "url": platform_config.url,
+                "username": platform_config.username,
+                "has_token": bool(platform_config.token),
+                "message": f"Configuration for '{platform_name}'",
+            }
+        except Exception as e:
+            return {
+                "platform": platform_name,
+                "found": False,
+                "message": f"Error getting platform config: {str(e)}",
+            }
+
+    @staticmethod
+    async def get_current_user_info(platform_name: str) -> Dict[str, Any]:
+        """Get current user information from platform API."""
+        try:
+            adapter = PlatformService.get_adapter(platform_name)
+            user_info = await adapter.get_current_user()
+
+            return {
+                "platform": platform_name,
+                "success": True,
+                "user_info": user_info,
+                "username": user_info.get("username", "Unknown"),
+                "message": f"User info retrieved from '{platform_name}'",
+            }
+        except Exception as e:
+            return {
+                "platform": platform_name,
+                "success": False,
+                "user_info": None,
+                "username": None,
+                "message": f"Failed to get user info: {str(e)}",
+            }
+
+    @staticmethod
+    async def refresh_platform_username(platform_name: str) -> Dict[str, Any]:
+        """Refresh username for a platform configuration."""
+        try:
+            config = get_config()
+            success = await config.refresh_username(platform_name)
+            platform_config = config.get_platform(platform_name)
+
+            return {
+                "platform": platform_name,
+                "success": success,
+                "username": platform_config.username if platform_config else None,
+                "message": f"Username refreshed for '{platform_name}'"
+                if success
+                else f"Could not refresh username for '{platform_name}'",
+            }
+        except Exception as e:
+            return {
+                "platform": platform_name,
+                "success": False,
+                "username": None,
+                "message": f"Failed to refresh username: {str(e)}",
+            }
+
+    @staticmethod
     async def test_platform_connection(platform_name: str) -> Dict[str, Any]:
         """Test connection to a platform."""
         try:

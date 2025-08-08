@@ -368,6 +368,27 @@ uv run git-mcp-server
 uv run mcp dev git_mcp/mcp_server.py
 ```
 
+### Configuration Features
+
+#### Automatic Username Detection
+
+When adding a new platform, the system will automatically fetch your username from the provided token:
+
+```bash
+# Username will be auto-fetched from token
+git-mcp config add my-gitlab gitlab --url https://gitlab.com --token YOUR_TOKEN
+
+# Disable auto-fetch if needed
+git-mcp config add my-gitlab gitlab --url https://gitlab.com --token YOUR_TOKEN --no-auto-username
+
+# Refresh username for existing platform
+git-mcp config refresh-username my-gitlab
+```
+
+**Supported Platforms for Auto-fetch:**
+- ✅ GitLab (gitlab.com and private instances)
+- 🚧 GitHub (planned)
+
 ### MCP Scopes Explained
 
 - **Local scope** (`-s local`): Only available in the current project directory
@@ -383,6 +404,9 @@ When running as an MCP server, the following tools are available:
 #### Platform Management
 - `list_platforms()` - List all configured Git platforms
 - `test_platform_connection(platform)` - Test connection to a platform
+- `refresh_platform_username(platform)` - Refresh username by fetching from token
+- `get_platform_config(platform)` - Get configuration info for a platform (including username)
+- `get_current_user_info(platform)` - Get current user info directly from platform API
 
 #### Project Operations
 - `list_projects(platform, limit=20)` - List projects from a platform

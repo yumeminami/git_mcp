@@ -23,6 +23,24 @@ async def test_platform_connection(platform: str) -> Dict[str, Any]:
     return await PlatformService.test_platform_connection(platform)
 
 
+@mcp.tool()
+async def refresh_platform_username(platform: str) -> Dict[str, Any]:
+    """Refresh username for a configured platform by fetching from token"""
+    return await PlatformService.refresh_platform_username(platform)
+
+
+@mcp.tool()
+async def get_platform_config(platform: str) -> Dict[str, Any]:
+    """Get configuration information for a specific platform"""
+    return await PlatformService.get_platform_config(platform)
+
+
+@mcp.tool()
+async def get_current_user_info(platform: str) -> Dict[str, Any]:
+    """Get current user information directly from platform API"""
+    return await PlatformService.get_current_user_info(platform)
+
+
 # Project Management Tools
 @mcp.tool()
 async def list_projects(
@@ -136,6 +154,20 @@ async def close_issue(platform: str, project_id: str, issue_id: str) -> Dict[str
     return await PlatformService.close_issue(platform, project_id, issue_id)
 
 
+@mcp.tool()
+async def list_my_issues(
+    platform: str,
+    project_id: str,
+    state: str = "opened",
+    limit: Optional[int] = 20,
+    **filters,
+) -> List[Dict[str, Any]]:
+    """List issues assigned to the current user (automatically uses configured username)"""
+    return await PlatformService.list_my_issues(
+        platform, project_id, state, limit, **filters
+    )
+
+
 # Merge Request Management Tools
 @mcp.tool()
 async def list_merge_requests(
@@ -179,6 +211,20 @@ async def create_merge_request(
 
     return await PlatformService.create_merge_request(
         platform, project_id, title, source_branch, target_branch, **create_kwargs
+    )
+
+
+@mcp.tool()
+async def list_my_merge_requests(
+    platform: str,
+    project_id: str,
+    state: str = "opened",
+    limit: Optional[int] = 20,
+    **filters,
+) -> List[Dict[str, Any]]:
+    """List merge requests created by the current user (automatically uses configured username)"""
+    return await PlatformService.list_my_merge_requests(
+        platform, project_id, state, limit, **filters
     )
 
 

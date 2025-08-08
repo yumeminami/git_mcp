@@ -108,15 +108,34 @@ class GitMCPConfig:
         except Exception as e:
             raise ValueError(f"Failed to save configuration: {e}")
 
-    def add_platform(
+    async def add_platform(
         self,
         name: str,
         platform_type: str,
         url: str,
         token: Optional[str] = None,
         username: Optional[str] = None,
+        auto_fetch_username: bool = True,
     ) -> None:
-        """Add a new platform configuration."""
+        """Add a new platform configuration.
+
+        Args:
+            name: Platform name
+            platform_type: Platform type ('gitlab', 'github', etc.)
+            url: Platform URL
+            token: Access token
+            username: Username (if not provided and token is given, will try to fetch automatically)
+            auto_fetch_username: Whether to automatically fetch username from token
+        """
+        # If username not provided and token is available, try to fetch it automatically
+        if auto_fetch_username and token and not username:
+            try:
+                username = await self._fetch_username_from_token(
+                    platform_type, url, token
+                )
+            except Exception as e:
+                print(f"Warning: Could not fetch username automatically: {e}")
+
         platform_config = PlatformConfig(
             name=name, type=platform_type, url=url, token=token, username=username
         )
@@ -191,6 +210,53 @@ class GitMCPConfig:
             if alias.name == name:
                 return alias
         return None
+
+    async def _fetch_username_from_token(
+        self, platform_type: str, url: str, token: str
+    ) -> Optional[str]:
+        """Fetch username from platform using token."""
+        try:
+            if platform_type.lower() == "gitlab":
+                from ..platforms.gitlab import GitLabAdapter
+
+                adapter = GitLabAdapter(url, token)
+                user_info = await adapter.get_current_user()
+                return user_info.get("username")
+            elif platform_type.lower() == "github":
+                # TODO: Implement GitHub username fetching when GitHub adapter is ready
+                return None
+            else:
+                print(
+                    f"Warning: Username auto-fetch not supported for platform type: {platform_type}"
+                )
+                return None
+        except Exception as e:
+            raise Exception(f"Failed to fetch username from {platform_type}: {e}")
+
+    async def refresh_username(self, platform_name: str) -> bool:
+        """Refresh username for an existing platform configuration.
+
+        Returns:
+            bool: True if username was successfully updated, False otherwise
+        """
+        platform_config = self.platforms.get(platform_name)
+        if not platform_config:
+            raise ValueError(f"Platform '{platform_name}' not found")
+
+        if not platform_config.token:
+            raise ValueError(f"No token available for platform '{platform_name}'")
+
+        try:
+            username = await self._fetch_username_from_token(
+                platform_config.type, platform_config.url, platform_config.token
+            )
+            if username:
+                platform_config.username = username
+                self.save()
+                return True
+            return False
+        except Exception as e:
+            raise Exception(f"Failed to refresh username for {platform_name}: {e}")
 
     def update_defaults(self, **kwargs) -> None:
         """Update default settings."""
