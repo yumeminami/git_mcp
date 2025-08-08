@@ -1,0 +1,222 @@
+"""Command-line interface for git-mpc."""
+
+import asyncio
+import click
+
+from .commands.project import project_commands
+from .core.config import get_config
+from .core.exceptions import GitMPCError
+from .utils.output import OutputFormatter
+
+
+# Global context for CLI
+class CLIContext:
+    def __init__(self):
+        self.config = get_config()
+        self.output_format = "table"
+        self.platform = None
+        self.formatter = None
+
+    def get_formatter(self) -> OutputFormatter:
+        if not self.formatter:
+            self.formatter = OutputFormatter(self.output_format)
+        return self.formatter
+
+
+@click.group()
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json", "yaml"]),
+    default=None,
+    help="Output format",
+)
+@click.option("--platform", help="Default platform to use")
+@click.option("--config-dir", type=click.Path(), help="Configuration directory path")
+@click.pass_context
+def cli(ctx, output_format, platform, config_dir):
+    """Git Multi-Platform Controller - Unified management for GitLab, GitHub, and more."""
+    ctx.ensure_object(CLIContext)
+
+    if config_dir:
+        from pathlib import Path
+        from .core.config import init_config
+
+        init_config(Path(config_dir))
+        ctx.obj.config = get_config()
+
+    if output_format:
+        ctx.obj.output_format = output_format
+    else:
+        ctx.obj.output_format = ctx.obj.config.defaults.output_format
+
+    if platform:
+        ctx.obj.platform = platform
+    else:
+        ctx.obj.platform = ctx.obj.config.defaults.platform
+
+
+@cli.group()
+def config():
+    """Manage git-mpc configuration."""
+    pass
+
+
+@config.command("add")
+@click.argument("name")
+@click.argument("type", type=click.Choice(["gitlab", "github", "bitbucket"]))
+@click.option("--url", required=True, help="Platform URL")
+@click.option("--token", prompt=True, hide_input=True, help="Access token")
+@click.option("--username", help="Username (optional)")
+@click.pass_context
+def config_add(ctx, name, type, url, token, username):
+    """Add a new platform configuration."""
+    try:
+        ctx.obj.config.add_platform(name, type, url, token, username)
+        formatter = ctx.obj.get_formatter()
+        formatter.print_success(f"Platform '{name}' added successfully")
+    except GitMPCError as e:
+        formatter = ctx.obj.get_formatter()
+        formatter.print_error(str(e))
+        ctx.exit(1)
+
+
+@config.command("list")
+@click.pass_context
+def config_list(ctx):
+    """List configured platforms."""
+    platforms = ctx.obj.config.list_platforms()
+    formatter = ctx.obj.get_formatter()
+
+    if not platforms:
+        formatter.print_info("No platforms configured")
+        return
+
+    if ctx.obj.output_format == "json":
+        import json
+
+        data = []
+        for name in platforms:
+            platform_config = ctx.obj.config.get_platform(name)
+            data.append(
+                {
+                    "name": name,
+                    "type": platform_config.type,
+                    "url": platform_config.url,
+                    "username": platform_config.username,
+                }
+            )
+        click.echo(json.dumps(data, indent=2))
+    else:
+        from rich.table import Table
+
+        table = Table(title="Configured Platforms")
+        table.add_column("Name")
+        table.add_column("Type")
+        table.add_column("URL")
+        table.add_column("Username")
+
+        for name in platforms:
+            platform_config = ctx.obj.config.get_platform(name)
+            table.add_row(
+                name,
+                platform_config.type,
+                platform_config.url,
+                platform_config.username or "",
+            )
+
+        formatter.console.print(table)
+
+
+@config.command("remove")
+@click.argument("name")
+@click.confirmation_option(prompt="Are you sure you want to remove this platform?")
+@click.pass_context
+def config_remove(ctx, name):
+    """Remove a platform configuration."""
+    try:
+        ctx.obj.config.remove_platform(name)
+        formatter = ctx.obj.get_formatter()
+        formatter.print_success(f"Platform '{name}' removed successfully")
+    except GitMPCError as e:
+        formatter = ctx.obj.get_formatter()
+        formatter.print_error(str(e))
+        ctx.exit(1)
+
+
+@config.command("test")
+@click.argument("name", required=False)
+@click.pass_context
+def config_test(ctx, name):
+    """Test platform connection."""
+
+    async def test_platform(platform_name):
+        platform_config = ctx.obj.config.get_platform(platform_name)
+        if not platform_config:
+            raise ValueError(f"Platform '{platform_name}' not found")
+
+        # Import adapter based on type
+        if platform_config.type == "gitlab":
+            from .platforms.gitlab import GitLabAdapter
+
+            adapter = GitLabAdapter(platform_config.url, platform_config.token)
+        else:
+            raise ValueError(
+                f"Platform type '{platform_config.type}' not supported yet"
+            )
+
+        try:
+            success = await adapter.test_connection()
+            return success, None
+        except Exception as e:
+            return False, str(e)
+
+    formatter = ctx.obj.get_formatter()
+
+    if name:
+        platforms_to_test = [name]
+    else:
+        platforms_to_test = ctx.obj.config.list_platforms()
+
+    if not platforms_to_test:
+        formatter.print_info("No platforms to test")
+        return
+
+    for platform_name in platforms_to_test:
+        try:
+            success, error = asyncio.run(test_platform(platform_name))
+            if success:
+                formatter.print_success(f"Connection to '{platform_name}' successful")
+            else:
+                formatter.print_error(
+                    f"Connection to '{platform_name}' failed: {error}"
+                )
+        except Exception as e:
+            formatter.print_error(f"Error testing '{platform_name}': {e}")
+
+
+@cli.group()
+def project():
+    """Manage projects."""
+    pass
+
+
+# Add project commands
+for cmd in project_commands:
+    project.add_command(cmd)
+
+
+def main():
+    """Main entry point for the CLI."""
+    try:
+        cli()
+    except GitMPCError as e:
+        click.echo(f"Error: {e}", err=True)
+        exit(1)
+    except KeyboardInterrupt:
+        click.echo("\nOperation cancelled.", err=True)
+        exit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,32 @@
+[project]
+name = "git-mpc"
+version = "0.1.0"
+description = "Git Multi-Platform Controller - Unified management tool for GitLab, GitHub, and other Git platforms"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "python-gitlab>=4.4.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pydantic>=2.5.0",
+    "httpx>=0.26.0",
+    "keyring>=24.0.0",
+    "gitpython>=3.1.0",
+    "pyyaml>=6.0.0",
+]
+
+[project.scripts]
+git-mpc = "git_mpc.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=4.2.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "ruff>=0.1.0",
+]
