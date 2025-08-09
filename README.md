@@ -298,10 +298,10 @@ uv run pytest
 
 ```bash
 # Install via uv (recommended)
-uv tool install git_mcp
+uv tool install git_mcp_server
 
 # Or install via pip
-pip install git_mcp
+pip install git_mcp_server
 
 # Setup Claude Code integration and slash commands
 git-mcp-server --install-claude
