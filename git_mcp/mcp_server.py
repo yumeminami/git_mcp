@@ -293,7 +293,7 @@ def main():
 
 def install_claude_integration():
     """Install Claude Code integration and slash commands."""
-    import subprocess  # nosec B404
+    import subprocess
     import shutil
     from pathlib import Path
 
@@ -308,7 +308,7 @@ def install_claude_integration():
     # Add MCP server to Claude Code
     print("📦 Adding MCP server to Claude Code (user scope)...")
     try:
-        subprocess.run(  # nosec B603, B607
+        subprocess.run(
             ["claude", "mcp", "add", "-s", "user", "git-mcp-server", "git-mcp-server"],
             check=True,
         )

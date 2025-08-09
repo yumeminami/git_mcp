@@ -36,3 +36,7 @@ dev = [
     "bandit[toml]>=1.7.0",
     "pip-audit>=2.0.0",
 ]
+
+[tool.bandit]
+# Skip subprocess warnings - our usage is safe (only calls 'claude' CLI)
+skips = ["B404", "B603", "B607"]
