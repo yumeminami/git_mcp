@@ -31,7 +31,7 @@ uv run pytest
 uv tool install git_mcp_server
 git-mcp-server --install-claude
 
-# Install from PyPI and configure Gemini CLI integration  
+# Install from PyPI and configure Gemini CLI integration
 git-mcp-server --install-gemini
 
 # Local development installation
@@ -120,7 +120,7 @@ When working on this codebase:
 
 - `git_mcp/` - Main Python package
 - `git_mcp/claude_commands/` - Slash commands for Claude Code (.md files)
-- `git_mcp/gemini_commands/` - Slash commands for Gemini CLI (.toml files)  
+- `git_mcp/gemini_commands/` - Slash commands for Gemini CLI (.toml files)
 - `git_mcp/commands/` - CLI command implementations
 - `git_mcp/platforms/` - Git platform adapters (GitLab, GitHub, etc.)
 - `git_mcp/services/` - Service layer for business logic

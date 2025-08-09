@@ -36,7 +36,7 @@ class GitHubAdapter(PlatformAdapter):
                 url = url.rstrip("/") + "/api/v3"
         else:
             url = "https://api.github.com"
-            
+
         super().__init__(url, token, username)
         self.client: Optional[Github] = None
         self._base_url = url
@@ -56,7 +56,7 @@ class GitHubAdapter(PlatformAdapter):
             else:
                 # GitHub Enterprise
                 self.client = Github(base_url=self._base_url, login_or_token=self.token)
-            
+
             # Test authentication by getting current user
             self.client.get_user()
             self._authenticated = True
@@ -86,7 +86,7 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repos = []
             user = self.client.get_user()
-            
+
             # Determine what repos to fetch based on filters
             if filters.get("owned", False):
                 repos = user.get_repos(type="owner")
@@ -102,12 +102,15 @@ class GitHubAdapter(PlatformAdapter):
                 if filters.get("archived") is not None:
                     if repo.archived != filters["archived"]:
                         continue
-                
+
                 if filters.get("search"):
                     search_term = filters["search"].lower()
-                    if search_term not in repo.name.lower() and search_term not in (repo.description or "").lower():
+                    if (
+                        search_term not in repo.name.lower()
+                        and search_term not in (repo.description or "").lower()
+                    ):
                         continue
-                
+
                 result_repos.append(self._convert_to_project_resource(repo))
 
             return result_repos
@@ -141,9 +144,11 @@ class GitHubAdapter(PlatformAdapter):
                 "description": kwargs.get("description", ""),
                 "private": kwargs.get("visibility", "private") == "private",
                 "auto_init": kwargs.get("initialize_with_readme", False),
-                **{k: v for k, v in kwargs.items() if k in [
-                    "homepage", "has_issues", "has_wiki", "has_downloads"
-                ]}
+                **{
+                    k: v
+                    for k, v in kwargs.items()
+                    if k in ["homepage", "has_issues", "has_wiki", "has_downloads"]
+                },
             }
             repo = user.create_repo(**repo_kwargs)
             return self._convert_to_project_resource(repo)
@@ -161,7 +166,9 @@ class GitHubAdapter(PlatformAdapter):
             return True
         except GithubException as e:
             if e.status == 404:
-                raise ResourceNotFoundError("repository", project_id, self.platform_name)
+                raise ResourceNotFoundError(
+                    "repository", project_id, self.platform_name
+                )
             raise PlatformError(
                 f"Failed to delete repository {project_id}: {e}", self.platform_name
             )
@@ -191,12 +198,12 @@ class GitHubAdapter(PlatformAdapter):
         try:
             # Use GitHub's search API for global issue search
             query_parts = []
-            
+
             # Add state filter
             state = filters.get("state", "open")
             if state != "all":
                 query_parts.append(f"state:{state}")
-            
+
             # Add assignee filter
             if "assignee" in filters:
                 assignee = filters["assignee"]
@@ -204,7 +211,7 @@ class GitHubAdapter(PlatformAdapter):
                     query_parts.append("assignee:@me")
                 else:
                     query_parts.append(f"assignee:{assignee}")
-            
+
             # Add labels filter
             if "labels" in filters:
                 labels = filters["labels"]
@@ -212,20 +219,22 @@ class GitHubAdapter(PlatformAdapter):
                     labels = [labels]
                 for label in labels:
                     query_parts.append(f'label:"{label}"')
-            
+
             # Add author filter
             if "author" in filters:
                 query_parts.append(f"author:{filters['author']}")
-            
+
             # Default to issues only (not PRs)
             query_parts.append("type:issue")
-            
+
             query = " ".join(query_parts) if query_parts else "type:issue"
-            
+
             issues = self.client.search_issues(query)
-            
+
             return [
-                self._convert_to_issue_resource(issue, self._extract_repo_name(issue.repository.full_name))
+                self._convert_to_issue_resource(
+                    issue, self._extract_repo_name(issue.repository.full_name)
+                )
                 for issue in issues
             ]
         except GithubException as e:
@@ -256,7 +265,7 @@ class GitHubAdapter(PlatformAdapter):
                     }
                     for comment in comments
                 ]
-                
+
                 issue_resource = self._convert_to_issue_resource(issue, project_id)
                 if not issue_resource.metadata:
                     issue_resource.metadata = {}
@@ -284,7 +293,7 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repo = self.client.get_repo(project_id)
             issue_kwargs = {"title": title}
-            
+
             if "description" in kwargs:
                 issue_kwargs["body"] = kwargs["description"]
             if "labels" in kwargs:
@@ -294,7 +303,7 @@ class GitHubAdapter(PlatformAdapter):
                 issue_kwargs["labels"] = labels
             if "assignee" in kwargs:
                 issue_kwargs["assignee"] = kwargs["assignee"]
-            
+
             issue = repo.create_issue(**issue_kwargs)
             return self._convert_to_issue_resource(issue, project_id)
         except GithubException as e:
@@ -400,12 +409,12 @@ class GitHubAdapter(PlatformAdapter):
                 "head": source_branch,
                 "base": target_branch,
             }
-            
+
             if "description" in kwargs:
                 pr_kwargs["body"] = kwargs["description"]
             if "draft" in kwargs:
                 pr_kwargs["draft"] = kwargs["draft"]
-            
+
             pr = repo.create_pull(**pr_kwargs)
             return self._convert_to_mr_resource(pr, project_id)
         except GithubException as e:
@@ -423,12 +432,9 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repo = self.client.get_repo(project_id)
             pr = repo.get_pull(int(mr_id))
-            
+
             # Create a review with approval
-            review_kwargs = {
-                "event": "APPROVE",
-                "body": kwargs.get("body", "")
-            }
+            review_kwargs = {"event": "APPROVE", "body": kwargs.get("body", "")}
             pr.create_review(**review_kwargs)
             return True
         except GithubException as e:
@@ -446,7 +452,7 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repo = self.client.get_repo(project_id)
             pr = repo.get_pull(int(mr_id))
-            
+
             merge_kwargs = {}
             if "commit_title" in kwargs:
                 merge_kwargs["commit_title"] = kwargs["commit_title"]
@@ -454,7 +460,7 @@ class GitHubAdapter(PlatformAdapter):
                 merge_kwargs["commit_message"] = kwargs["commit_message"]
             if "merge_method" in kwargs:
                 merge_kwargs["merge_method"] = kwargs["merge_method"]
-            
+
             pr.merge(**merge_kwargs)
             # Refresh the PR to get updated state
             pr = repo.get_pull(int(mr_id))
@@ -473,16 +479,20 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repo = self.client.get_repo(project_id)
             branches = repo.get_branches()
-            
+
             return [
                 {
                     "name": branch.name,
                     "commit": {
                         "id": branch.commit.sha,
                         "short_id": branch.commit.sha[:8],
-                        "title": branch.commit.commit.message.split('\n')[0],
-                        "author_name": branch.commit.commit.author.name if branch.commit.commit.author else None,
-                        "created_at": branch.commit.commit.author.date if branch.commit.commit.author else None,
+                        "title": branch.commit.commit.message.split("\n")[0],
+                        "author_name": branch.commit.commit.author.name
+                        if branch.commit.commit.author
+                        else None,
+                        "created_at": branch.commit.commit.author.date
+                        if branch.commit.commit.author
+                        else None,
                     },
                     "protected": branch.protected,
                 }
@@ -499,14 +509,14 @@ class GitHubAdapter(PlatformAdapter):
         try:
             repo = self.client.get_repo(project_id)
             tags = repo.get_tags()
-            
+
             return [
                 {
                     "name": tag.name,
                     "commit": {
                         "id": tag.commit.sha,
                         "short_id": tag.commit.sha[:8],
-                        "title": tag.commit.commit.message.split('\n')[0],
+                        "title": tag.commit.commit.message.split("\n")[0],
                     },
                     "tarball_url": tag.tarball_url,
                     "zipball_url": tag.zipball_url,
@@ -523,7 +533,7 @@ class GitHubAdapter(PlatformAdapter):
 
         try:
             repo = self.client.get_repo(project_id)
-            
+
             # Apply filters
             commit_kwargs = {}
             if "sha" in filters:
@@ -534,21 +544,33 @@ class GitHubAdapter(PlatformAdapter):
                 commit_kwargs["since"] = filters["since"]
             if "until" in filters:
                 commit_kwargs["until"] = filters["until"]
-            
+
             commits = repo.get_commits(**commit_kwargs)
-            
+
             return [
                 {
                     "id": commit.sha,
                     "short_id": commit.sha[:8],
-                    "title": commit.commit.message.split('\n')[0],
+                    "title": commit.commit.message.split("\n")[0],
                     "message": commit.commit.message,
-                    "author_name": commit.commit.author.name if commit.commit.author else None,
-                    "author_email": commit.commit.author.email if commit.commit.author else None,
-                    "authored_date": commit.commit.author.date if commit.commit.author else None,
-                    "committer_name": commit.commit.committer.name if commit.commit.committer else None,
-                    "committer_email": commit.commit.committer.email if commit.commit.committer else None,
-                    "committed_date": commit.commit.committer.date if commit.commit.committer else None,
+                    "author_name": commit.commit.author.name
+                    if commit.commit.author
+                    else None,
+                    "author_email": commit.commit.author.email
+                    if commit.commit.author
+                    else None,
+                    "authored_date": commit.commit.author.date
+                    if commit.commit.author
+                    else None,
+                    "committer_name": commit.commit.committer.name
+                    if commit.commit.committer
+                    else None,
+                    "committer_email": commit.commit.committer.email
+                    if commit.commit.committer
+                    else None,
+                    "committed_date": commit.commit.committer.date
+                    if commit.commit.committer
+                    else None,
                     "web_url": commit.html_url,
                 }
                 for commit in commits
@@ -625,7 +647,9 @@ class GitHubAdapter(PlatformAdapter):
             platform=self.platform_name,
             resource_type=ResourceType.ISSUE,
             url=issue.html_url,
-            state=ResourceState.OPENED if issue.state == "open" else ResourceState.CLOSED,
+            state=ResourceState.OPENED
+            if issue.state == "open"
+            else ResourceState.CLOSED,
             project_id=project_id,
             description=issue.body,
             author=issue.user.login if issue.user else None,
@@ -640,7 +664,8 @@ class GitHubAdapter(PlatformAdapter):
                 "locked": issue.locked,
                 "comments_count": issue.comments,
                 "repository": project_id,
-                "pull_request": hasattr(issue, "pull_request") and issue.pull_request is not None,
+                "pull_request": hasattr(issue, "pull_request")
+                and issue.pull_request is not None,
             },
         )
 
@@ -705,14 +730,19 @@ class GitHubAdapter(PlatformAdapter):
             if key in filter_mapping:
                 if key == "state" and value == "opened":
                     github_filters["state"] = "open"
-                elif key == "labels" and isinstance(value, str):
-                    github_filters["labels"] = [value]
+                elif key == "labels":
+                    if isinstance(value, str):
+                        github_filters["labels"] = [value]  # type: ignore
+                    else:
+                        github_filters["labels"] = value
                 else:
                     github_filters[filter_mapping[key]] = value
 
         return github_filters
 
-    def _normalize_global_issue_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_global_issue_filters(
+        self, filters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Normalize issue filters for global search."""
         return filters  # Search query is built differently for global search
 
