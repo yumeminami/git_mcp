@@ -223,8 +223,11 @@ class GitMCPConfig:
                 user_info = await adapter.get_current_user()
                 return user_info.get("username")
             elif platform_type.lower() == "github":
-                # TODO: Implement GitHub username fetching when GitHub adapter is ready
-                return None
+                from ..platforms.github import GitHubAdapter
+
+                adapter = GitHubAdapter(url, token)
+                user_info = await adapter.get_current_user()
+                return user_info.get("username")
             else:
                 print(
                     f"Warning: Username auto-fetch not supported for platform type: {platform_type}"

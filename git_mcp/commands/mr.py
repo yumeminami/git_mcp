@@ -12,6 +12,10 @@ def get_adapter(platform_config):
         from ..platforms.gitlab import GitLabAdapter
 
         return GitLabAdapter(platform_config.url, platform_config.token)
+    elif platform_config.type == "github":
+        from ..platforms.github import GitHubAdapter
+
+        return GitHubAdapter(platform_config.url, platform_config.token)
     else:
         raise ValueError(f"Platform type '{platform_config.type}' not supported yet")
 

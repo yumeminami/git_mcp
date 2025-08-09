@@ -25,6 +25,12 @@ class PlatformService:
             return GitLabAdapter(
                 platform_config.url, platform_config.token, platform_config.username
             )
+        elif platform_config.type == "github":
+            from ..platforms.github import GitHubAdapter
+
+            return GitHubAdapter(
+                platform_config.url, platform_config.token, platform_config.username
+            )
         else:
             raise ValueError(
                 f"Platform type '{platform_config.type}' not supported yet"
