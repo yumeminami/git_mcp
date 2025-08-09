@@ -209,6 +209,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build, test-install]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -273,21 +275,12 @@ jobs:
           - `git_mcp_server-${{ steps.version.outputs.version }}.tar.gz` - Source distribution
           EOF
 
-      - name: "Create GitHub Release"
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          release_name: "Git MCP Server ${{ steps.version.outputs.version }}"
-          body_path: release_notes.md
-          draft: false
-          prerelease: false
-
-      - name: "Upload Release Assets"
+      - name: "Create GitHub Release with gh CLI"
         run: |
-          for file in dist/*; do
-            gh release upload ${{ steps.version.outputs.version }} "$file"
-          done
+          # Create release with gh CLI and upload assets in one step
+          gh release create ${{ steps.version.outputs.version }} \
+            --title "Git MCP Server ${{ steps.version.outputs.version }}" \
+            --notes-file release_notes.md \
+            dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
