@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/git_mcp
+      url: https://pypi.org/p/git_mcp/
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
