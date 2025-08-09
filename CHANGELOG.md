@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-08-09
+
+### Added
+- **GitHub Support**: Complete GitHub platform integration using PyGithub
+  - Full feature parity with GitLab including issues, pull requests, repositories
+  - Support for GitHub Enterprise Server
+  - MCP server integration for GitHub operations
+  - CLI commands for GitHub repository management
+
+### Changed
+- **Enhanced CLI**: Fixed merge request creation bug with proper variable scoping
+- **Pre-commit Integration**: Added comprehensive code quality hooks
+  - Ruff linting and formatting
+  - Bandit security scanning
+  - MyPy type checking
+  - Basic file validation hooks
+
+### Fixed
+- Variable scoping issue in CLI merge request creation (`nonlocal source_branch`)
+- MyPy type annotation issues in GitHub platform adapter
+- Code formatting and linting issues across codebase
+
+### Technical
+- Added PyGithub>=2.1.0 dependency for GitHub API access
+- Added pre-commit>=4.2.0 for development workflow
+- Improved error handling and exception management
+- Enhanced platform adapter architecture for multi-platform support
+
 ## [0.1.3] - 2024-08-09
 
 ### Fixed
