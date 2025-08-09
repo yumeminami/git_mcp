@@ -283,10 +283,14 @@ def main():
     """Run the MCP server with stdio transport"""
     import sys
 
-    # Handle --install-claude flag for easy Claude Code setup
-    if len(sys.argv) > 1 and sys.argv[1] == "--install-claude":
-        install_claude_integration()
-        return
+    # Handle installation flags for easy setup
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--install-claude":
+            install_claude_integration()
+            return
+        elif sys.argv[1] == "--install-gemini":
+            install_gemini_integration()
+            return
 
     mcp.run()
 
@@ -658,6 +662,315 @@ These commands leverage our Git MCP server tools:
 - `get_platform_config()` - Get configuration info
 
 Start your automated issue-to-code development journey! 🚀
+""",
+    }
+
+    # Write command files
+    for filename, content in commands.items():
+        command_file = commands_dir / filename
+        command_file.write_text(content.strip())
+        print(f"   Installed: {filename}")
+
+
+def install_gemini_integration():
+    """Install Gemini CLI integration and slash commands."""
+    import json
+    import shutil
+    from pathlib import Path
+
+    print("🔧 Setting up Git MCP Server with Gemini CLI...")
+
+    # Check if gemini command is available
+    if not shutil.which("gemini"):
+        print("❌ Gemini CLI is not installed.")
+        print(
+            "   Please install Gemini CLI first: https://github.com/google-gemini/gemini-cli"
+        )
+        return
+
+    # Get Gemini settings path
+    gemini_settings_path = Path.home() / ".gemini" / "settings.json"
+
+    print("📦 Adding MCP server to Gemini CLI...")
+
+    # Load or create settings
+    settings = {}
+    if gemini_settings_path.exists():
+        try:
+            settings = json.loads(gemini_settings_path.read_text())
+        except Exception as e:
+            print(f"⚠️  Could not parse existing settings: {e}")
+
+    # Ensure mcpServers exists
+    if "mcpServers" not in settings:
+        settings["mcpServers"] = {}
+
+    # Add our MCP server configuration
+    settings["mcpServers"]["git-mcp-server"] = {
+        "command": "git-mcp-server",
+        "args": [],
+        "env": {},
+        "timeout": 30000,
+        "trust": True,  # Trust our tools to avoid confirmation prompts
+    }
+
+    # Create settings directory if it doesn't exist
+    gemini_settings_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write updated settings
+    try:
+        gemini_settings_path.write_text(json.dumps(settings, indent=2))
+        print("✅ MCP server added successfully to Gemini settings")
+    except Exception as e:
+        print(f"❌ Failed to update Gemini settings: {e}")
+        return
+
+    # Install slash commands for Gemini
+    print("📋 Installing issue-to-code workflow slash commands for Gemini...")
+
+    commands_dir = Path.home() / ".gemini" / "commands"
+    install_gemini_commands(commands_dir)
+
+    print("\n🎯 Setup completed! Next steps:")
+    print("1. Configure a Git platform:")
+    print("   git-mcp config add my-gitlab gitlab --url https://gitlab.com")
+    print("\n2. Test the connection:")
+    print("   git-mcp config test my-gitlab")
+    print("\n3. Use the issue-to-code workflow in Gemini CLI:")
+    print("   /issue <issue-url>")
+    print("   /plan")
+    print("   /implement")
+    print("   /test")
+    print("   /doc")
+    print("   /pr <issue-id>")
+    print("\n🎉 Happy issue-driven coding with Gemini!")
+
+
+def install_gemini_commands(commands_dir):
+    """Install slash commands for Gemini CLI."""
+    commands_dir.mkdir(parents=True, exist_ok=True)
+
+    # Gemini commands use TOML format
+    commands = {
+        "issue.toml": """[command]
+description = "Fetch and analyze GitLab/GitHub issue"
+system = '''
+# 🎯 Issue Analysis
+
+Analyze GitLab/GitHub issues with smart context understanding.
+
+## Mode Selection
+
+If no arguments provided ("-" or empty), show **My Issues Dashboard**:
+- List issues assigned to me across configured platforms
+- Show priority, status, and project context
+- Allow selection for detailed analysis
+
+If arguments provided, analyze **Specific Issue**:
+- Fetch issue details from URL or platform/project/issue-id
+- Provide technical analysis and requirements
+- Generate implementation suggestions
+
+## Analysis Output
+
+**For My Issues List:**
+1. **Assigned Issues** - issues assigned to current user
+2. **Recent Activity** - recently updated issues
+3. **Priority Issues** - high priority or urgent items
+4. **Selection Prompt** - choose issue for detailed analysis
+
+**For Specific Issue:**
+1. **Issue Overview** - title, description, labels, priority
+2. **Technical Requirements** - what needs to be implemented
+3. **Context Analysis** - review current codebase for related components
+4. **Next Steps** - suggested approach for development
+
+Use `/plan` after issue analysis to generate the development plan.
+'''
+
+[[command.args]]
+name = "issue_reference"
+placeholder = "[issue-url] or [platform] [project-id] [issue-id] (empty to list my issues)"
+default = "-"
+""",
+        "plan.toml": """[command]
+description = "Generate development plan based on issue analysis"
+system = '''
+# 📋 Development Plan Generator
+
+Generate a structured development plan based on the analyzed issue.
+
+## Plan Generation
+
+Create a comprehensive development plan including:
+
+1. **Branch Strategy** - suggest branch name and workflow
+2. **File Structure** - what files need to be created/modified
+3. **Implementation Steps** - ordered task breakdown
+4. **Testing Strategy** - what tests are needed
+5. **Documentation Updates** - README, docs, comments
+
+## Repository Context
+
+Analyze current repository structure by running:
+- git branch -a
+- git status
+- Find relevant source files
+
+Based on the issue requirements and current codebase, provide a detailed implementation roadmap.
+
+Use `/implement` to start coding based on this plan.
+'''
+
+[[command.args]]
+name = "context"
+placeholder = "[optional context or specific requirements]"
+default = ""
+""",
+        "implement.toml": """[command]
+description = "Implement planned functionality with best practices"
+system = '''
+# 🔨 Implementation
+
+Implement the planned functionality following best practices.
+
+## Implementation Process
+
+1. **Create Feature Branch** - based on development plan
+2. **Code Implementation** - write high-quality, maintainable code
+3. **Follow Conventions** - match existing code style and patterns
+4. **Error Handling** - implement robust error handling
+5. **Code Comments** - add necessary documentation
+
+## Best Practices
+
+- Follow existing project patterns and conventions
+- Write clean, readable, and maintainable code
+- Implement proper error handling and logging
+- Add type hints and documentation
+- Consider security implications
+
+Use `/test` after implementation to generate comprehensive tests.
+'''
+
+[[command.args]]
+name = "focus"
+placeholder = "[optional specific component or step]"
+default = ""
+""",
+        "test.toml": """[command]
+description = "Generate comprehensive test suites"
+system = '''
+# 🧪 Test Generation
+
+Generate comprehensive test suites for implemented functionality.
+
+## Test Strategy
+
+1. **Unit Tests** - test individual functions and methods
+2. **Integration Tests** - test component interactions
+3. **Edge Cases** - test boundary conditions and error scenarios
+4. **Mock External Dependencies** - isolate components for testing
+5. **Test Coverage** - ensure comprehensive coverage
+
+## Test Types
+
+- **Happy Path Tests** - normal operation scenarios
+- **Error Handling Tests** - exception and error conditions
+- **Boundary Tests** - edge cases and limits
+- **Integration Tests** - component interactions
+- **Performance Tests** - if applicable
+
+Use `/doc` after testing to update documentation.
+'''
+
+[[command.args]]
+name = "focus"
+placeholder = "[optional test type or component focus]"
+default = ""
+""",
+        "doc.toml": """[command]
+description = "Update documentation and API docs"
+system = '''
+# 📚 Documentation Update
+
+Update documentation to reflect implemented changes.
+
+## Documentation Updates
+
+1. **API Documentation** - update function/method documentation
+2. **README Updates** - update usage examples and features
+3. **Configuration Guide** - update setup and configuration docs
+4. **Examples** - add practical usage examples
+5. **Changelog** - document changes and improvements
+
+## Documentation Types
+
+- **Code Comments** - inline documentation for complex logic
+- **Docstrings** - comprehensive function/class documentation
+- **README** - user-facing documentation and examples
+- **API Docs** - detailed API reference
+- **Configuration** - setup and configuration guides
+
+Use `/pr` after documentation to create the pull/merge request.
+'''
+
+[[command.args]]
+name = "focus"
+placeholder = "[optional doc type or component focus]"
+default = ""
+""",
+        "pr.toml": """[command]
+description = "Create pull/merge request and close related issue"
+system = '''
+# 🚀 Pull Request Creation
+
+Create a pull/merge request and close the related issue.
+
+## PR Creation Process
+
+1. **Prepare Branch**
+   Run git commands to add, check status, and commit changes
+
+2. **Push to Remote**
+   Push the current branch to remote repository
+
+3. **Create Pull/Merge Request**
+   Using our MCP tools to create the PR/MR with:
+   - Descriptive title linking to issue
+   - Comprehensive description
+   - Closes #[issue-id] in description
+   - Appropriate labels and reviewers
+
+4. **PR Description Template**
+   ```
+   ## Summary
+   Implements [feature description] as requested in issue #[issue-id]
+
+   ## Changes Made
+   - [List of changes]
+
+   ## Testing
+   - [Test coverage details]
+
+   ## Documentation
+   - [Documentation updates]
+
+   Closes #[issue-id]
+   ```
+
+5. **Final Steps**
+   - Link PR to original issue
+   - Request code review
+   - Monitor CI/CD pipeline
+   - Address review feedback
+
+**Workflow Complete!** From issue analysis to PR creation.
+'''
+
+[[command.args]]
+name = "issue_id"
+placeholder = "[issue-id] [optional: target-branch]"
 """,
     }
 

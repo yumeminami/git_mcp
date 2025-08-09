@@ -42,6 +42,7 @@ Transform how you handle development tasks with these automated slash commands:
 
 ### Quick Setup (Recommended)
 
+**For Claude Code:**
 ```bash
 # Install from PyPI
 uv tool install git_mcp_server
@@ -50,10 +51,19 @@ uv tool install git_mcp_server
 git-mcp-server --install-claude
 ```
 
+**For Gemini CLI:**
+```bash
+# Install from PyPI
+uv tool install git_mcp_server
+
+# Setup Gemini CLI integration (adds MCP server + slash commands)
+git-mcp-server --install-gemini
+```
+
 This automatically:
 - ✅ Installs Git MCP Server globally
-- ✅ Configures MCP server in Claude Code (user scope)
-- ✅ Installs slash commands to `~/.claude/commands/`
+- ✅ Configures MCP server in Claude Code/Gemini CLI
+- ✅ Installs slash commands to respective directories
 - ✅ Provides setup instructions
 
 ### Alternative Installation
@@ -61,13 +71,13 @@ This automatically:
 ```bash
 # Using pip
 pip install git_mcp_server
-git-mcp-server --install-claude
+git-mcp-server --install-claude  # or --install-gemini
 
 # From source (development)
 git clone <repository-url>
 cd git_mcp
 uv tool install --from . git_mcp_server
-git-mcp-server --install-claude
+git-mcp-server --install-claude  # or --install-gemini
 ```
 
 ## ⚡ Quick Start
@@ -89,7 +99,7 @@ The system will automatically:
 
 ### 2. Start Using Slash Commands
 
-In Claude Code, you can now use:
+In Claude Code or Gemini CLI, you can now use:
 
 #### **`/issue`** - Smart Issue Analysis
 ```bash
@@ -132,7 +142,7 @@ In Claude Code, you can now use:
 
 ## 🛠️ Available MCP Tools
 
-When configured, Claude Code gains access to these powerful tools:
+When configured, Claude Code and Gemini CLI gain access to these powerful tools:
 
 ### Platform Management
 - `list_platforms()` - List configured Git platforms
@@ -202,9 +212,15 @@ uv run mcp dev git_mcp/mcp_server.py
 
 ### MCP Scope Configuration
 
+**Claude Code:**
 - **User scope** (recommended): Available across all Claude Code projects
 - **Local scope**: Only in current project directory
 - **Project scope**: Shared via `.mcp.json` in project
+
+**Gemini CLI:**
+- **Global settings**: Configured in `~/.gemini/settings.json`
+- **Project settings**: Can override in project-specific settings
+- **Commands**: Located in `~/.gemini/commands/` (global) or `.gemini/commands/` (project)
 
 ### Development Setup
 
@@ -284,6 +300,9 @@ git-mcp-server --help
 # Verify Claude Code integration
 claude mcp list
 
+# Verify Gemini CLI integration
+gemini /mcp
+
 # Test MCP connection
 echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
 ```
@@ -293,7 +312,7 @@ echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "
 **"No MCP servers configured"**
 ```bash
 # Reinstall MCP integration
-git-mcp-server --install-claude
+git-mcp-server --install-claude  # or --install-gemini
 ```
 
 **"Command not found" after installation**
@@ -305,11 +324,14 @@ uv tool install git_mcp_server
 
 **Slash commands not working**
 ```bash
-# Check commands directory
+# Check commands directory (Claude Code)
 ls ~/.claude/commands/
 
+# Check commands directory (Gemini CLI)
+ls ~/.gemini/commands/
+
 # Reinstall if missing
-git-mcp-server --install-claude
+git-mcp-server --install-claude  # or --install-gemini
 ```
 
 ### Update to Latest Version
@@ -319,7 +341,7 @@ git-mcp-server --install-claude
 uv tool install git_mcp_server --upgrade
 
 # Reinstall integration
-git-mcp-server --install-claude
+git-mcp-server --install-claude  # or --install-gemini
 ```
 
 ## 🌟 Key Benefits
@@ -328,7 +350,7 @@ git-mcp-server --install-claude
 - **🎯 Focus**: AI handles boilerplate, you focus on logic
 - **📋 Consistency**: Standardized workflow across all projects
 - **🔧 Flexibility**: Works with any GitLab instance
-- **🤖 Intelligence**: Claude Code understands your codebase context
+- **🤖 Intelligence**: AI assistants understand your codebase context
 - **🔐 Security**: Secure credential management
 
 ## 🛣️ Supported Platforms
@@ -349,7 +371,11 @@ MIT License
 **Ready to supercharge your development workflow?**
 
 ```bash
+# For Claude Code
 uv tool install git_mcp_server && git-mcp-server --install-claude
+
+# For Gemini CLI
+uv tool install git_mcp_server && git-mcp-server --install-gemini
 ```
 
-Then try `/issue` in Claude Code! 🚀
+Then try `/issue` in your AI assistant! 🚀
