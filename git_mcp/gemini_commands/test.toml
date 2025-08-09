@@ -1,7 +1,8 @@
-[command]
 description = "Generate comprehensive test suites"
-system = '''
+prompt = '''
 # 🧪 Test Generation
+
+**Focus:** {{args}}
 
 Generate comprehensive test suites for implemented functionality.
 
@@ -23,8 +24,3 @@ Generate comprehensive test suites for implemented functionality.
 
 Use `/doc` after testing to update documentation.
 '''
-
-[[command.args]]
-name = "focus"
-placeholder = "[optional test type or component focus]"
-default = ""

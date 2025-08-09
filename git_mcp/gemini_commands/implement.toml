@@ -1,7 +1,8 @@
-[command]
 description = "Implement planned functionality with best practices"
-system = '''
+prompt = '''
 # 🔨 Implementation
+
+**Focus:** {{args}}
 
 Implement the planned functionality following best practices.
 
@@ -23,8 +24,3 @@ Implement the planned functionality following best practices.
 
 Use `/test` after implementation to generate comprehensive tests.
 '''
-
-[[command.args]]
-name = "focus"
-placeholder = "[optional specific component or step]"
-default = ""

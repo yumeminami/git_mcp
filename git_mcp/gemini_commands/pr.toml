@@ -1,7 +1,8 @@
-[command]
 description = "Create pull/merge request and close related issue"
-system = '''
+prompt = '''
 # 🚀 Pull Request Creation
+
+**Issue ID:** {{args}}
 
 Create a pull/merge request and close the related issue.
 
@@ -45,7 +46,3 @@ Create a pull/merge request and close the related issue.
 
 **Workflow Complete!** From issue analysis to PR creation.
 '''
-
-[[command.args]]
-name = "issue_id"
-placeholder = "[issue-id] [optional: target-branch]"

@@ -1,7 +1,8 @@
-[command]
 description = "Generate development plan based on issue analysis"
-system = '''
+prompt = '''
 # 📋 Development Plan Generator
+
+**Context:** {{args}}
 
 Generate a structured development plan based on the analyzed issue.
 
@@ -26,8 +27,3 @@ Based on the issue requirements and current codebase, provide a detailed impleme
 
 Use `/implement` to start coding based on this plan.
 '''
-
-[[command.args]]
-name = "context"
-placeholder = "[optional context or specific requirements]"
-default = ""

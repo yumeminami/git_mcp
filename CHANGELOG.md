@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2024-08-09
+
+### Fixed
+- **PyPI Packaging**: Fixed duplicate filename error in wheel distribution
+  - Removed redundant `force-include` directive causing file duplication
+  - Clean package structure now properly distributes command files
+- **Gemini CLI Commands**: Fixed slash command format for proper recognition
+  - Changed from `[command]` + `system` to root-level `prompt` field
+  - Commands now use `{{args}}` placeholder for argument handling
+  - All slash commands (`/issue`, `/plan`, `/implement`, `/test`, `/doc`, `/pr`) now work correctly
+
+### Technical
+- Updated all Gemini CLI TOML files to use correct format specification
+- Improved package build configuration for cleaner distribution
+
 ## [0.1.2] - 2024-08-09
 
 ### Added

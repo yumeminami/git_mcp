@@ -1,6 +1,6 @@
 [project]
 name = "git_mcp_server"
-version = "0.1.2"
+version = "0.1.3"
 description = "Git MCP Server - Unified command-line tool for managing Git repositories across GitHub and GitLab"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -27,10 +27,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["git_mcp"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"git_mcp/claude_commands" = "git_mcp/claude_commands"
-"git_mcp/gemini_commands" = "git_mcp/gemini_commands"
-
 [project.optional-dependencies]
 dev = [
     "pre-commit>=4.2.0",
@@ -44,3 +40,8 @@ dev = [
 [tool.bandit]
 # Skip subprocess warnings - our usage is safe (only calls 'claude' CLI)
 skips = ["B404", "B603", "B607"]
+
+[dependency-groups]
+dev = [
+    "build>=1.3.0",
+]

@@ -1,7 +1,8 @@
-[command]
 description = "Update documentation and API docs"
-system = '''
+prompt = '''
 # 📚 Documentation Update
+
+**Focus:** {{args}}
 
 Update documentation to reflect implemented changes.
 
@@ -23,8 +24,3 @@ Update documentation to reflect implemented changes.
 
 Use `/pr` after documentation to create the pull/merge request.
 '''
-
-[[command.args]]
-name = "focus"
-placeholder = "[optional doc type or component focus]"
-default = ""

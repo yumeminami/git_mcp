@@ -1,7 +1,8 @@
-[command]
 description = "Fetch and analyze GitLab/GitHub issue"
-system = '''
+prompt = '''
 # 🎯 Issue Analysis
+
+**Arguments:** {{args}}
 
 Analyze GitLab/GitHub issues with smart context understanding.
 
@@ -33,8 +34,3 @@ If arguments provided, analyze **Specific Issue**:
 
 Use `/plan` after issue analysis to generate the development plan.
 '''
-
-[[command.args]]
-name = "issue_reference"
-placeholder = "[issue-url] or [platform] [project-id] [issue-id] (empty to list my issues)"
-default = "-"
