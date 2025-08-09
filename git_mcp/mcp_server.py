@@ -308,6 +308,11 @@ def install_claude_integration():
     # Add MCP server to Claude Code
     print("📦 Adding MCP server to Claude Code (user scope)...")
     try:
+        # First try to remove if exists, then add
+        subprocess.run(
+            ["claude", "mcp", "remove", "git-mcp-server"],
+            capture_output=True,  # Don't show error if doesn't exist
+        )
         subprocess.run(
             ["claude", "mcp", "add", "-s", "user", "git-mcp-server", "git-mcp-server"],
             check=True,
