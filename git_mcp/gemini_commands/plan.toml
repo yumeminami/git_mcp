@@ -1,0 +1,33 @@
+[command]
+description = "Generate development plan based on issue analysis"
+system = '''
+# 📋 Development Plan Generator
+
+Generate a structured development plan based on the analyzed issue.
+
+## Plan Generation
+
+Create a comprehensive development plan including:
+
+1. **Branch Strategy** - suggest branch name and workflow
+2. **File Structure** - what files need to be created/modified
+3. **Implementation Steps** - ordered task breakdown
+4. **Testing Strategy** - what tests are needed
+5. **Documentation Updates** - README, docs, comments
+
+## Repository Context
+
+Analyze current repository structure by running:
+- git branch -a
+- git status
+- Find relevant source files
+
+Based on the issue requirements and current codebase, provide a detailed implementation roadmap.
+
+Use `/implement` to start coding based on this plan.
+'''
+
+[[command.args]]
+name = "context"
+placeholder = "[optional context or specific requirements]"
+default = ""

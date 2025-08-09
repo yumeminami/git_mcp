@@ -1,0 +1,28 @@
+---
+description: Implement planned functionality with best practices
+argument-hint: [optional specific component or step]
+---
+
+# 🔨 Implementation
+
+Implement the planned functionality following best practices.
+
+**Focus:** $ARGUMENTS
+
+## Implementation Process
+
+1. **Create Feature Branch** - based on development plan
+2. **Code Implementation** - write high-quality, maintainable code
+3. **Follow Conventions** - match existing code style and patterns
+4. **Error Handling** - implement robust error handling
+5. **Code Comments** - add necessary documentation
+
+## Best Practices
+
+- Follow existing project patterns and conventions
+- Write clean, readable, and maintainable code
+- Implement proper error handling and logging
+- Add type hints and documentation
+- Consider security implications
+
+Use `/test` after implementation to generate comprehensive tests.
