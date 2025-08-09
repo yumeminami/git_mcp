@@ -1,6 +1,7 @@
 ---
-description: Generate comprehensive test suites
+description: Generate comprehensive test suites using git_mcp_server tools for project context
 argument-hint: [optional test type or component focus]
+allowed-tools: mcp__git-mcp-server__*
 ---
 
 # 🧪 Test Generation
@@ -24,5 +25,7 @@ Generate comprehensive test suites for implemented functionality.
 - **Boundary Tests** - edge cases and limits
 - **Integration Tests** - component interactions
 - **Performance Tests** - if applicable
+
+Use `get_project_details()` to understand testing frameworks and `list_merge_requests()` to review existing test patterns in the codebase.
 
 Use `/doc` after testing to update documentation.

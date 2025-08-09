@@ -1,6 +1,7 @@
 ---
-description: Implement planned functionality with best practices
+description: Implement planned functionality with best practices using git_mcp_server tools
 argument-hint: [optional specific component or step]
+allowed-tools: mcp__git-mcp-server__*
 ---
 
 # 🔨 Implementation
@@ -24,5 +25,7 @@ Implement the planned functionality following best practices.
 - Implement proper error handling and logging
 - Add type hints and documentation
 - Consider security implications
+
+Use `get_project_details()` to understand codebase structure and `list_merge_requests()` to review implementation patterns in recent changes.
 
 Use `/test` after implementation to generate comprehensive tests.

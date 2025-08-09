@@ -1,6 +1,7 @@
 ---
-description: Update documentation and API docs
+description: Update documentation and API docs using git_mcp_server tools for project context
 argument-hint: [optional doc type or component focus]
+allowed-tools: mcp__git-mcp-server__*
 ---
 
 # 📚 Documentation Update
@@ -24,5 +25,7 @@ Update documentation to reflect implemented changes.
 - **README** - user-facing documentation and examples
 - **API Docs** - detailed API reference
 - **Configuration** - setup and configuration guides
+
+Use `get_project_details()` to understand documentation structure and `list_merge_requests()` to review recent documentation patterns.
 
 Use `/pr` after documentation to create the pull/merge request.

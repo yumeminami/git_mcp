@@ -21,8 +21,15 @@ uv tool install --from . git_mcp_server --force
 uv run ruff check git_mcp/
 uv run bandit -r git_mcp/
 
-# Run tests (if pytest is configured)
+# Run pre-commit hooks manually
+uv run pre-commit run --all-files
+
+# Run tests (when implemented - uses placeholder test currently)
 uv run pytest
+
+# Test CLI entry points
+uv run git-mcp --help
+uv run git-mcp-server --help
 ```
 
 ### Installation & Setup
@@ -141,7 +148,10 @@ Core dependencies (from pyproject.toml):
 Development tools:
 - `ruff>=0.1.0` - Linting and code formatting
 - `bandit[toml]>=1.7.0` - Security vulnerability scanning
-- `pytest>=8.0.0` - Testing framework
+- `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
+- `pytest-asyncio>=0.23.0` - Async testing support
+- `pre-commit>=4.2.0` - Git hooks for code quality
+- `pip-audit>=2.0.0` - Security vulnerability scanning
 
 ## Security Notes
 

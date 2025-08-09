@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-08-09
+
+### Changed
+- **Enhanced Command Documentation**: Improved Claude Code and Gemini CLI slash commands with explicit git_mcp_server tool usage hints
+  - Updated all command descriptions to mention "using git_mcp_server tools"
+  - Added `allowed-tools: mcp__git-mcp-server__*` specifications to Claude commands
+  - Included specific tool function hints (e.g., `list_my_issues()`, `get_project_details()`, `create_merge_request()`)
+  - Enhanced workflow guidance with concrete MCP tool examples
+- **CLAUDE.md Improvements**: Updated development documentation with current testing status and additional dependencies
+  - Clarified testing setup status (configured but not yet implemented)
+  - Added missing development dependencies (`pytest-asyncio`, `pre-commit`, `pip-audit`)
+  - Added pre-commit manual execution command
+  - Added CLI entry point testing commands
+
+### Technical
+- All slash commands now provide explicit guidance on leveraging available MCP tools
+- Improved developer experience with clearer tool usage patterns
+- Better integration hints for both Claude Code and Gemini CLI workflows
+
 ## [0.1.4] - 2025-08-09
 
 ### Added

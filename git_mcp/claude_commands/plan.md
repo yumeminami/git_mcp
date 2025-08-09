@@ -1,7 +1,7 @@
 ---
-description: Generate development plan based on issue analysis
+description: Generate development plan based on issue analysis using git_mcp_server tools
 argument-hint: [optional context or specific requirements]
-allowed-tools: Bash(git *)
+allowed-tools: Bash(git *), mcp__git-mcp-server__*
 ---
 
 # 📋 Development Plan Generator
@@ -19,6 +19,8 @@ Create a comprehensive development plan including:
 3. **Implementation Steps** - ordered task breakdown
 4. **Testing Strategy** - what tests are needed
 5. **Documentation Updates** - README, docs, comments
+
+Use `get_project_details()` to understand project structure and `list_merge_requests()` to review existing workflow patterns.
 
 ## Repository Context
 

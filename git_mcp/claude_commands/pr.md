@@ -21,7 +21,7 @@ Create a pull/merge request and close the related issue.
    !git push -u origin HEAD
 
 3. **Create Pull/Merge Request**
-   Using our MCP tools to create the PR/MR with:
+   Use `create_merge_request()` to create the PR/MR with:
    - Descriptive title linking to issue
    - Comprehensive description
    - Closes #$ARGUMENTS in description
@@ -45,8 +45,8 @@ Create a pull/merge request and close the related issue.
    ```
 
 5. **Final Steps**
-   - Link PR to original issue
-   - Request code review
+   - Link PR to original issue (use `update_issue()` to close issue if needed)
+   - Request code review via `get_merge_request_details()` for tracking
    - Monitor CI/CD pipeline
    - Address review feedback
 
