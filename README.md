@@ -294,66 +294,57 @@ uv run pytest
 
 ### Installation and Setup
 
-#### Quick Install (Recommended)
+#### Recommended: Install from PyPI/uv
 
 ```bash
-# Clone and run the installation script
+# Install via uv (recommended)
+uv tool install git_mcp
+
+# Or install via pip
+pip install git_mcp
+
+# Setup Claude Code integration and slash commands
+git-mcp-server --install-claude
+```
+
+This will:
+- Install Git MCP Server globally on your system
+- Add MCP server to Claude Code (user scope - available in all projects)
+- Install issue-to-code workflow slash commands to `~/.claude/commands/`
+- Provide next steps for platform configuration
+
+#### Alternative: Install from Source
+
+For development or latest features:
+
+```bash
+# Clone and install from source
 git clone <repository-url>
 cd git_mcp
-./install.sh
+uv tool install --from . git_mcp
+
+# Setup Claude Code integration
+git-mcp-server --install-claude
 ```
 
-The script will:
-- Install Git MCP Server globally using `uv tool`
-- Add it to Claude Code with user scope
-- Install issue-to-code workflow slash commands globally
-- Provide next steps for configuration
+#### Development Setup
 
-#### Option 1: Manual Global Installation
-
-Install Git MCP Server globally using `uv tool`:
-
-```bash
-# Clone and install globally
-git clone <repository-url>
-cd git_mcp
-uv tool install --from . git-mcp
-
-# Verify installation
-git-mcp-server --help
-```
-
-Then add to Claude Code:
-
-```bash
-# Add to Claude Code (user scope - available in all projects)
-claude mcp add -s user git-mcp-server git-mcp-server
-```
-
-#### Option 2: Local Development Setup
-
-For development or local-only usage:
+For local development:
 
 ```bash
 # Clone repository
 git clone <repository-url>
 cd git_mcp
 
-# Install dependencies
-uv sync
+# Install in development mode
+uv sync --all-extras
 
-# Run locally
+# Run locally for testing
 uv run git-mcp-server
-```
 
-Add to Claude Code with absolute path:
-
-```bash
-# Add to Claude Code (local scope - current project only)
-claude mcp add git-mcp-server "uv run --project /absolute/path/to/git_mcp git-mcp-server"
-
-# Or for user scope with absolute path
-claude mcp add -s user git-mcp-server "uv run --project /absolute/path/to/git_mcp git-mcp-server"
+# Install development version globally
+uv tool install --from . git_mcp --force
+git-mcp-server --install-claude
 ```
 
 ### Running as an MCP Server
@@ -497,8 +488,8 @@ echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "
 1. **"Command not found" after global installation**
    ```bash
    # Reinstall with uv tool
-   uv tool uninstall git-mcp
-   uv tool install --from /path/to/git_mcp git-mcp
+   uv tool uninstall git_mcp
+   uv tool install --from /path/to/git_mcp git_mcp
    ```
 
 2. **MCP server not working in different directories**
@@ -519,7 +510,7 @@ echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "
 # Update to latest version
 cd /path/to/git_mcp
 git pull
-uv tool install --from . git-mcp --force
+uv tool install --from . git_mcp --force
 ```
 
 ## Supported Platforms

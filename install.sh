@@ -22,7 +22,7 @@ fi
 PROJECT_ROOT=$(pwd)
 
 echo "📦 Installing Git MCP Server as global tool..."
-uv tool install --from "$PROJECT_ROOT" git-mcp
+uv tool install --from "$PROJECT_ROOT" git_mcp
 
 echo "🔧 Adding to Claude Code (user scope)..."
 claude mcp add -s user git-mcp-server git-mcp-server

@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  lint:
+    name: "Lint & Format"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+
+      - name: "Set up Python"
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: "Install dependencies"
+        run: uv sync --all-extras
+
+      - name: "Lint with ruff"
+        run: uv run ruff check .
+
+      - name: "Check formatting with ruff"
+        run: uv run ruff format --check .
+
+      - name: "Type check with mypy (if configured)"
+        run: |
+          if [ -f pyproject.toml ] && grep -q "mypy" pyproject.toml; then
+            uv run mypy git_mcp
+          else
+            echo "Mypy not configured, skipping type check"
+          fi
+        continue-on-error: true
+
+  test:
+    name: "Test (Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: "Install dependencies"
+        run: uv sync --all-extras
+
+      - name: "Run tests"
+        run: |
+          if [ -d tests ] || [ -f test_*.py ] || find . -name "*_test.py" | grep -q .; then
+            uv run pytest -xvs
+          else
+            echo "No tests found yet. Tests directory or test files will be added later."
+            echo "Creating placeholder test to ensure test runner works..."
+            mkdir -p tests
+            cat > tests/test_placeholder.py << 'EOF'
+          """Placeholder test file until real tests are implemented."""
+          def test_placeholder():
+              """Placeholder test that always passes."""
+              assert True
+          EOF
+            uv run pytest tests/test_placeholder.py -v
+            rm -rf tests/test_placeholder.py
+          fi
+
+      - name: "Test CLI entry points"
+        run: |
+          uv run git-mcp --help
+          uv run git-mcp-server --help
+
+      - name: "Test installation"
+        run: |
+          # Test that the package can be imported
+          uv run python -c "import git_mcp; print('Import successful')"
+          uv run python -c "from git_mcp.mcp_server import main; print('MCP server import successful')"
+
+  security:
+    name: "Security Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v4
+
+      - name: "Set up Python"
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: "Install dependencies"
+        run: uv sync --all-extras
+
+      - name: "Security audit with bandit"
+        run: |
+          uv run pip install bandit[toml]
+          uv run bandit -r git_mcp/ -f json -o bandit-report.json || true
+          uv run bandit -r git_mcp/
+        continue-on-error: true
+
+      - name: "Check for known vulnerabilities in dependencies"
+        run: uv run pip-audit
+        continue-on-error: true
