@@ -1,335 +1,212 @@
 # Git MCP Server
 
-A unified command-line tool and **MCP (Model Context Protocol) Server** for managing Git repositories across GitHub and GitLab platforms.
+**A Model Context Protocol (MCP) server for Claude Code** that enables complete issue-to-code automation across GitHub and GitLab platforms.
 
-## Features
+## 🚀 What is Git MCP Server?
 
-### Core Functionality
-- 🚀 **Multi-Platform Support** - Unified management for GitHub and GitLab platforms
-- 🔐 **Secure Authentication** - Uses system keyring for secure token storage
-- 📊 **Rich Output** - Support for table, JSON, and YAML output formats
-- 🔧 **Project Management** - Create, delete, and list projects
-- 🎯 **Issue Tracking** - Complete issue management with comments and full details
-- 🚀 **CI/CD Integration** - Manage pipelines and deployments
+Git MCP Server transforms your development workflow by connecting Claude Code directly to your Git repositories. It provides:
 
-### MCP Server Integration
-- 🤖 **Claude Code Integration** - Works as an MCP server for Claude Code
-- 🛠️ **Tool-based Interface** - Expose Git operations as MCP tools
-- 📚 **Resource Access** - Provide Git data as MCP resources
-- 🔄 **Real-time Operations** - Async support for responsive interactions
+- **🤖 MCP Integration**: Full Claude Code support via Model Context Protocol
+- **📋 Issue-to-Code Workflow**: Complete automation from issue analysis to PR creation
+- **🎯 Slash Commands**: Pre-built workflow commands (`/issue`, `/plan`, `/implement`, `/test`, `/doc`, `/pr`)
+- **🔧 Multi-Platform**: Unified interface for GitLab (GitHub coming soon)
+- **🔐 Secure**: Keyring-based token storage with auto-username detection
 
-## Installation
+## 🎯 Issue-to-Code Workflow
+
+Transform how you handle development tasks with these automated slash commands:
 
 ```bash
-# Clone repository
+# 1. Analyze any issue from URL
+/issue https://gitlab.com/group/project/-/issues/123
+
+# 2. Generate development plan
+/plan
+
+# 3. Implement the solution
+/implement
+
+# 4. Create comprehensive tests
+/test
+
+# 5. Update documentation
+/doc
+
+# 6. Create PR/MR and close issue
+/pr 123
+```
+
+**That's it!** From issue analysis to pull request in 6 commands.
+
+## 📦 Installation
+
+### Quick Setup (Recommended)
+
+```bash
+# Install from PyPI
+uv tool install git_mcp_server
+
+# Setup Claude Code integration (adds MCP server + slash commands)
+git-mcp-server --install-claude
+```
+
+This automatically:
+- ✅ Installs Git MCP Server globally
+- ✅ Configures MCP server in Claude Code (user scope)
+- ✅ Installs slash commands to `~/.claude/commands/`
+- ✅ Provides setup instructions
+
+### Alternative Installation
+
+```bash
+# Using pip
+pip install git_mcp_server
+git-mcp-server --install-claude
+
+# From source (development)
 git clone <repository-url>
-cd git_mpc
-
-# Install dependencies using uv
-uv sync
-
-# Or using pip (requires virtual environment)
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-pip install -e .
+cd git_mcp
+uv tool install --from . git_mcp_server
+git-mcp-server --install-claude
 ```
 
-## Quick Start
+## ⚡ Quick Start
 
-### 1. Configure Platforms
+### 1. Configure Your Git Platform
 
 ```bash
-# Add GitLab configuration
-uv run git-mcp config add my-gitlab gitlab --url https://gitlab.com
+# Add GitLab (public or private instance)
+git-mcp config add my-gitlab gitlab --url https://gitlab.com
 
-# Add private GitLab instance
-uv run git-mcp config add company-gitlab gitlab --url https://git.company.com
-
-# List configured platforms
-uv run git-mcp config list
-
-# Test connection
-uv run git-mcp config test my-gitlab
+# Test the connection
+git-mcp config test my-gitlab
 ```
 
-### 2. Project Management
+The system will automatically:
+- 🔐 Prompt for your access token
+- 👤 Fetch your username automatically
+- 💾 Store credentials securely in system keyring
 
+### 2. Start Using Slash Commands
+
+In Claude Code, you can now use:
+
+#### **`/issue`** - Smart Issue Analysis
 ```bash
-# List projects
-uv run git-mcp project list --platform my-gitlab
+# List your assigned issues
+/issue
 
-# Get project details
-uv run git-mcp project get 123 --platform my-gitlab
-
-# Create new project
-uv run git-mcp project create "My New Project" \\
-  --platform my-gitlab \\
-  --visibility private \\
-  --description "Project description"
-
-# Delete project
-uv run git-mcp project delete 123 --platform my-gitlab
+# Analyze specific issue from any GitLab/GitHub URL
+/issue https://gitlab.com/group/project/-/issues/123
 ```
 
-### 3. Issue Management
-
+#### **`/plan`** - Generate Development Plans
 ```bash
-# List issues in a project
-uv run git-mcp issue list 123 --platform my-gitlab
-
-# Create a new issue
-uv run git-mcp issue create 123 "Bug in login system" \\
-  --platform my-gitlab \\
-  --description "Users cannot login with valid credentials" \\
-  --labels "bug,urgent" \\
-  --assignee johndoe
-
-# Get issue details with comments
-uv run git-mcp issue get 123 45 --platform my-gitlab
-# This displays comprehensive issue information including:
-# - Basic info (ID, state, dates, author)
-# - Labels and milestones
-# - Full description
-# - All user comments with timestamps and authors
-
-# Update an issue
-uv run git-mcp issue update 123 45 \\
-  --platform my-gitlab \\
-  --state closed \\
-  --comment "Fixed in v1.2.0"
-
-# Search issues
-uv run git-mcp issue search --project 123 --query "login" --platform my-gitlab
+# Create structured implementation plan based on issue analysis
+/plan
 ```
 
-### 4. Merge Request Workflow
-
+#### **`/implement`** - Code Implementation
 ```bash
-# List merge requests in a project
-uv run git-mcp mr list --project 123 --platform my-gitlab --state opened
-
-# Create a merge request (auto-detects current branch as source)
-uv run git-mcp mr create 123 \\
-  --platform my-gitlab \\
-  --target main \\
-  --title "Implement user authentication" \\
-  --description "Added JWT-based authentication system" \\
-  --assignee revieweruser \\
-  --labels "feature,security"
-
-# Get merge request details
-uv run git-mcp mr get 123 45 --platform my-gitlab
-
-# Approve a merge request
-uv run git-mcp mr approve 123 45 --platform my-gitlab --comment "LGTM!"
-
-# Merge a merge request
-uv run git-mcp mr merge 123 45 \\
-  --platform my-gitlab \\
-  --should-remove-source-branch \\
-  --squash
+# Implement the planned solution with best practices
+/implement
 ```
 
-### 5. Output Formats
-
+#### **`/test`** - Test Generation
 ```bash
-# Table format (default)
-uv run git-mcp project list --format table
-
-# JSON format
-uv run git-mcp --format json project list --platform my-gitlab
-
-# YAML format
-uv run git-mcp --format yaml project list --platform my-gitlab
+# Generate comprehensive test suites
+/test
 ```
 
-## Command Reference
-
-### Global Options
-
-- `--format [table|json|yaml]` - Output format
-- `--platform TEXT` - Specify default platform
-- `--config-dir PATH` - Configuration directory path
-
-### Configuration Management
-
+#### **`/doc`** - Documentation Updates
 ```bash
-git-mcp config add <name> <type> --url <url>     # Add platform configuration
-git-mcp config list                              # List platform configurations
-git-mcp config remove <name>                     # Remove platform configuration
-git-mcp config test [name]                       # Test platform connection
+# Update documentation and API docs
+/doc
 ```
+
+#### **`/pr`** - Create Pull Requests
+```bash
+# Create PR/MR and automatically close related issue
+/pr 123
+```
+
+## 🛠️ Available MCP Tools
+
+When configured, Claude Code gains access to these powerful tools:
+
+### Platform Management
+- `list_platforms()` - List configured Git platforms
+- `test_platform_connection(platform)` - Test platform connectivity
+- `get_platform_config(platform)` - Get platform configuration
+- `refresh_platform_username(platform)` - Update username from token
+
+### Issue Operations
+- `list_my_issues(platform)` - List issues assigned to you
+- `get_issue_by_url(url)` - Analyze issues from GitLab/GitHub URLs
+- `get_issue_details(platform, project_id, issue_id)` - Get detailed issue info
+- `create_issue(platform, project_id, title, ...)` - Create new issues
 
 ### Project Management
+- `list_projects(platform)` - List accessible projects
+- `get_project_details(platform, project_id)` - Get project information
 
-```bash
-git-mcp project list [OPTIONS]                   # List projects
-git-mcp project get <project_id>                 # Get project details
-git-mcp project create <name> [OPTIONS]          # Create project
-git-mcp project delete <project_id>              # Delete project
-```
+### Merge Requests
+- `list_merge_requests(platform, project_id)` - List merge requests
+- `create_merge_request(platform, project_id, ...)` - Create pull/merge requests
 
-### Issue Management
+## 🎛️ Configuration
 
-```bash
-git-mcp issue list <project_id> [OPTIONS]        # List issues in a project
-git-mcp issue get <project_id> <issue_id>        # Get issue details with comments
-git-mcp issue create <project_id> <title> [OPTIONS] # Create new issue
-git-mcp issue update <project_id> <issue_id> [OPTIONS] # Update issue
-git-mcp issue close <project_id> <issue_id>      # Close issue
-git-mcp issue search --project <id> --query <text> # Search issues
-```
+### Platform Configuration
 
-### Merge Request Management
-
-```bash
-git-mcp mr list --project <id> [OPTIONS]         # List MRs in a project
-git-mcp mr get <project_id> <mr_id>               # Get MR details
-git-mcp mr create <project_id> [OPTIONS]         # Create new MR
-git-mcp mr update <project_id> <mr_id> [OPTIONS] # Update MR
-git-mcp mr approve <project_id> <mr_id>           # Approve MR
-git-mcp mr merge <project_id> <mr_id> [OPTIONS]  # Merge MR
-git-mcp mr close <project_id> <mr_id>             # Close MR
-```
-
-#### Project List Options
-
-- `--visibility [public|internal|private]` - Project visibility
-- `--archived [true|false]` - Include archived projects
-- `--owned [true|false]` - Only show owned projects
-- `--starred [true|false]` - Only show starred projects
-- `--search <term>` - Search keyword
-- `--limit <number>` - Limit result count
-
-#### Issue Management Options
-
-- `--state [opened|closed|all]` - Filter by issue state
-- `--assignee <username>` - Filter by assignee
-- `--author <username>` - Filter by author
-- `--labels <label1,label2>` - Filter by labels
-- `--milestone <name>` - Filter by milestone
-- `--search <term>` - Search in title and description
-- `--sort [created_asc|created_desc|updated_asc|updated_desc]` - Sort order
-
-#### Merge Request Management Options
-
-**List Options:**
-
-- `--project <id>` - Project scope (required)
-- `--state [opened|closed|merged|all]` - Filter by MR state
-- `--assignee <username>` - Filter by assignee
-- `--author <username>` - Filter by author
-- `--source-branch <branch>` - Filter by source branch
-- `--target-branch <branch>` - Filter by target branch
-- `--labels <label1,label2>` - Filter by labels
-
-**Create Options:**
-- `--source <branch>` - Source branch (auto-detected if not specified)
-- `--target <branch>` - Target branch (default: main)
-- `--draft` - Create as draft MR
-- `--remove-source-branch` - Remove source branch when merged
-- `--squash` - Squash commits when merging
-
-## Configuration File
-
-Configuration file is located at `~/.git-mcp/config.yaml`:
+Git MCP Server stores configuration in `~/.git-mcp/config.yaml`:
 
 ```yaml
 platforms:
   my-gitlab:
     type: gitlab
     url: https://gitlab.com
-    username: myuser
+    username: myuser  # Auto-fetched from token
 
   company-gitlab:
     type: gitlab
     url: https://git.company.com
+    username: myuser
 
 defaults:
   platform: my-gitlab
-  output_format: table
-  page_size: 20
-  timeout: 30
-
-aliases:
-  - name: "work"
-    platform: company-gitlab
-    project: "team/my-project"
 ```
 
-Tokens are stored securely in the system keyring and not saved in the configuration file.
+**Security Note**: Access tokens are stored securely in your system keyring, not in config files.
 
-## Development
-
-### Project Structure
-
-```
-git_mpc/
-├── core/           # Core functionality
-│   ├── config.py   # Configuration management
-│   └── exceptions.py # Exception definitions
-├── platforms/      # Platform adapters
-│   ├── base.py     # Base class definitions
-│   └── gitlab.py   # GitLab adapter
-├── commands/       # Command handlers
-│   └── project.py  # Project management commands
-├── utils/          # Utility modules
-│   └── output.py   # Output formatting
-└── cli.py          # CLI entry point
-```
-
-### Adding New Platforms
-
-1. Inherit from `PlatformAdapter` base class
-2. Implement all abstract methods
-3. Register new platform type in CLI
-
-### Running Tests
+### Automatic Username Detection
 
 ```bash
-uv run pytest
+# Username automatically fetched from token
+git-mcp config add my-gitlab gitlab --url https://gitlab.com
+
+# Refresh username for existing platforms
+git-mcp config refresh-username my-gitlab
 ```
 
-## MCP Server Usage
+## 🔧 Advanced Usage
 
-### Installation and Setup
-
-#### Recommended: Install from PyPI/uv
+### Running MCP Server Directly
 
 ```bash
-# Install via uv (recommended)
-uv tool install git_mcp_server
+# Start MCP server (for debugging)
+git-mcp-server
 
-# Or install via pip
-pip install git_mcp_server
-
-# Setup Claude Code integration and slash commands
-git-mcp-server --install-claude
+# Interactive development mode
+uv run mcp dev git_mcp/mcp_server.py
 ```
 
-This will:
-- Install Git MCP Server globally on your system
-- Add MCP server to Claude Code (user scope - available in all projects)
-- Install issue-to-code workflow slash commands to `~/.claude/commands/`
-- Provide next steps for platform configuration
+### MCP Scope Configuration
 
-#### Alternative: Install from Source
+- **User scope** (recommended): Available across all Claude Code projects
+- **Local scope**: Only in current project directory
+- **Project scope**: Shared via `.mcp.json` in project
 
-For development or latest features:
-
-```bash
-# Clone and install from source
-git clone <repository-url>
-cd git_mcp
-uv tool install --from . git_mcp
-
-# Setup Claude Code integration
-git-mcp-server --install-claude
-```
-
-#### Development Setup
-
-For local development:
+### Development Setup
 
 ```bash
 # Clone repository
@@ -339,189 +216,140 @@ cd git_mcp
 # Install in development mode
 uv sync --all-extras
 
-# Run locally for testing
+# Run locally
 uv run git-mcp-server
 
 # Install development version globally
-uv tool install --from . git_mcp --force
-git-mcp-server --install-claude
+uv tool install --from . git_mcp_server --force
 ```
 
-### Running as an MCP Server
+## 📚 Workflow Examples
+
+### Complete Feature Development
 
 ```bash
-# If installed globally
-git-mcp-server
+# Start with your assigned issues
+/issue
 
-# If running locally
-uv run git-mcp-server
+# Select and analyze specific issue
+/issue https://gitlab.com/team/project/-/issues/456
 
-# Test interactively during development
-uv run mcp dev git_mcp/mcp_server.py
+# Generate implementation plan
+/plan
+
+# Implement with best practices
+/implement
+
+# Create comprehensive tests
+/test
+
+# Update documentation
+/doc
+
+# Create PR and close issue
+/pr 456
 ```
 
-### Configuration Features
-
-#### Automatic Username Detection
-
-When adding a new platform, the system will automatically fetch your username from the provided token:
+### Bug Fix Workflow
 
 ```bash
-# Username will be auto-fetched from token
-git-mcp config add my-gitlab gitlab --url https://gitlab.com --token YOUR_TOKEN
+# Analyze bug report
+/issue https://gitlab.com/team/project/-/issues/789
 
-# Disable auto-fetch if needed
-git-mcp config add my-gitlab gitlab --url https://gitlab.com --token YOUR_TOKEN --no-auto-username
+# Plan the fix
+/plan
 
-# Refresh username for existing platform
-git-mcp config refresh-username my-gitlab
+# Implement fix
+/implement
+
+# Add regression tests
+/test
+
+# Update docs if needed
+/doc
+
+# Submit fix
+/pr 789
 ```
 
-**Supported Platforms for Auto-fetch:**
-- ✅ GitLab (gitlab.com and private instances)
-- 🚧 GitHub (planned)
+## 🔍 Troubleshooting
 
-### MCP Scopes Explained
-
-- **Local scope** (`-s local`): Only available in the current project directory
-- **User scope** (`-s user`): Available across all projects for the current user
-- **Project scope** (`-s project`): Shared via `.mcp.json` file in the project
-
-For most users, **user scope with global installation** is recommended.
-
-### Available MCP Tools
-
-When running as an MCP server, the following tools are available:
-
-#### Platform Management
-- `list_platforms()` - List all configured Git platforms
-- `test_platform_connection(platform)` - Test connection to a platform
-- `refresh_platform_username(platform)` - Refresh username by fetching from token
-- `get_platform_config(platform)` - Get configuration info for a platform (including username)
-- `get_current_user_info(platform)` - Get current user info directly from platform API
-
-#### Project Operations
-- `list_projects(platform, limit=20)` - List projects from a platform
-- `get_project_details(platform, project_id)` - Get detailed project information
-
-#### Issue Management
-- `list_issues(platform, project_id, state='opened', limit=20)` - List issues in a project
-- `get_issue_details(platform, project_id, issue_id)` - Get issue details with comments
-- `create_issue(platform, project_id, title, description?, labels?, assignee?)` - Create new issue
-
-#### Merge Request Operations
-- `list_merge_requests(platform, project_id, state='opened', limit=20)` - List merge requests
-
-#### Resources
-- `config://platforms` - Get current platform configuration
-- `project://{platform}/{project_id}` - Get project information as a resource
-
-### Issue-to-Code Workflow
-
-After installation, use these slash commands in Claude Code for complete issue-driven development:
+### Verify Installation
 
 ```bash
-# Workflow Option 1: Start with my issues dashboard
-/issue                                              # List my assigned issues
-# (select an issue from the list)
-/issue https://gitlab.com/group/project/-/issues/123  # Analyze selected issue
-/plan                                               # Generate dev plan
-/implement                                         # Write code
-/test                                             # Generate tests
-/doc                                             # Update documentation
-/pr 123                                         # Create PR/MR & close issue
-
-# Workflow Option 2: Direct issue analysis
-/issue https://gitlab.com/group/project/-/issues/456  # Analyze specific issue
-/plan                                                 # Generate dev plan
-# ... continue with implement/test/doc/pr
-```
-
-**Available Commands:**
-- `/issue` - List my assigned issues (no args) or analyze specific issue (with args)
-- `/plan` - Generate development plans based on issue analysis
-- `/implement` - Implement planned functionality with best practices
-- `/test` - Generate comprehensive test suites
-- `/doc` - Update documentation and API docs
-- `/pr` - Create pull/merge requests with automatic issue closing
-
-### MCP Integration Examples
-
-```python
-# Example: Using the MCP tools through Claude Code
-# These operations will be available when the server is configured
-
-# List all configured platforms
-platforms = list_platforms()
-
-# Get projects from a specific platform
-projects = list_projects("my-gitlab", limit=10)
-
-# Create a new issue
-new_issue = create_issue(
-    platform="my-gitlab",
-    project_id="123",
-    title="Bug in login system",
-    description="Users cannot login with valid credentials",
-    labels=["bug", "urgent"]
-)
-```
-
-### Troubleshooting
-
-#### Verify Installation
-
-```bash
-# Check if globally installed
+# Check global installation
 which git-mcp-server
 git-mcp-server --help
 
-# Check Claude Code configuration
+# Verify Claude Code integration
 claude mcp list
 
 # Test MCP connection
 echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
 ```
 
-#### Common Issues
+### Common Issues
 
-1. **"Command not found" after global installation**
-   ```bash
-   # Reinstall with uv tool
-   uv tool uninstall git_mcp
-   uv tool install --from /path/to/git_mcp git_mcp
-   ```
-
-2. **MCP server not working in different directories**
-   - Make sure you used `-s user` scope for global availability
-   - Use global installation instead of local project paths
-
-3. **Configuration issues**
-   ```bash
-   # First configure a platform
-   git-mcp config add my-gitlab gitlab --url https://gitlab.com
-
-   # Then test the MCP tools
-   ```
-
-#### Update Global Installation
-
+**"No MCP servers configured"**
 ```bash
-# Update to latest version
-cd /path/to/git_mcp
-git pull
-uv tool install --from . git_mcp --force
+# Reinstall MCP integration
+git-mcp-server --install-claude
 ```
 
-## Supported Platforms
+**"Command not found" after installation**
+```bash
+# Reinstall with uv
+uv tool uninstall git_mcp_server
+uv tool install git_mcp_server
+```
 
-- ✅ **GitLab** - Full support (GitLab.com and private instances)
-- 🚧 **GitHub** - Planned support
+**Slash commands not working**
+```bash
+# Check commands directory
+ls ~/.claude/commands/
 
-## Contributing
+# Reinstall if missing
+git-mcp-server --install-claude
+```
 
-Issues and Pull Requests are welcome!
+### Update to Latest Version
 
-## License
+```bash
+# Update package
+uv tool install git_mcp_server --upgrade
+
+# Reinstall integration
+git-mcp-server --install-claude
+```
+
+## 🌟 Key Benefits
+
+- **⚡ Speed**: From issue to PR in minutes, not hours
+- **🎯 Focus**: AI handles boilerplate, you focus on logic
+- **📋 Consistency**: Standardized workflow across all projects
+- **🔧 Flexibility**: Works with any GitLab instance
+- **🤖 Intelligence**: Claude Code understands your codebase context
+- **🔐 Security**: Secure credential management
+
+## 🛣️ Supported Platforms
+
+- ✅ **GitLab** - Full support (gitlab.com and private instances)
+- 🚧 **GitHub** - Coming soon
+
+## 🤝 Contributing
+
+Issues and Pull Requests welcome! This project enables powerful AI-assisted development workflows.
+
+## 📄 License
 
 MIT License
+
+---
+
+**Ready to supercharge your development workflow?**
+
+```bash
+uv tool install git_mcp_server && git-mcp-server --install-claude
+```
+
+Then try `/issue` in Claude Code! 🚀
