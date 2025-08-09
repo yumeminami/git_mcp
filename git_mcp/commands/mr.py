@@ -254,6 +254,7 @@ def create_mr(
     """Create a new merge request."""
 
     async def _create_mr():
+        nonlocal source_branch  # Allow modification of outer scope variable
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
@@ -270,7 +271,7 @@ def create_mr(
             raise ValueError(f"Platform '{platform_name}' not configured")
 
         # Auto-detect source branch if not provided
-        if source_branch is None or not source_branch:  # noqa: F823
+        if source_branch is None or not source_branch:
             detected_branch = get_current_branch()
             if not detected_branch:
                 raise ValueError(
