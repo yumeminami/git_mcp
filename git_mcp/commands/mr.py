@@ -12,6 +12,10 @@ def get_adapter(platform_config):
         from ..platforms.gitlab import GitLabAdapter
 
         return GitLabAdapter(platform_config.url, platform_config.token)
+    elif platform_config.type == "github":
+        from ..platforms.github import GitHubAdapter
+
+        return GitHubAdapter(platform_config.url, platform_config.token)
     else:
         raise ValueError(f"Platform type '{platform_config.type}' not supported yet")
 
@@ -250,6 +254,7 @@ def create_mr(
     """Create a new merge request."""
 
     async def _create_mr():
+        nonlocal source_branch  # Allow modification of outer scope variable
         formatter = ctx.obj.get_formatter()
 
         # Determine platform
@@ -266,7 +271,7 @@ def create_mr(
             raise ValueError(f"Platform '{platform_name}' not configured")
 
         # Auto-detect source branch if not provided
-        if source_branch is None or not source_branch:  # noqa: F823
+        if source_branch is None or not source_branch:
             detected_branch = get_current_branch()
             if not detected_branch:
                 raise ValueError(

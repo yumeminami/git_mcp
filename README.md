@@ -9,7 +9,7 @@ Git MCP Server transforms your development workflow by connecting Claude Code di
 - **🤖 MCP Integration**: Full Claude Code support via Model Context Protocol
 - **📋 Issue-to-Code Workflow**: Complete automation from issue analysis to PR creation
 - **🎯 Slash Commands**: Pre-built workflow commands (`/issue`, `/plan`, `/implement`, `/test`, `/doc`, `/pr`)
-- **🔧 Multi-Platform**: Unified interface for GitLab (GitHub coming soon)
+- **🔧 Multi-Platform**: Unified interface for GitLab and GitHub
 - **🔐 Secure**: Keyring-based token storage with auto-username detection
 
 ## 🎯 Issue-to-Code Workflow
@@ -88,8 +88,12 @@ git-mcp-server --install-claude  # or --install-gemini
 # Add GitLab (public or private instance)
 git-mcp config add my-gitlab gitlab --url https://gitlab.com
 
-# Test the connection
+# Add GitHub (public or GitHub Enterprise)
+git-mcp config add my-github github --url https://github.com
+
+# Test the connections
 git-mcp config test my-gitlab
+git-mcp config test my-github
 ```
 
 The system will automatically:
@@ -356,7 +360,7 @@ git-mcp-server --install-claude  # or --install-gemini
 ## 🛣️ Supported Platforms
 
 - ✅ **GitLab** - Full support (gitlab.com and private instances)
-- 🚧 **GitHub** - Coming soon
+- ✅ **GitHub** - Full support (github.com and GitHub Enterprise)
 
 ## 🤝 Contributing
 

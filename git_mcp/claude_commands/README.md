@@ -8,8 +8,10 @@ These slash commands provide a complete issue-driven development workflow, integ
 ## 🚀 Complete Workflow
 
 ```bash
-# 1. Analyze issue
+# 1. Analyze issue (GitLab or GitHub)
 /issue https://gitlab.com/group/project/-/issues/123
+# or
+/issue https://github.com/user/repo/issues/456
 
 # 2. Generate development plan
 /plan

@@ -66,7 +66,7 @@ def config():
 
 @config.command("add")
 @click.argument("name")
-@click.argument("type", type=click.Choice(["gitlab", "github", "bitbucket"]))
+@click.argument("type", type=click.Choice(["gitlab", "github"]))
 @click.option("--url", required=True, help="Platform URL")
 @click.option("--token", prompt=True, hide_input=True, help="Access token")
 @click.option("--username", help="Username (optional, will auto-fetch if not provided)")
@@ -182,6 +182,10 @@ def config_test(ctx, name):
             from .platforms.gitlab import GitLabAdapter
 
             adapter = GitLabAdapter(platform_config.url, platform_config.token)
+        elif platform_config.type == "github":
+            from .platforms.github import GitHubAdapter
+
+            adapter = GitHubAdapter(platform_config.url, platform_config.token)
         else:
             raise ValueError(
                 f"Platform type '{platform_config.type}' not supported yet"
