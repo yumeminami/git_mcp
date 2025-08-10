@@ -352,8 +352,24 @@ class GitLabAdapter(PlatformAdapter):
                 "source_branch": source_branch,
                 "target_branch": target_branch,
                 "title": title,
-                **kwargs,
             }
+
+            # Handle assignee parameter conversion
+            if "assignee_username" in kwargs:
+                assignee_username = kwargs.pop("assignee_username")
+                try:
+                    users = self.client.users.list(username=assignee_username)
+                    if users:
+                        mr_data["assignee_id"] = users[0].id
+                except Exception as e:  # nosec B110
+                    # If we can't resolve the username, skip assignee (graceful degradation)
+                    print(
+                        f"Warning: Could not resolve assignee username '{assignee_username}': {e}"
+                    )
+
+            # Add remaining kwargs
+            mr_data.update(kwargs)
+
             mr = project.mergerequests.create(mr_data)
             return self._convert_to_mr_resource(mr, project_id)
         except GitlabError as e:

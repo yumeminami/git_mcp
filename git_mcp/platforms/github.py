@@ -414,6 +414,9 @@ class GitHubAdapter(PlatformAdapter):
                 pr_kwargs["body"] = kwargs["description"]
             if "draft" in kwargs:
                 pr_kwargs["draft"] = kwargs["draft"]
+            if "assignee_username" in kwargs:
+                # GitHub accepts username directly for assignees
+                pr_kwargs["assignee"] = kwargs["assignee_username"]
 
             pr = repo.create_pull(**pr_kwargs)
             return self._convert_to_mr_resource(pr, project_id)
