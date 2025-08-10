@@ -10,6 +10,19 @@ Consider multiple architectural approaches and evaluate their tradeoffs deeply b
 
 **Context:** $ARGUMENTS
 
+## Issue Documentation Update
+
+**First, update issue documentation:**
+
+1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
+   - If multiple exist, prompt user to specify which issue this plan is for
+   - If none exist, suggest running `/issue <issue-url>` first for proper documentation
+
+2. **Update Plan Section** in the issue document:
+   - Replace/append to `## 📋 Development Plan (Updated: <timestamp>)` section
+   - Include full plan details with timestamp
+   - Preserve other sections (analysis, implementation, testing, etc.)
+
 ## Plan Generation
 
 Create a comprehensive development plan including:
@@ -31,5 +44,7 @@ Analyze current repository structure:
 !find . -name "*.py" -o -name "*.js" -o -name "*.ts" | head -20
 
 Based on the issue requirements and current codebase, thoroughly evaluate potential approaches and provide a detailed implementation roadmap with clear rationale for the chosen approach.
+
+**After generating the plan, save it to the issue documentation file.**
 
 Use `/implement` to start coding based on this plan.

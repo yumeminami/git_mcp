@@ -10,6 +10,21 @@ Please implement the planned functionality thoroughly and in great detail, consi
 
 **Focus:** $ARGUMENTS
 
+## Issue Documentation Update
+
+**First, update issue documentation:**
+
+1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
+   - Read existing plan and analysis to understand requirements
+   - If no issue doc exists, suggest running `/issue` and `/plan` first
+
+2. **Track Implementation Progress** in the issue document:
+   - Update `## 🔨 Implementation Progress (Updated: <timestamp>)` section
+   - Document what files were modified/created
+   - Record implementation decisions and rationale
+   - Note any deviations from the original plan
+   - Track completion status of each implementation step
+
 ## Implementation Process
 
 1. **Create Feature Branch** - based on development plan
@@ -27,5 +42,7 @@ Please implement the planned functionality thoroughly and in great detail, consi
 - Consider security implications
 
 Use `get_project_details()` to understand codebase structure and `list_merge_requests()` to review implementation patterns in recent changes.
+
+**After implementation, update the issue documentation with progress and file changes.**
 
 Use `/test` after implementation to generate comprehensive tests.

@@ -10,6 +10,21 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 
 **Issue ID:** $ARGUMENTS
 
+## Issue Documentation Finalization
+
+**First, finalize issue documentation:**
+
+1. **Find Issue Document** - Look for `.claude/issue-$ARGUMENTS-*.md` in current project
+   - Use the provided issue ID to find the correct documentation file
+   - If no issue doc exists, create a summary from available git history
+
+2. **Final Update** to the issue document:
+   - Update `## 🚀 Pull Request (Updated: <timestamp>)` section
+   - Include PR/MR URL, title, and description
+   - Summarize all work completed (analysis → plan → implementation → testing → docs → PR)
+   - Mark issue as completed
+   - Archive or mark for cleanup
+
 ## PR Creation Process
 
 1. **Prepare Branch**
@@ -50,4 +65,9 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    - Monitor CI/CD pipeline
    - Address review feedback
 
-**Workflow Complete!** From issue analysis to PR creation.
+6. **Complete Issue Documentation**
+   - Save final PR details to `.claude/issue-$ARGUMENTS-*.md`
+   - Mark workflow as completed in the documentation
+   - Issue document now serves as complete project history for this feature
+
+**Workflow Complete!** From issue analysis to PR creation with full documentation trail.

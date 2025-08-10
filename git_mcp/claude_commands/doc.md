@@ -10,6 +10,21 @@ Evaluate what documentation needs updating and consider multiple ways to make it
 
 **Focus:** $ARGUMENTS
 
+## Issue Documentation Update
+
+**First, update issue documentation:**
+
+1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
+   - Review previous work to understand what documentation is needed
+   - If no issue doc exists, suggest running previous workflow steps first
+
+2. **Update Documentation Section** in the issue document:
+   - Update `## 📚 Documentation Updates (Updated: <timestamp>)` section
+   - Document what files were updated (README, API docs, comments, etc.)
+   - Record documentation strategy and approach
+   - Note any documentation standards or patterns followed
+   - Track documentation completion status
+
 ## Documentation Updates
 
 1. **API Documentation** - update function/method documentation clearly and comprehensively
@@ -27,5 +42,7 @@ Evaluate what documentation needs updating and consider multiple ways to make it
 - **Configuration** - setup and configuration guides
 
 Use `get_project_details()` to understand documentation structure and `list_merge_requests()` to review recent documentation patterns.
+
+**After documentation updates, save details to the issue documentation file.**
 
 Use `/pr` after documentation to create the pull/merge request.

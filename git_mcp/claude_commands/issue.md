@@ -18,9 +18,56 @@ If no arguments provided, show **My Issues Dashboard**:
 - Allow selection for detailed analysis
 
 If arguments provided, analyze **Specific Issue**:
+
+## Issue Documentation Management
+
+**First, handle issue documentation:**
+
+1. **Extract Issue ID** from URL or direct ID argument
+   - For GitHub URLs: extract number from `/issues/123` or `/pull/456`
+   - For GitLab URLs: extract from `/-/issues/123` or `/-/merge_requests/456`
+   - For direct ID: use as-is
+
+2. **Check for Existing Documentation**
+   - Look for `.claude/issue-<ISSUE_ID>-<sanitized-title>.md` in current project
+   - If exists: Read existing analysis and show summary of previous work
+   - If not exists: Will create new documentation file
+   - **Note:** Add `.claude/issue-*.md` to `.gitignore` to keep docs local, or commit them for team sharing
+
+3. **Create/Update Issue Document** with structure:
+   ```markdown
+   # Issue #<ID>: <Title>
+
+   **URL:** <issue_url>
+   **Status:** <status>
+   **File:** issue-<ID>-<sanitized-title>.md
+   **Created:** <timestamp>
+   **Last Updated:** <timestamp>
+
+   ## 🎯 Issue Analysis (Updated: <timestamp>)
+   [Analysis content]
+
+   ## 📋 Development Plan (Updated: <timestamp>)
+   [Plan content - added by /plan]
+
+   ## 🔨 Implementation Progress (Updated: <timestamp>)
+   [Implementation notes - added by /implement]
+
+   ## 🧪 Testing Status (Updated: <timestamp>)
+   [Test results - added by /test]
+
+   ## 📚 Documentation Updates (Updated: <timestamp>)
+   [Doc changes - added by /doc]
+
+   ## 🚀 Pull Request (Updated: <timestamp>)
+   [PR details - added by /pr]
+   ```
+
+**Then perform issue analysis:**
 - Fetch issue details from URL or platform/project/issue-id
 - Provide technical analysis and requirements
 - Generate implementation suggestions
+- Save analysis to issue documentation file
 
 ## Analysis Output
 
