@@ -348,6 +348,29 @@ class GitLabAdapter(PlatformAdapter):
 
         try:
             project = self.client.projects.get(project_id)
+
+            # Verify branches exist before creating merge request
+            try:
+                # Check if source branch exists
+                source_branches = project.branches.list(search=source_branch)
+                if not any(b.name == source_branch for b in source_branches):
+                    raise PlatformError(
+                        f"Source branch '{source_branch}' not found in project {project_id}. "
+                        f"Make sure the branch is pushed to the remote repository.",
+                        self.platform_name,
+                    )
+
+                # Check if target branch exists
+                target_branches = project.branches.list(search=target_branch)
+                if not any(b.name == target_branch for b in target_branches):
+                    raise PlatformError(
+                        f"Target branch '{target_branch}' not found in project {project_id}",
+                        self.platform_name,
+                    )
+            except GitlabError as branch_error:
+                print(f"Warning: Could not verify branch existence: {branch_error}")
+                # Continue with merge request creation even if branch check fails
+
             mr_data = {
                 "source_branch": source_branch,
                 "target_branch": target_branch,
@@ -369,6 +392,9 @@ class GitLabAdapter(PlatformAdapter):
 
             # Add remaining kwargs
             mr_data.update(kwargs)
+
+            # Debug: Print merge request data
+            print(f"Creating GitLab merge request with data: {mr_data}")
 
             mr = project.mergerequests.create(mr_data)
             return self._convert_to_mr_resource(mr, project_id)
