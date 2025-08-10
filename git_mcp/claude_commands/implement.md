@@ -6,17 +6,17 @@ allowed-tools: mcp__git-mcp-server__*
 
 # 🔨 Implementation
 
-Implement the planned functionality following best practices.
+Think about the implementation approach and potential edge cases before implementing the planned functionality following best practices.
 
 **Focus:** $ARGUMENTS
 
 ## Implementation Process
 
 1. **Create Feature Branch** - based on development plan
-2. **Code Implementation** - write high-quality, maintainable code
+2. **Code Implementation** - think more about code structure and write high-quality, maintainable code
 3. **Follow Conventions** - match existing code style and patterns
-4. **Error Handling** - implement robust error handling
-5. **Code Comments** - add necessary documentation
+4. **Error Handling** - think about edge cases and implement robust error handling
+5. **Code Comments** - add necessary documentation for complex logic
 
 ## Best Practices
 

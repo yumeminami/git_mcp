@@ -6,17 +6,17 @@ allowed-tools: mcp__git-mcp-server__*
 
 # 📚 Documentation Update
 
-Update documentation to reflect implemented changes.
+Think about what documentation needs updating and how to make it most helpful for users before updating documentation to reflect implemented changes.
 
 **Focus:** $ARGUMENTS
 
 ## Documentation Updates
 
-1. **API Documentation** - update function/method documentation
-2. **README Updates** - update usage examples and features
-3. **Configuration Guide** - update setup and configuration docs
-4. **Examples** - add practical usage examples
-5. **Changelog** - document changes and improvements
+1. **API Documentation** - think about updating function/method documentation clearly
+2. **README Updates** - think more about updating usage examples and features
+3. **Configuration Guide** - consider setup and configuration docs updates
+4. **Examples** - think about adding practical, helpful usage examples
+5. **Changelog** - think through documenting changes and improvements comprehensively
 
 ## Documentation Types
 

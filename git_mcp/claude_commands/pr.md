@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), mcp__git-mcp-server__*
 
 # 🚀 Pull Request Creation
 
-Create a pull/merge request and close the related issue.
+Think about the changes made and how to present them clearly before creating a pull/merge request and closing the related issue.
 
 **Issue ID:** $ARGUMENTS
 
@@ -22,10 +22,10 @@ Create a pull/merge request and close the related issue.
 
 3. **Create Pull/Merge Request**
    Use `create_merge_request()` to create the PR/MR with:
-   - Descriptive title linking to issue
-   - Comprehensive description
+   - Think about a descriptive title linking to issue
+   - Think more about comprehensive description that explains the solution
    - Closes #$ARGUMENTS in description
-   - Appropriate labels and reviewers
+   - Consider appropriate labels and reviewers
 
 4. **PR Description Template**
    ```

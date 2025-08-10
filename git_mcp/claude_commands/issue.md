@@ -8,6 +8,8 @@ allowed-tools: mcp__git-mcp-server__*
 
 **Arguments:** $ARGUMENTS
 
+Think carefully about the issue requirements and context before proceeding.
+
 ## Mode Selection
 
 If no arguments provided, show **My Issues Dashboard**:
@@ -30,8 +32,8 @@ If arguments provided, analyze **Specific Issue**:
 
 **For Specific Issue:**
 1. **Issue Overview** - use `get_issue_by_url()` or `get_issue_details()` for title, description, labels, priority
-2. **Technical Requirements** - analyze what needs to be implemented
-3. **Context Analysis** - review current codebase for related components
-4. **Next Steps** - suggested approach for development
+2. **Technical Requirements** - think more about what needs to be implemented and potential challenges
+3. **Context Analysis** - review current codebase for related components and dependencies
+4. **Next Steps** - think through suggested approach for development with consideration of tradeoffs
 
 Use `/plan` after issue analysis to generate the development plan.
