@@ -665,7 +665,7 @@ class PlatformService:
         """Create a new merge request."""
         adapter = PlatformService.get_adapter(platform_name)
         mr = await adapter.create_merge_request(
-            project_id, title, source_branch, target_branch, **kwargs
+            project_id, source_branch, target_branch, title, **kwargs
         )
 
         return {
