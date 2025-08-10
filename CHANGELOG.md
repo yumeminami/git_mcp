@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2025-08-10
+
+### Fixed
+- **Critical GitLab MR Creation Bug**: Fixed parameter order mismatch in platform service
+  - Platform service was passing `title` before `source_branch` to adapters
+  - This caused "source_branch is invalid" errors as title was used as branch name
+  - Corrected parameter order to: `project_id, source_branch, target_branch, title`
+  - Fixes issue #4
+
+### Improved
+- **Branch Validation**: Added branch existence verification before creating merge requests
+- **Debug Logging**: Enhanced debug output for merge request creation troubleshooting
+
 ## [0.1.6] - 2025-08-10
 
 ### Fixed
