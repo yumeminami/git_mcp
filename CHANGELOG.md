@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] - 2025-08-10
+
+### Fixed
+- **GitLab Merge Request Creation**: Fixed "source_branch is invalid" error by properly handling assignee parameter conversion
+  - GitLab adapter now correctly converts `assignee_username` to `assignee_id` as required by GitLab API
+  - Added username lookup with graceful error handling for invalid usernames
+  - GitHub adapter now properly supports `assignee_username` parameter in merge request creation
+  - Both platforms now correctly handle assignee assignment during merge request creation
+
+### Improved
+- **Error Handling**: Enhanced platform adapter error handling with better logging and graceful degradation
+- **API Compatibility**: Improved GitLab and GitHub API parameter mapping for consistent merge request functionality
+
 ## [0.1.5] - 2025-08-09
 
 ### Changed
