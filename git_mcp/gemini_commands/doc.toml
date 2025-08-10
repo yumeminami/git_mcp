@@ -4,15 +4,15 @@ prompt = '''
 
 **Focus:** {{args}}
 
-Think about what documentation needs updating and how to make it most helpful for users before updating documentation to reflect implemented changes.
+Evaluate what documentation needs updating and consider multiple ways to make it most helpful for users throughout the update process.
 
 ## Documentation Updates
 
-1. **API Documentation** - think about updating function/method documentation clearly
-2. **README Updates** - think more about updating usage examples and features
-3. **Configuration Guide** - consider setup and configuration docs updates
-4. **Examples** - think about adding practical, helpful usage examples
-5. **Changelog** - think through documenting changes and improvements comprehensively
+1. **API Documentation** - update function/method documentation clearly and comprehensively
+2. **README Updates** - enhance usage examples and feature descriptions
+3. **Configuration Guide** - update setup and configuration docs as needed
+4. **Examples** - add practical, helpful usage examples
+5. **Changelog** - document changes and improvements comprehensively
 
 ## Documentation Types
 

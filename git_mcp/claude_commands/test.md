@@ -6,17 +6,17 @@ allowed-tools: mcp__git-mcp-server__*
 
 # 🧪 Test Generation
 
-Think harder about test coverage and potential failure scenarios before generating comprehensive test suites for implemented functionality.
+Show your complete reasoning when designing comprehensive test suites, considering multiple testing approaches and potential failure scenarios.
 
 **Focus:** $ARGUMENTS
 
 ## Test Strategy
 
-1. **Unit Tests** - think about testing individual functions and methods thoroughly
-2. **Integration Tests** - think more about component interactions and dependencies
-3. **Edge Cases** - think harder about boundary conditions and error scenarios
+1. **Unit Tests** - design thorough testing for individual functions and methods
+2. **Integration Tests** - analyze component interactions and dependencies
+3. **Edge Cases** - identify boundary conditions and error scenarios
 4. **Mock External Dependencies** - isolate components for testing
-5. **Test Coverage** - think about ensuring comprehensive coverage across all code paths
+5. **Test Coverage** - ensure comprehensive coverage across all code paths
 
 ## Test Types
 

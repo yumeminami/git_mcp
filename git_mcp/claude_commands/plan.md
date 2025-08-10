@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), mcp__git-mcp-server__*
 
 # 📋 Development Plan Generator
 
-Think harder about the architecture and approach before generating a structured development plan based on the analyzed issue.
+Consider multiple architectural approaches and evaluate their tradeoffs deeply before generating a structured development plan.
 
 **Context:** $ARGUMENTS
 
@@ -14,11 +14,11 @@ Think harder about the architecture and approach before generating a structured 
 
 Create a comprehensive development plan including:
 
-1. **Branch Strategy** - think about branch name and workflow approach
-2. **File Structure** - think more about what files need to be created/modified and their relationships
-3. **Implementation Steps** - think through ordered task breakdown with dependencies
-4. **Testing Strategy** - think harder about what tests are needed and test coverage
-5. **Documentation Updates** - consider README, docs, and comment requirements
+1. **Branch Strategy** - determine optimal branch name and workflow approach
+2. **File Structure** - analyze what files need to be created/modified and their relationships
+3. **Implementation Steps** - provide ordered task breakdown with clear dependencies
+4. **Testing Strategy** - design comprehensive test coverage plan
+5. **Documentation Updates** - identify README, docs, and comment requirements
 
 Use `get_project_details()` to understand project structure and `list_merge_requests()` to review existing workflow patterns.
 
@@ -30,6 +30,6 @@ Analyze current repository structure:
 !git status
 !find . -name "*.py" -o -name "*.js" -o -name "*.ts" | head -20
 
-Based on the issue requirements and current codebase, think longer about potential approaches and provide a detailed implementation roadmap with rationale for chosen approach.
+Based on the issue requirements and current codebase, thoroughly evaluate potential approaches and provide a detailed implementation roadmap with clear rationale for the chosen approach.
 
 Use `/implement` to start coding based on this plan.
