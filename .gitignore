@@ -9,5 +9,5 @@ wheels/
 # Virtual environments
 .venv
 
-CLAUDE.md
-./claude
+# Claude Code documentation (keep local)
+.claude/
