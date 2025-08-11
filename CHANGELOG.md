@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **GitLab MR Description Bug**: Enhanced description parameter handling in GitLab merge request creation
+  - Added explicit description parameter extraction to ensure it's properly passed to GitLab API
+  - Added comprehensive debug logging to track parameter flow through MCP → Service → Adapter layers
+  - Fixes issue #6 where descriptions were not appearing in GitLab merge requests
+
 ## [0.1.7] - 2025-08-10
 
 ### Fixed

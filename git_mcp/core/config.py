@@ -219,14 +219,14 @@ class GitMCPConfig:
             if platform_type.lower() == "gitlab":
                 from ..platforms.gitlab import GitLabAdapter
 
-                adapter = GitLabAdapter(url, token)
-                user_info = await adapter.get_current_user()
+                gitlab_adapter = GitLabAdapter(url, token)
+                user_info = await gitlab_adapter.get_current_user()
                 return user_info.get("username")
             elif platform_type.lower() == "github":
                 from ..platforms.github import GitHubAdapter
 
-                adapter = GitHubAdapter(url, token)
-                user_info = await adapter.get_current_user()
+                github_adapter = GitHubAdapter(url, token)
+                user_info = await github_adapter.get_current_user()
                 return user_info.get("username")
             else:
                 print(

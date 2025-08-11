@@ -144,13 +144,17 @@ Core dependencies (from pyproject.toml):
 - `rich>=13.0.0` - Rich text and table formatting
 - `keyring>=24.0.0` - Secure credential storage
 - `pydantic>=2.5.0` - Data validation and settings management
+- `httpx>=0.26.0` - HTTP client for async requests
+- `gitpython>=3.1.0` - Git repository interaction
+- `pyyaml>=6.0.0` - YAML configuration parsing
+- `tool>=0.8.0` - Tool utilities
 
 Development tools:
 - `ruff>=0.1.0` - Linting and code formatting
 - `bandit[toml]>=1.7.0` - Security vulnerability scanning
 - `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
 - `pytest-asyncio>=0.23.0` - Async testing support
-- `pre-commit>=4.2.0` - Git hooks for code quality
+- `pre-commit>=4.2.0` - Git hooks for code quality (also core dependency)
 - `pip-audit>=2.0.0` - Security vulnerability scanning
 
 ## Security Notes

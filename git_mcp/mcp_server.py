@@ -226,11 +226,24 @@ async def create_merge_request(
 ) -> Dict[str, Any]:
     """Create a new merge request"""
     create_kwargs = kwargs.copy()
-    if description:
-        create_kwargs["description"] = description
+
+    # Handle description from either parameter or kwargs
+    final_description = description
+    if not final_description and "description" in create_kwargs:
+        final_description = create_kwargs.pop("description")
+
+    if final_description:
+        create_kwargs["description"] = final_description
+        print(
+            f"Debug: MCP Server - description parameter set: {final_description[:100]}..."
+            if len(final_description) > 100
+            else f"Debug: MCP Server - description parameter set: {final_description}"
+        )
+
     if assignee:
         create_kwargs["assignee_username"] = assignee
 
+    print(f"Debug: MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
     return await PlatformService.create_merge_request(
         platform, project_id, title, source_branch, target_branch, **create_kwargs
     )
