@@ -1,6 +1,7 @@
 """Git MCP Server - MCP interface for Git repository management."""
 
 from typing import List, Dict, Any, Optional
+import json
 from mcp.server.fastmcp import FastMCP
 
 from .services.platform_service import PlatformService
@@ -227,10 +228,32 @@ async def create_merge_request(
     """Create a new merge request"""
     create_kwargs = kwargs.copy()
 
+    # Some MCP clients pass a single 'kwargs' argument as a JSON string.
+    # Parse and merge it so downstream adapters receive real keyword args.
+    if "kwargs" in create_kwargs:
+        nested_kwargs = create_kwargs.pop("kwargs")
+        try:
+            if isinstance(nested_kwargs, str):
+                parsed = json.loads(nested_kwargs)
+            else:
+                parsed = nested_kwargs
+            if isinstance(parsed, dict):
+                for k, v in parsed.items():
+                    # Do not overwrite explicitly provided keys
+                    if k not in create_kwargs:
+                        create_kwargs[k] = v
+        except Exception as e:  # nosec B110 - best-effort parsing
+            print(f"Warning: Failed to parse kwargs JSON: {e}")
+
     # Handle description from either parameter or kwargs
     final_description = description
     if not final_description and "description" in create_kwargs:
         final_description = create_kwargs.pop("description")
+
+    # Normalize alternative field names that might be sent by some clients
+    if not final_description and "body" in create_kwargs:
+        # Some tools use 'body' (GitHub semantics). Normalize to 'description'.
+        final_description = create_kwargs.pop("body")
 
     if final_description:
         create_kwargs["description"] = final_description
