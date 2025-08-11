@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2025-08-11
+
 ### Fixed
+- **PR Command Issue URL Format**: Updated `/pr` slash command template to use full issue URLs instead of `#xx` format
+  - Modified `git_mcp/claude_commands/pr.md` to include instructions for extracting issue URLs from `.claude/issue-*.md` files
+  - Added bash command guidance: `grep "URL:" .claude/issue-$ARGUMENTS-*.md | head -1 | cut -d' ' -f2`
+  - Maintains backward compatibility while enabling full issue URL usage in PR descriptions
+  - Fixes issue #11 where PR descriptions used shorthand `#xx` instead of full issue URLs
 - **GitLab & GitHub MR/PR Description Bug**: Enhanced description parameter handling in both GitLab and GitHub merge/pull request creation
   - Added explicit description parameter extraction to ensure it's properly passed to platform APIs
   - Added comprehensive debug logging to track parameter flow through MCP → Service → Adapter layers
