@@ -390,11 +390,30 @@ class GitLabAdapter(PlatformAdapter):
                         f"Warning: Could not resolve assignee username '{assignee_username}': {e}"
                     )
 
+            # Explicitly handle description parameter to ensure it's included
+            if "description" in kwargs:
+                mr_data["description"] = kwargs.pop("description")
+                print(
+                    f"Debug: Added description parameter: {mr_data['description'][:100]}..."
+                    if len(str(mr_data["description"])) > 100
+                    else f"Debug: Added description parameter: {mr_data['description']}"
+                )
+
             # Add remaining kwargs
             mr_data.update(kwargs)
 
             # Debug: Print merge request data
-            print(f"Creating GitLab merge request with data: {mr_data}")
+            print(
+                f"Creating GitLab merge request with data keys: {list(mr_data.keys())}"
+            )
+            print(f"Description present: {'description' in mr_data}")
+            if "description" in mr_data:
+                desc_preview = (
+                    str(mr_data["description"])[:200] + "..."
+                    if len(str(mr_data["description"])) > 200
+                    else str(mr_data["description"])
+                )
+                print(f"Description preview: {desc_preview}")
 
             mr = project.mergerequests.create(mr_data)
             return self._convert_to_mr_resource(mr, project_id)

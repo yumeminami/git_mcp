@@ -1,6 +1,7 @@
 """Git MCP Server - MCP interface for Git repository management."""
 
 from typing import List, Dict, Any, Optional
+import json
 from mcp.server.fastmcp import FastMCP
 
 from .services.platform_service import PlatformService
@@ -226,11 +227,46 @@ async def create_merge_request(
 ) -> Dict[str, Any]:
     """Create a new merge request"""
     create_kwargs = kwargs.copy()
-    if description:
-        create_kwargs["description"] = description
+
+    # Some MCP clients pass a single 'kwargs' argument as a JSON string.
+    # Parse and merge it so downstream adapters receive real keyword args.
+    if "kwargs" in create_kwargs:
+        nested_kwargs = create_kwargs.pop("kwargs")
+        try:
+            if isinstance(nested_kwargs, str):
+                parsed = json.loads(nested_kwargs)
+            else:
+                parsed = nested_kwargs
+            if isinstance(parsed, dict):
+                for k, v in parsed.items():
+                    # Do not overwrite explicitly provided keys
+                    if k not in create_kwargs:
+                        create_kwargs[k] = v
+        except Exception as e:  # nosec B110 - best-effort parsing
+            print(f"Warning: Failed to parse kwargs JSON: {e}")
+
+    # Handle description from either parameter or kwargs
+    final_description = description
+    if not final_description and "description" in create_kwargs:
+        final_description = create_kwargs.pop("description")
+
+    # Normalize alternative field names that might be sent by some clients
+    if not final_description and "body" in create_kwargs:
+        # Some tools use 'body' (GitHub semantics). Normalize to 'description'.
+        final_description = create_kwargs.pop("body")
+
+    if final_description:
+        create_kwargs["description"] = final_description
+        print(
+            f"Debug: MCP Server - description parameter set: {final_description[:100]}..."
+            if len(final_description) > 100
+            else f"Debug: MCP Server - description parameter set: {final_description}"
+        )
+
     if assignee:
         create_kwargs["assignee_username"] = assignee
 
+    print(f"Debug: MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
     return await PlatformService.create_merge_request(
         platform, project_id, title, source_branch, target_branch, **create_kwargs
     )

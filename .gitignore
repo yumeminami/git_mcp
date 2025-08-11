@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Claude Code documentation (keep local)
+.claude/
