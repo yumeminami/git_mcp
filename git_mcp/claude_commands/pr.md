@@ -39,7 +39,8 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    Use `create_merge_request()` to create the PR/MR with:
    - Craft a descriptive title linking to issue
    - Create comprehensive description that clearly explains the solution
-   - Closes #$ARGUMENTS in description
+   - **IMPORTANT**: In the description, use the full issue URL from `.claude/issue-$ARGUMENTS-*.md` instead of just `#$ARGUMENTS`
+   - Extract the URL using: `grep "URL:" .claude/issue-$ARGUMENTS-*.md | head -1 | cut -d' ' -f2`
    - Consider appropriate labels and reviewers
 
 4. **PR Description Template**
