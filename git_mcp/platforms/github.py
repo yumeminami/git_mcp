@@ -410,13 +410,36 @@ class GitHubAdapter(PlatformAdapter):
                 "base": target_branch,
             }
 
+            # Explicitly handle description parameter to ensure it's included
             if "description" in kwargs:
-                pr_kwargs["body"] = kwargs["description"]
+                pr_kwargs["body"] = kwargs.pop("description")
+                print(
+                    f"Debug: GitHub - Added description parameter: {pr_kwargs['body'][:100]}..."
+                    if len(str(pr_kwargs["body"])) > 100
+                    else f"Debug: GitHub - Added description parameter: {pr_kwargs['body']}"
+                )
+
             if "draft" in kwargs:
-                pr_kwargs["draft"] = kwargs["draft"]
+                pr_kwargs["draft"] = kwargs.pop("draft")
             if "assignee_username" in kwargs:
                 # GitHub accepts username directly for assignees
-                pr_kwargs["assignee"] = kwargs["assignee_username"]
+                pr_kwargs["assignee"] = kwargs.pop("assignee_username")
+
+            # Add remaining kwargs
+            pr_kwargs.update(kwargs)
+
+            # Debug: Print pull request data
+            print(
+                f"Creating GitHub pull request with data keys: {list(pr_kwargs.keys())}"
+            )
+            print(f"Description present: {'body' in pr_kwargs}")
+            if "body" in pr_kwargs:
+                desc_preview = (
+                    str(pr_kwargs["body"])[:200] + "..."
+                    if len(str(pr_kwargs["body"])) > 200
+                    else str(pr_kwargs["body"])
+                )
+                print(f"Description preview: {desc_preview}")
 
             pr = repo.create_pull(**pr_kwargs)
             return self._convert_to_mr_resource(pr, project_id)

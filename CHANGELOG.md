@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **GitLab MR Description Bug**: Enhanced description parameter handling in GitLab merge request creation
-  - Added explicit description parameter extraction to ensure it's properly passed to GitLab API
+- **GitLab & GitHub MR/PR Description Bug**: Enhanced description parameter handling in both GitLab and GitHub merge/pull request creation
+  - Added explicit description parameter extraction to ensure it's properly passed to platform APIs
   - Added comprehensive debug logging to track parameter flow through MCP → Service → Adapter layers
-  - Fixes issue #6 where descriptions were not appearing in GitLab merge requests
+  - Fixed MCP server to handle description from both direct parameter and kwargs JSON
+  - Fixes issue #6 where descriptions were not appearing in GitLab merge requests and GitHub pull requests
 
 ## [0.1.7] - 2025-08-10
 
