@@ -32,18 +32,65 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    !git status
    !git commit -m "Implement feature for issue #$ARGUMENTS"
 
-2. **Push to Remote**
+2. **Fork Detection and Repository Analysis**
+   - Use `get_fork_info()` to check if current repository is a fork
+   - If it's a fork, identify the upstream repository for PR creation
+   - Determine the correct target repository (fork vs upstream)
+
+3. **Push to Remote**
    !git push -u origin HEAD
 
-3. **Create Pull/Merge Request**
-   Use `create_merge_request()` to create the PR/MR with:
+4. **Create Pull/Merge Request with Fork Support**
+   Use `create_merge_request()` to create the PR/MR with enhanced fork support:
+
+   **For Fork-to-Upstream PRs:**
+   - Source branch: `username:branch-name` format (automatically detected)
+   - Target repository: Upstream repository (parent)
+   - Target branch: Usually `main` or `master`
+
+   **For Same-Repository PRs:**
+   - Source branch: `branch-name` format (current behavior)
+   - Target repository: Current repository
+   - Target branch: As specified or default
+
+   **PR Parameters:**
    - Craft a descriptive title linking to issue
    - Create comprehensive description that clearly explains the solution
    - **IMPORTANT**: In the description, use the full issue URL from `.claude/issue-$ARGUMENTS-*.md` instead of just `#$ARGUMENTS`
    - Extract the URL using: `grep "URL:" .claude/issue-$ARGUMENTS-*.md | head -1 | cut -d' ' -f2`
    - Consider appropriate labels and reviewers
 
-4. **PR Description Template**
+5. **Fork Workflow Examples**
+
+   **Example 1: Fork-to-Upstream PR**
+   ```
+   # Check if current repo is a fork
+   get_fork_info("github", "myuser/upstream-project")
+
+   # If it's a fork, create PR to upstream
+   create_merge_request(
+       platform="github",
+       project_id="upstream-owner/upstream-project",  # Target upstream repo
+       source_branch="myuser:feature-branch",         # Fork branch reference
+       target_branch="main",                          # Upstream main branch
+       title="Fix issue #123: Add new feature",
+       description="Implements feature as requested in issue..."
+   )
+   ```
+
+   **Example 2: Same-Repository PR (existing behavior)**
+   ```
+   create_merge_request(
+       platform="github",
+       project_id="myuser/my-project",
+       source_branch="feature-branch",                # Simple branch name
+       target_branch="main",
+       title="Fix issue #123: Add new feature",
+       description="Implements feature as requested in issue..."
+   )
+   ```
+
+6. **PR Description Template**
    ```
    ## Summary
    Implements [feature description] as requested in issue #$ARGUMENTS
@@ -60,13 +107,24 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    Closes #$ARGUMENTS
    ```
 
-5. **Final Steps**
+7. **Available Fork MCP Tools**
+
+   **New Tools for Fork Management:**
+   - `create_fork(platform, project_id, **kwargs)` - Create a fork of a repository
+   - `get_fork_info(platform, project_id)` - Check fork status and get parent info
+   - `list_forks(platform, project_id)` - List forks of a repository (basic implementation)
+
+   **Enhanced Existing Tools:**
+   - `create_merge_request()` - Now supports cross-repository PRs with `owner:branch` format
+   - All existing MCP tools work seamlessly with fork workflows
+
+8. **Final Steps**
    - Link PR to original issue (use `update_issue()` to close issue if needed)
    - Request code review via `get_merge_request_details()` for tracking
    - Monitor CI/CD pipeline
    - Address review feedback
 
-6. **Complete Issue Documentation**
+9. **Complete Issue Documentation**
    - Save final PR details to `.claude/issue-$ARGUMENTS-*.md`
    - Mark workflow as completed in the documentation
    - Issue document now serves as complete project history for this feature
