@@ -35,6 +35,24 @@ Create a comprehensive development plan including:
 
 Use `get_project_details()` to understand project structure and `list_merge_requests()` to review existing workflow patterns.
 
+## Platform API Planning
+
+**When planning platform integrations**, consult the API documentation in CLAUDE.md:
+
+**GitLab API Resources:**
+- API Objects: https://python-gitlab.readthedocs.io/en/stable/api-objects.html
+- Usage Patterns: https://python-gitlab.readthedocs.io/en/stable/gl_objects/
+
+**GitHub API Resources:**
+- Examples: https://pygithub.readthedocs.io/en/stable/examples.html
+- API Reference: https://pygithub.readthedocs.io/en/stable/github_objects.html
+
+**Consider API limitations and capabilities when planning:**
+- Rate limiting requirements
+- Authentication scopes needed
+- Available operations and data structures
+- Error handling patterns
+
 ## Repository Context
 
 Analyze current repository structure:

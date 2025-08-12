@@ -24,5 +24,23 @@ Please implement the planned functionality thoroughly and in great detail, consi
 
 Use `get_project_details()` to understand codebase structure and `list_merge_requests()` to review implementation patterns in recent changes.
 
+## Platform API Resources
+
+**When implementing platform-specific features**, refer to the API documentation in CLAUDE.md:
+
+**For GitLab integrations** (`git_mcp/platforms/gitlab.py`):
+- API Objects Reference: https://python-gitlab.readthedocs.io/en/stable/api-objects.html
+- Usage Examples: https://python-gitlab.readthedocs.io/en/stable/gl_objects/
+
+**For GitHub integrations** (`git_mcp/platforms/github.py`):
+- Examples & Patterns: https://pygithub.readthedocs.io/en/stable/examples.html
+- API Reference: https://pygithub.readthedocs.io/en/stable/github_objects.html
+
+**Common use cases requiring API docs:**
+- Extending platform adapter methods
+- Adding new MCP tools for platform operations
+- Implementing custom issue/PR workflows
+- Debugging API response handling
+
 Use `/test` after implementation to generate comprehensive tests.
 '''

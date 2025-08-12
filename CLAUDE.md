@@ -164,6 +164,38 @@ Development tools:
 - `pytest-asyncio>=0.23.0` - Async testing support
 - `pip-audit>=2.0.0` - Security vulnerability scanning
 
+## API Documentation
+
+**Platform API References:**
+
+### GitHub API (PyGithub)
+- **Examples & Usage Patterns**: https://pygithub.readthedocs.io/en/stable/examples.html
+  - Comprehensive examples for common GitHub operations
+  - Authentication methods and best practices
+  - Rate limiting and pagination handling
+- **API Reference**: https://pygithub.readthedocs.io/en/stable/github_objects.html
+  - Complete class and method documentation
+  - Object relationships and property details
+
+### GitLab API (python-gitlab)
+- **API Objects Reference**: https://python-gitlab.readthedocs.io/en/stable/api-objects.html
+  - Complete list of available API objects and methods
+  - CRUD operations for issues, merge requests, projects
+  - Advanced features like pipelines, deployments, and wiki management
+- **Usage Guide**: https://python-gitlab.readthedocs.io/en/stable/gl_objects/
+  - Object-specific documentation with examples
+  - Authentication and connection management
+
+**When to Use These Resources:**
+- **Customizing platform adapters** (`git_mcp/platforms/`) - Reference API objects and methods
+- **Debugging API interactions** - Understand response structures and error handling
+- **Extending MCP tools** (`git_mcp/mcp_server.py`) - Add new platform operations
+- **Developing slash commands** - Integrate additional API functionality
+
+**Additional Resources:**
+- **GitHub REST API Docs**: https://docs.github.com/en/rest
+- **GitLab REST API Docs**: https://docs.gitlab.com/ee/api/
+
 ## Security Notes
 
 - All access tokens are stored securely in system keyring, never in config files
