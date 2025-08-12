@@ -398,16 +398,48 @@ class GitHubAdapter(PlatformAdapter):
         title: str,
         **kwargs,
     ) -> MergeRequestResource:
-        """Create a new GitHub pull request."""
+        """Create a new GitHub pull request with fork support."""
         if not self.client:
             await self.authenticate()
 
         try:
-            repo = self.client.get_repo(project_id)
+            # Parse source branch to handle cross-repository references
+            source_ref = self.parse_branch_reference(source_branch)
+            target_ref = self.parse_branch_reference(target_branch)
+
+            # Determine the target repository
+            # For cross-repo PRs, the target is usually the upstream repository
+            target_repo_id = project_id
+
+            # Handle cross-repository source branch
+            if source_ref["is_cross_repo"]:
+                # Source is from a different repository (fork)
+                source_head = f"{source_ref['owner']}:{source_ref['branch']}"
+                print(f"Debug: GitHub - Creating cross-repo PR from {source_head}")
+            else:
+                # Source is from the same repository
+                source_head = source_ref["branch"]
+                print(f"Debug: GitHub - Creating same-repo PR from {source_head}")
+
+            # Handle cross-repository target branch (less common but possible)
+            if target_ref["is_cross_repo"]:
+                # Target is in a different repository
+                target_repo_id = (
+                    f"{target_ref['owner']}/{target_ref['branch'].split('/')[0]}"
+                )
+                target_base = target_ref["branch"]
+            else:
+                # Target is in the same repository
+                target_base = target_ref["branch"]
+
+            # Get the target repository
+            target_repo = self.client.get_repo(target_repo_id)
+
+            # Build PR parameters
             pr_kwargs = {
                 "title": title,
-                "head": source_branch,
-                "base": target_branch,
+                "head": source_head,
+                "base": target_base,
             }
 
             # Explicitly handle description parameter to ensure it's included
@@ -432,6 +464,8 @@ class GitHubAdapter(PlatformAdapter):
             print(
                 f"Creating GitHub pull request with data keys: {list(pr_kwargs.keys())}"
             )
+            print(f"Target repo: {target_repo_id}")
+            print(f"Head: {pr_kwargs['head']} -> Base: {pr_kwargs['base']}")
             print(f"Description present: {'body' in pr_kwargs}")
             if "body" in pr_kwargs:
                 desc_preview = (
@@ -441,8 +475,12 @@ class GitHubAdapter(PlatformAdapter):
                 )
                 print(f"Description preview: {desc_preview}")
 
-            pr = repo.create_pull(**pr_kwargs)
-            return self._convert_to_mr_resource(pr, project_id)
+            # Create the pull request
+            pr = target_repo.create_pull(**pr_kwargs)
+            return self._convert_to_mr_resource(pr, target_repo_id)
+        except ValueError as e:
+            # Branch reference parsing error
+            raise PlatformError(f"Invalid branch reference: {e}", self.platform_name)
         except GithubException as e:
             raise PlatformError(
                 f"Failed to create pull request: {e}", self.platform_name
@@ -630,6 +668,95 @@ class GitHubAdapter(PlatformAdapter):
             }
         except GithubException as e:
             raise PlatformError(f"Failed to get current user: {e}", self.platform_name)
+
+    # Fork operations
+    async def create_fork(self, project_id: str, **kwargs) -> ProjectResource:
+        """Create a fork of a GitHub repository."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+
+            # Extract fork parameters
+            fork_kwargs = {}
+            if "organization" in kwargs:
+                fork_kwargs["organization"] = kwargs["organization"]
+            if "name" in kwargs:
+                fork_kwargs["name"] = kwargs["name"]
+            if "default_branch_only" in kwargs:
+                fork_kwargs["default_branch_only"] = kwargs["default_branch_only"]
+
+            # Create the fork
+            forked_repo = repo.create_fork(**fork_kwargs)
+            return self._convert_to_project_resource(forked_repo)
+        except GithubException as e:
+            raise PlatformError(
+                f"Failed to create fork of {project_id}: {e}", self.platform_name
+            )
+
+    async def is_fork(self, project_id: str) -> bool:
+        """Check if a GitHub repository is a fork."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            return repo.fork
+        except GithubException as e:
+            if e.status == 404:
+                raise ResourceNotFoundError(
+                    "repository", project_id, self.platform_name
+                )
+            raise PlatformError(
+                f"Failed to check fork status for {project_id}: {e}", self.platform_name
+            )
+
+    async def get_fork_parent(self, project_id: str) -> Optional[str]:
+        """Get the parent repository ID of a GitHub fork."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            if repo.fork and repo.parent:
+                return repo.parent.full_name
+            return None
+        except GithubException as e:
+            if e.status == 404:
+                raise ResourceNotFoundError(
+                    "repository", project_id, self.platform_name
+                )
+            raise PlatformError(
+                f"Failed to get fork parent for {project_id}: {e}", self.platform_name
+            )
+
+    def parse_branch_reference(self, branch_ref: str) -> Dict[str, Any]:
+        """Parse GitHub branch reference into components.
+
+        Args:
+            branch_ref: Branch reference in format 'branch' or 'owner:branch'
+
+        Returns:
+            Dict with keys: 'owner' (optional), 'branch', 'is_cross_repo'
+        """
+        if ":" in branch_ref:
+            # Cross-repository reference: 'owner:branch'
+            parts = branch_ref.split(":", 1)
+            if len(parts) != 2:
+                raise ValueError(f"Invalid branch reference format: {branch_ref}")
+
+            owner, branch = parts
+            if not owner or not branch:
+                raise ValueError(f"Invalid branch reference format: {branch_ref}")
+
+            return {"owner": owner, "branch": branch, "is_cross_repo": True}  # type: ignore[dict-item]
+        else:
+            # Same-repository reference: 'branch'
+            if not branch_ref:
+                raise ValueError("Branch reference cannot be empty")
+
+            return {"branch": branch_ref, "is_cross_repo": False}  # type: ignore[dict-item]
 
     # Helper methods
     def _convert_to_project_resource(self, repo) -> ProjectResource:

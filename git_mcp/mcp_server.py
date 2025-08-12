@@ -286,6 +286,52 @@ async def list_my_merge_requests(
     )
 
 
+# Fork operations
+@mcp.tool()
+async def create_fork(platform: str, project_id: str, **kwargs) -> Dict[str, Any]:
+    """Create a fork of a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to fork (owner/repo for GitHub, numeric for GitLab)
+        **kwargs: Platform-specific fork parameters
+                 - GitHub: organization, name, default_branch_only
+                 - GitLab: namespace, name, path
+    """
+    return await PlatformService.create_fork(platform, project_id, **kwargs)
+
+
+@mcp.tool()
+async def get_fork_info(platform: str, project_id: str) -> Dict[str, Any]:
+    """Get fork information for a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to check
+
+    Returns:
+        Dictionary with fork status, parent repository, and other fork details
+    """
+    return await PlatformService.get_fork_info(platform, project_id)
+
+
+@mcp.tool()
+async def list_forks(
+    platform: str, project_id: str, limit: Optional[int] = 20
+) -> List[Dict[str, Any]]:
+    """List forks of a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to list forks for
+        limit: Maximum number of forks to return
+
+    Returns:
+        List of fork repositories
+    """
+    return await PlatformService.list_forks(platform, project_id, limit)
+
+
 @mcp.resource("config://platforms")
 async def get_platforms_config() -> Dict[str, Any]:
     """Get the current platforms configuration"""

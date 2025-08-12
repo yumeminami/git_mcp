@@ -678,3 +678,62 @@ class PlatformService:
             "project_id": project_id,
             "message": f"Merge request '{title}' created successfully",
         }
+
+    # Fork operations
+    @staticmethod
+    async def create_fork(
+        platform_name: str, project_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a fork of a repository."""
+        adapter = PlatformService.get_adapter(platform_name)
+        fork = await adapter.create_fork(project_id, **kwargs)
+
+        return {
+            "id": fork.id,
+            "title": fork.title,
+            "url": fork.url,
+            "namespace": fork.namespace,
+            "visibility": fork.visibility,
+            "clone_url_http": fork.clone_url_http,
+            "clone_url_ssh": fork.clone_url_ssh,
+            "platform": platform_name,
+            "original_project_id": project_id,
+            "message": f"Fork of '{project_id}' created successfully as '{fork.id}'",
+            "full_info": fork.metadata or {},
+        }
+
+    @staticmethod
+    async def get_fork_info(platform_name: str, project_id: str) -> Dict[str, Any]:
+        """Get fork information for a repository."""
+        adapter = PlatformService.get_adapter(platform_name)
+
+        is_fork = await adapter.is_fork(project_id)
+        parent_id = None
+
+        if is_fork:
+            parent_id = await adapter.get_fork_parent(project_id)
+
+        return {
+            "project_id": project_id,
+            "is_fork": is_fork,
+            "parent_id": parent_id,
+            "platform": platform_name,
+        }
+
+    @staticmethod
+    async def list_forks(
+        platform_name: str, project_id: str, limit: Optional[int] = 20
+    ) -> List[Dict[str, Any]]:
+        """List forks of a repository."""
+        # Note: This is a basic implementation
+        # Full implementation would require additional API calls to list forks
+        # For now, we'll return a message indicating this functionality
+        return [
+            {
+                "project_id": project_id,
+                "platform": platform_name,
+                "limit": limit,
+                "message": "Fork listing functionality requires additional implementation",
+                "note": "Use GitHub/GitLab web interface to view forks for now",
+            }
+        ]

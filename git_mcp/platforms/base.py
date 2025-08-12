@@ -258,6 +258,34 @@ class PlatformAdapter(ABC):
         """Get current authenticated user information."""
         pass
 
+    # Fork operations
+    @abstractmethod
+    async def create_fork(self, project_id: str, **kwargs) -> ProjectResource:
+        """Create a fork of a repository."""
+        pass
+
+    @abstractmethod
+    async def is_fork(self, project_id: str) -> bool:
+        """Check if a repository is a fork."""
+        pass
+
+    @abstractmethod
+    async def get_fork_parent(self, project_id: str) -> Optional[str]:
+        """Get the parent repository ID of a fork."""
+        pass
+
+    @abstractmethod
+    def parse_branch_reference(self, branch_ref: str) -> Dict[str, Any]:
+        """Parse branch reference into components.
+
+        Args:
+            branch_ref: Branch reference in format 'branch' or 'owner:branch'
+
+        Returns:
+            Dict with keys: 'owner' (optional), 'branch', 'is_cross_repo'
+        """
+        pass
+
     # Utility methods
     def _normalize_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize filter parameters for platform-specific format."""

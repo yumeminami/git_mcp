@@ -19,9 +19,11 @@ uv tool install --from . git_mcp_server --force
 
 # Run linting and security checks
 uv run ruff check git_mcp/
+uv run ruff format git_mcp/
 uv run bandit -r git_mcp/
+uv run mypy git_mcp/ --ignore-missing-imports --no-strict-optional
 
-# Run pre-commit hooks manually
+# Run pre-commit hooks manually (includes ruff, bandit, mypy, yaml/json checks)
 uv run pre-commit run --all-files
 
 # Run tests (when implemented - uses placeholder test currently)
@@ -30,6 +32,9 @@ uv run pytest
 # Test CLI entry points
 uv run git-mcp --help
 uv run git-mcp-server --help
+
+# Test MCP server directly
+echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
 ```
 
 ### Installation & Setup
@@ -136,6 +141,8 @@ When working on this codebase:
 
 ## Dependencies
 
+**Python Version**: Requires Python >=3.13
+
 Core dependencies (from pyproject.toml):
 - `python-gitlab>=4.4.0` - GitLab API client
 - `PyGithub>=2.1.0` - GitHub API client
@@ -148,13 +155,13 @@ Core dependencies (from pyproject.toml):
 - `gitpython>=3.1.0` - Git repository interaction
 - `pyyaml>=6.0.0` - YAML configuration parsing
 - `tool>=0.8.0` - Tool utilities
+- `pre-commit>=4.2.0` - Git hooks for code quality
 
 Development tools:
 - `ruff>=0.1.0` - Linting and code formatting
 - `bandit[toml]>=1.7.0` - Security vulnerability scanning
 - `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
 - `pytest-asyncio>=0.23.0` - Async testing support
-- `pre-commit>=4.2.0` - Git hooks for code quality (also core dependency)
 - `pip-audit>=2.0.0` - Security vulnerability scanning
 
 ## Security Notes
