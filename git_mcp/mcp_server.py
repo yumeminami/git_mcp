@@ -364,14 +364,32 @@ async def get_project_resource(platform: str, project_id: str) -> Dict[str, Any]
 def main():
     """Run the MCP server with stdio transport"""
     import sys
+    from . import get_version
 
-    # Handle installation flags for easy setup
+    # Handle command line arguments
     if len(sys.argv) > 1:
-        if sys.argv[1] == "--install-claude":
+        if sys.argv[1] == "--version":
+            print(f"git-mcp-server {get_version()}")
+            return
+        elif sys.argv[1] == "--install-claude":
             install_claude_integration()
             return
         elif sys.argv[1] == "--install-gemini":
             install_gemini_integration()
+            return
+        elif sys.argv[1] in ["--help", "-h"]:
+            print("git-mcp-server - Git MCP Server")
+            print(f"Version: {get_version()}")
+            print()
+            print("Usage: git-mcp-server [OPTIONS]")
+            print()
+            print("Options:")
+            print("  --version          Show version and exit")
+            print("  --help, -h         Show this help message and exit")
+            print("  --install-claude   Install Claude Code integration")
+            print("  --install-gemini   Install Gemini CLI integration")
+            print()
+            print("Run without arguments to start the MCP server.")
             return
 
     mcp.run()

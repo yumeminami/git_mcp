@@ -3,5 +3,17 @@
 A unified command-line tool for managing Git repositories across GitHub and GitLab platforms.
 """
 
-__version__ = "0.1.0"
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("git_mcp_server")
+except importlib.metadata.PackageNotFoundError:
+    # Fallback for development/source installations
+    __version__ = "0.1.8"
+
 __author__ = "Git MCP Team"
+
+
+def get_version() -> str:
+    """Get the package version dynamically."""
+    return __version__
