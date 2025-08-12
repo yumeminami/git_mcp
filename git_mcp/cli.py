@@ -9,6 +9,7 @@ from .commands.mr import mr_commands
 from .core.config import get_config
 from .core.exceptions import GitMCPError
 from .utils.output import OutputFormatter
+from . import get_version
 
 
 # Global context for CLI
@@ -25,7 +26,7 @@ class CLIContext:
         return self.formatter
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option(
     "--format",
     "output_format",
@@ -35,9 +36,23 @@ class CLIContext:
 )
 @click.option("--platform", help="Default platform to use")
 @click.option("--config-dir", type=click.Path(), help="Configuration directory path")
+@click.option(
+    "--version",
+    is_flag=True,
+    help="Show version and exit",
+)
 @click.pass_context
-def cli(ctx, output_format, platform, config_dir):
+def cli(ctx, output_format, platform, config_dir, version):
     """Git MCP Server - Unified management for GitHub and GitLab."""
+    if version:
+        click.echo(f"git-mcp {get_version()}")
+        ctx.exit()
+
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit()
+
     ctx.ensure_object(CLIContext)
 
     if config_dir:

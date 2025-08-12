@@ -507,6 +507,95 @@ class GitLabAdapter(PlatformAdapter):
         except GitlabError as e:
             raise PlatformError(f"Failed to get current user: {e}", self.platform_name)
 
+    # Fork operations
+    async def create_fork(self, project_id: str, **kwargs) -> ProjectResource:
+        """Create a fork of a GitLab project."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+
+            # GitLab fork parameters
+            fork_kwargs = {}
+            if "namespace" in kwargs:
+                fork_kwargs["namespace"] = kwargs["namespace"]
+            if "name" in kwargs:
+                fork_kwargs["name"] = kwargs["name"]
+            if "path" in kwargs:
+                fork_kwargs["path"] = kwargs["path"]
+
+            # Create the fork
+            forked_project = project.forks.create(fork_kwargs)
+            return self._convert_to_project_resource(forked_project)
+        except GitlabError as e:
+            raise PlatformError(
+                f"Failed to create fork of {project_id}: {e}", self.platform_name
+            )
+
+    async def is_fork(self, project_id: str) -> bool:
+        """Check if a GitLab project is a fork."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            # GitLab indicates forks via forked_from_project attribute
+            return (
+                hasattr(project, "forked_from_project")
+                and project.forked_from_project is not None
+            )
+        except GitlabError as e:
+            if "404" in str(e):
+                raise ResourceNotFoundError("project", project_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to check fork status for {project_id}: {e}", self.platform_name
+            )
+
+    async def get_fork_parent(self, project_id: str) -> Optional[str]:
+        """Get the parent project ID of a GitLab fork."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            if hasattr(project, "forked_from_project") and project.forked_from_project:
+                return str(project.forked_from_project["id"])
+            return None
+        except GitlabError as e:
+            if "404" in str(e):
+                raise ResourceNotFoundError("project", project_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to get fork parent for {project_id}: {e}", self.platform_name
+            )
+
+    def parse_branch_reference(self, branch_ref: str) -> Dict[str, Any]:
+        """Parse GitLab branch reference into components.
+
+        Args:
+            branch_ref: Branch reference in format 'branch' or 'owner:branch'
+
+        Returns:
+            Dict with keys: 'owner' (optional), 'branch', 'is_cross_repo'
+        """
+        if ":" in branch_ref:
+            # Cross-repository reference: 'owner:branch'
+            parts = branch_ref.split(":", 1)
+            if len(parts) != 2:
+                raise ValueError(f"Invalid branch reference format: {branch_ref}")
+
+            owner, branch = parts
+            if not owner or not branch:
+                raise ValueError(f"Invalid branch reference format: {branch_ref}")
+
+            return {"owner": owner, "branch": branch, "is_cross_repo": True}  # type: ignore[dict-item]
+        else:
+            # Same-repository reference: 'branch'
+            if not branch_ref:
+                raise ValueError("Branch reference cannot be empty")
+
+            return {"branch": branch_ref, "is_cross_repo": False}  # type: ignore[dict-item]
+
     # Helper methods
     def _convert_to_project_resource(self, project) -> ProjectResource:
         """Convert GitLab project to ProjectResource."""

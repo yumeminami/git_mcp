@@ -286,6 +286,52 @@ async def list_my_merge_requests(
     )
 
 
+# Fork operations
+@mcp.tool()
+async def create_fork(platform: str, project_id: str, **kwargs) -> Dict[str, Any]:
+    """Create a fork of a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to fork (owner/repo for GitHub, numeric for GitLab)
+        **kwargs: Platform-specific fork parameters
+                 - GitHub: organization, name, default_branch_only
+                 - GitLab: namespace, name, path
+    """
+    return await PlatformService.create_fork(platform, project_id, **kwargs)
+
+
+@mcp.tool()
+async def get_fork_info(platform: str, project_id: str) -> Dict[str, Any]:
+    """Get fork information for a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to check
+
+    Returns:
+        Dictionary with fork status, parent repository, and other fork details
+    """
+    return await PlatformService.get_fork_info(platform, project_id)
+
+
+@mcp.tool()
+async def list_forks(
+    platform: str, project_id: str, limit: Optional[int] = 20
+) -> List[Dict[str, Any]]:
+    """List forks of a repository
+
+    Args:
+        platform: The platform name (github, gitlab)
+        project_id: The repository ID to list forks for
+        limit: Maximum number of forks to return
+
+    Returns:
+        List of fork repositories
+    """
+    return await PlatformService.list_forks(platform, project_id, limit)
+
+
 @mcp.resource("config://platforms")
 async def get_platforms_config() -> Dict[str, Any]:
     """Get the current platforms configuration"""
@@ -318,14 +364,32 @@ async def get_project_resource(platform: str, project_id: str) -> Dict[str, Any]
 def main():
     """Run the MCP server with stdio transport"""
     import sys
+    from . import get_version
 
-    # Handle installation flags for easy setup
+    # Handle command line arguments
     if len(sys.argv) > 1:
-        if sys.argv[1] == "--install-claude":
+        if sys.argv[1] == "--version":
+            print(f"git-mcp-server {get_version()}")
+            return
+        elif sys.argv[1] == "--install-claude":
             install_claude_integration()
             return
         elif sys.argv[1] == "--install-gemini":
             install_gemini_integration()
+            return
+        elif sys.argv[1] in ["--help", "-h"]:
+            print("git-mcp-server - Git MCP Server")
+            print(f"Version: {get_version()}")
+            print()
+            print("Usage: git-mcp-server [OPTIONS]")
+            print()
+            print("Options:")
+            print("  --version          Show version and exit")
+            print("  --help, -h         Show this help message and exit")
+            print("  --install-claude   Install Claude Code integration")
+            print("  --install-gemini   Install Gemini CLI integration")
+            print()
+            print("Run without arguments to start the MCP server.")
             return
 
     mcp.run()
