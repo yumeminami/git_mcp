@@ -22,12 +22,17 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 4. **Create Pull/Merge Request with Fork Support**
    Use `create_merge_request()` with enhanced fork support:
 
-   **For Fork-to-Upstream PRs:**
+   **For GitHub Fork-to-Upstream PRs:**
    - Source branch: `username:branch-name` format (automatically detected)
    - Target repository: Upstream repository (parent)
    - Target branch: Usually `main` or `master`
 
-   **For Same-Repository PRs:**
+   **For GitLab Fork-to-Upstream MRs:**
+   - Source branch: `branch-name` format (simple branch name)
+   - Use `target_project_id` parameter for upstream project
+   - Target branch: Usually `main` or `master`
+
+   **For Same-Repository PRs/MRs:**
    - Source branch: `branch-name` format (current behavior)
    - Target repository: Current repository
    - Target branch: As specified or default

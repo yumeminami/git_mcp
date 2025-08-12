@@ -342,40 +342,99 @@ class GitLabAdapter(PlatformAdapter):
         title: str,
         **kwargs,
     ) -> MergeRequestResource:
-        """Create a new GitLab merge request."""
+        """Create a new GitLab merge request with cross-project support."""
         if not self.client:
             await self.authenticate()
 
         try:
-            project = self.client.projects.get(project_id)
+            # Parse branch references to handle cross-project scenarios
+            source_ref = self.parse_branch_reference(source_branch)
+            target_ref = self.parse_branch_reference(target_branch)
 
-            # Verify branches exist before creating merge request
-            try:
-                # Check if source branch exists
-                source_branches = project.branches.list(search=source_branch)
-                if not any(b.name == source_branch for b in source_branches):
-                    raise PlatformError(
-                        f"Source branch '{source_branch}' not found in project {project_id}. "
-                        f"Make sure the branch is pushed to the remote repository.",
-                        self.platform_name,
+            # Determine source and target projects
+            source_project_id = project_id
+            target_project_id = kwargs.get("target_project_id")
+
+            # Handle cross-project merge request setup
+            if target_project_id:
+                # Cross-project MR: source project creates MR to target project
+                print(
+                    f"Debug: GitLab - Creating cross-project MR from project {source_project_id} to {target_project_id}"
+                )
+                source_project = self.client.projects.get(source_project_id)
+                target_project = self.client.projects.get(target_project_id)
+
+                # Verify source branch exists in source project
+                try:
+                    source_branches = source_project.branches.list(
+                        search=source_ref["branch"]
+                    )
+                    if not any(b.name == source_ref["branch"] for b in source_branches):
+                        raise PlatformError(
+                            f"Source branch '{source_ref['branch']}' not found in project {source_project_id}. "
+                            f"Make sure the branch is pushed to the remote repository.",
+                            self.platform_name,
+                        )
+                except GitlabError as branch_error:
+                    print(
+                        f"Warning: Could not verify source branch existence: {branch_error}"
                     )
 
-                # Check if target branch exists
-                target_branches = project.branches.list(search=target_branch)
-                if not any(b.name == target_branch for b in target_branches):
-                    raise PlatformError(
-                        f"Target branch '{target_branch}' not found in project {project_id}",
-                        self.platform_name,
+                # Verify target branch exists in target project
+                try:
+                    target_branches = target_project.branches.list(
+                        search=target_ref["branch"]
                     )
-            except GitlabError as branch_error:
-                print(f"Warning: Could not verify branch existence: {branch_error}")
-                # Continue with merge request creation even if branch check fails
+                    if not any(b.name == target_ref["branch"] for b in target_branches):
+                        raise PlatformError(
+                            f"Target branch '{target_ref['branch']}' not found in project {target_project_id}",
+                            self.platform_name,
+                        )
+                except GitlabError as branch_error:
+                    print(
+                        f"Warning: Could not verify target branch existence: {branch_error}"
+                    )
+
+                # Use source project to create the MR
+                project = source_project
+            else:
+                # Same-project MR (existing behavior)
+                print(
+                    f"Debug: GitLab - Creating same-project MR in project {source_project_id}"
+                )
+                project = self.client.projects.get(source_project_id)
+
+                # Verify branches exist in same project
+                try:
+                    # Check if source branch exists
+                    source_branches = project.branches.list(search=source_ref["branch"])
+                    if not any(b.name == source_ref["branch"] for b in source_branches):
+                        raise PlatformError(
+                            f"Source branch '{source_ref['branch']}' not found in project {source_project_id}. "
+                            f"Make sure the branch is pushed to the remote repository.",
+                            self.platform_name,
+                        )
+
+                    # Check if target branch exists
+                    target_branches = project.branches.list(search=target_ref["branch"])
+                    if not any(b.name == target_ref["branch"] for b in target_branches):
+                        raise PlatformError(
+                            f"Target branch '{target_ref['branch']}' not found in project {source_project_id}",
+                            self.platform_name,
+                        )
+                except GitlabError as branch_error:
+                    print(f"Warning: Could not verify branch existence: {branch_error}")
+                    # Continue with merge request creation even if branch check fails
 
             mr_data = {
-                "source_branch": source_branch,
-                "target_branch": target_branch,
+                "source_branch": source_ref["branch"],
+                "target_branch": target_ref["branch"],
                 "title": title,
             }
+
+            # Add target_project_id for cross-project MR
+            if target_project_id:
+                mr_data["target_project_id"] = int(target_project_id)
 
             # Handle assignee parameter conversion
             if "assignee_username" in kwargs:
@@ -573,28 +632,28 @@ class GitLabAdapter(PlatformAdapter):
         """Parse GitLab branch reference into components.
 
         Args:
-            branch_ref: Branch reference in format 'branch' or 'owner:branch'
+            branch_ref: Branch reference in format 'branch' or 'project:branch'
 
         Returns:
-            Dict with keys: 'owner' (optional), 'branch', 'is_cross_repo'
+            Dict with keys: 'project' (optional), 'branch', 'is_cross_project'
         """
         if ":" in branch_ref:
-            # Cross-repository reference: 'owner:branch'
+            # Cross-project reference: 'project:branch'
             parts = branch_ref.split(":", 1)
             if len(parts) != 2:
                 raise ValueError(f"Invalid branch reference format: {branch_ref}")
 
-            owner, branch = parts
-            if not owner or not branch:
+            project, branch = parts
+            if not project or not branch:
                 raise ValueError(f"Invalid branch reference format: {branch_ref}")
 
-            return {"owner": owner, "branch": branch, "is_cross_repo": True}  # type: ignore[dict-item]
+            return {"project": project, "branch": branch, "is_cross_project": True}  # type: ignore[dict-item]
         else:
-            # Same-repository reference: 'branch'
+            # Same-project reference: 'branch'
             if not branch_ref:
                 raise ValueError("Branch reference cannot be empty")
 
-            return {"branch": branch_ref, "is_cross_repo": False}  # type: ignore[dict-item]
+            return {"branch": branch_ref, "is_cross_project": False}  # type: ignore[dict-item]
 
     # Helper methods
     def _convert_to_project_resource(self, project) -> ProjectResource:

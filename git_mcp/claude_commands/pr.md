@@ -62,7 +62,7 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 
 5. **Fork Workflow Examples**
 
-   **Example 1: Fork-to-Upstream PR**
+   **Example 1: GitHub Fork-to-Upstream PR**
    ```
    # Check if current repo is a fork
    get_fork_info("github", "myuser/upstream-project")
@@ -78,11 +78,28 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    )
    ```
 
-   **Example 2: Same-Repository PR (existing behavior)**
+   **Example 2: GitLab Fork-to-Upstream MR**
+   ```
+   # Check if current repo is a fork
+   get_fork_info("gitlab", "456")  # Fork project ID
+
+   # If it's a fork, create MR to upstream
+   create_merge_request(
+       platform="gitlab",
+       project_id="456",                              # Fork project ID (source)
+       source_branch="feature-branch",                # Simple branch name
+       target_branch="main",                          # Upstream main branch
+       target_project_id="123",                       # Upstream project ID (target)
+       title="Fix issue #123: Add new feature",
+       description="Implements feature as requested in issue..."
+   )
+   ```
+
+   **Example 3: Same-Repository PR/MR (existing behavior)**
    ```
    create_merge_request(
-       platform="github",
-       project_id="myuser/my-project",
+       platform="github",  # or "gitlab"
+       project_id="myuser/my-project",  # or GitLab project ID
        source_branch="feature-branch",                # Simple branch name
        target_branch="main",
        title="Fix issue #123: Add new feature",

@@ -223,9 +223,36 @@ async def create_merge_request(
     target_branch: str = "main",
     description: Optional[str] = None,
     assignee: Optional[str] = None,
+    target_project_id: Optional[str] = None,
     **kwargs,
 ) -> Dict[str, Any]:
-    """Create a new merge request"""
+    """Create a new merge request with cross-project support
+
+    Args:
+        platform: Git platform name (github, gitlab, etc.)
+        project_id: Source project ID (for cross-project MRs) or project ID (for same-project MRs)
+        title: Merge request title
+        source_branch: Source branch name or 'owner:branch' format for cross-repo
+        target_branch: Target branch name (default: 'main')
+        description: Optional merge request description
+        assignee: Optional assignee username
+        target_project_id: Optional target project ID for cross-project merge requests
+        **kwargs: Additional platform-specific parameters
+
+    Returns:
+        Dict containing merge request details
+
+    Examples:
+        # Same-project MR
+        create_merge_request("gitlab", "123", "Fix bug", "feature-branch", "main")
+
+        # Cross-project MR (fork to upstream)
+        create_merge_request("gitlab", "456", "Fix bug", "feature-branch", "main",
+                           target_project_id="123")
+
+        # GitHub cross-repo PR (using branch format)
+        create_merge_request("github", "upstream/repo", "Fix bug", "fork-owner:feature-branch", "main")
+    """
     create_kwargs = kwargs.copy()
 
     # Some MCP clients pass a single 'kwargs' argument as a JSON string.
@@ -265,6 +292,9 @@ async def create_merge_request(
 
     if assignee:
         create_kwargs["assignee_username"] = assignee
+
+    if target_project_id:
+        create_kwargs["target_project_id"] = target_project_id
 
     print(f"Debug: MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
     return await PlatformService.create_merge_request(

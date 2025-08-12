@@ -35,6 +35,12 @@ uv run git-mcp-server --help
 
 # Test MCP server directly
 echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
+
+# Build distribution packages
+uv build
+
+# Run development version in interactive MCP mode
+uv run mcp dev git_mcp/mcp_server.py
 ```
 
 ### Installation & Setup
@@ -141,7 +147,9 @@ When working on this codebase:
 
 ## Dependencies
 
-**Python Version**: Requires Python >=3.13
+**Python Version**: Requires Python >=3.13 (specified in pyproject.toml)
+
+**Build System**: Uses hatchling as the build backend
 
 Core dependencies (from pyproject.toml):
 - `python-gitlab>=4.4.0` - GitLab API client
@@ -163,6 +171,8 @@ Development tools:
 - `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
 - `pytest-asyncio>=0.23.0` - Async testing support
 - `pip-audit>=2.0.0` - Security vulnerability scanning
+
+**Pre-commit Configuration**: Includes ruff (linting/formatting), bandit (security), mypy (type checking), and standard file checks. Run with `uv run pre-commit run --all-files`.
 
 ## API Documentation
 
@@ -202,3 +212,64 @@ Development tools:
 - Bandit security scanning is configured to skip safe subprocess usage (`B404`, `B603`, `B607`)
 - Platform connections are tested before storing configuration
 - Username auto-detection reduces manual configuration and potential errors
+
+## MCP Tools Reference
+
+The MCP server exposes approximately 25 tools organized into categories:
+
+**Platform Management**: `list_platforms`, `test_platform_connection`, `refresh_platform_username`, `get_platform_config`, `get_current_user_info`
+
+**Project Operations**: `list_projects`, `get_project_details`, `create_project`, `delete_project`
+
+**Issue Management**: `list_issues`, `list_all_issues`, `list_my_issues`, `get_issue_details`, `get_issue_by_url`, `create_issue`, `update_issue`, `close_issue`
+
+**Merge Requests**: `list_merge_requests`, `get_merge_request_details`, `create_merge_request` (支持 GitLab 跨项目 MR), `list_my_merge_requests`
+
+**Repository Operations**: `create_fork`, `get_fork_info`, `list_forks`
+
+All tools support async operations and return structured data for integration with AI assistants.
+
+## GitLab Fork MR 支持
+
+**GitLab 跨项目 Merge Request** 现已完全支持，使用 `target_project_id` 参数：
+
+### GitLab Fork MR 用法
+
+```python
+# GitLab 跨项目 MR（从 fork 到上游项目）
+create_merge_request(
+    platform="gitlab",
+    project_id="456",              # fork 项目 ID（源项目）
+    source_branch="feature-branch",
+    target_branch="main",
+    title="Fix issue #123",
+    target_project_id="123",       # 上游项目 ID（目标项目）
+    description="详细描述..."
+)
+
+# GitLab 同项目 MR（现有功能保持不变）
+create_merge_request(
+    platform="gitlab",
+    project_id="123",
+    source_branch="feature-branch",
+    target_branch="main",
+    title="Fix issue #123"
+)
+```
+
+### GitHub Fork PR 对比
+
+```python
+# GitHub 跨仓库 PR（使用分支引用格式）
+create_merge_request(
+    platform="github",
+    project_id="upstream-owner/upstream-repo",  # 目标上游仓库
+    source_branch="fork-owner:feature-branch",  # fork 分支引用
+    target_branch="main",
+    title="Fix issue #123"
+)
+```
+
+**关键区别**：
+- **GitLab**: 使用 `target_project_id` 参数指定目标项目
+- **GitHub**: 使用 `owner:branch` 格式在 `source_branch` 中指定跨仓库引用
