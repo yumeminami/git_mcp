@@ -236,6 +236,20 @@ class PlatformAdapter(ABC):
         """Merge a merge request."""
         pass
 
+    @abstractmethod
+    async def get_merge_request_diff(
+        self, project_id: str, mr_id: str, **options
+    ) -> Dict[str, Any]:
+        """Get diff/changes for a merge request."""
+        pass
+
+    @abstractmethod
+    async def get_merge_request_commits(
+        self, project_id: str, mr_id: str, **filters
+    ) -> Dict[str, Any]:
+        """Get commits for a merge request."""
+        pass
+
     # Repository operations
     @abstractmethod
     async def list_branches(self, project_id: str, **filters) -> List[Dict[str, Any]]:

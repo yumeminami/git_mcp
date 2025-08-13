@@ -737,3 +737,33 @@ class PlatformService:
                 "note": "Use GitHub/GitLab web interface to view forks for now",
             }
         ]
+
+    @staticmethod
+    async def get_merge_request_diff(
+        platform_name: str, project_id: str, mr_id: str, **options
+    ) -> Dict[str, Any]:
+        """Get diff/changes for a merge request."""
+        adapter = PlatformService.get_adapter(platform_name)
+        diff_data = await adapter.get_merge_request_diff(project_id, mr_id, **options)
+
+        diff_data.update(
+            {"platform": platform_name, "project_id": project_id, "mr_id": mr_id}
+        )
+
+        return diff_data
+
+    @staticmethod
+    async def get_merge_request_commits(
+        platform_name: str, project_id: str, mr_id: str, **filters
+    ) -> Dict[str, Any]:
+        """Get commits for a merge request."""
+        adapter = PlatformService.get_adapter(platform_name)
+        commits_data = await adapter.get_merge_request_commits(
+            project_id, mr_id, **filters
+        )
+
+        commits_data.update(
+            {"platform": platform_name, "project_id": project_id, "mr_id": mr_id}
+        )
+
+        return commits_data

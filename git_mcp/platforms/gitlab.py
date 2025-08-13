@@ -628,6 +628,129 @@ class GitLabAdapter(PlatformAdapter):
                 f"Failed to get fork parent for {project_id}: {e}", self.platform_name
             )
 
+    async def get_merge_request_diff(
+        self, project_id: str, mr_id: str, **options
+    ) -> Dict[str, Any]:
+        """Get diff/changes for a GitLab merge request."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            mr = project.mergerequests.get(mr_id)
+
+            # Get diff format option (default: json)
+            diff_format = options.get("format", "json")
+            include_diff = options.get("include_diff", True)
+
+            # Get changes using GitLab changes API
+            changes = mr.changes()
+
+            # Initialize response structure
+            response = {
+                "mr_id": str(mr_id),
+                "total_changes": {
+                    "additions": 0,
+                    "deletions": 0,
+                    "files_changed": len(changes.get("changes", [])),
+                },
+                "files": [],
+                "diff_format": diff_format,
+                "truncated": False,
+            }
+
+            # Process file changes
+            for change in changes.get("changes", []):
+                file_info = {
+                    "path": change.get("new_path") or change.get("old_path", ""),
+                    "status": self._get_file_status(change),
+                    "additions": 0,  # GitLab doesn't provide line counts in changes
+                    "deletions": 0,
+                    "binary": change.get("diff", "").startswith("Binary files"),
+                }
+
+                # Include diff content if requested
+                if include_diff and not file_info["binary"]:
+                    file_info["diff"] = change.get("diff", "")
+
+                response["files"].append(file_info)
+
+            # Try to get overall stats from MR
+            if hasattr(mr, "changes_count"):
+                response["total_changes"]["files_changed"] = mr.changes_count
+
+            return response
+
+        except GitlabError as e:
+            if e.response_code == 404:
+                raise ResourceNotFoundError("merge_request", mr_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to get merge request diff {mr_id}: {e}", self.platform_name
+            )
+
+    async def get_merge_request_commits(
+        self, project_id: str, mr_id: str, **filters
+    ) -> Dict[str, Any]:
+        """Get commits for a GitLab merge request."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            mr = project.mergerequests.get(mr_id)
+
+            # Get commits from the merge request
+            commits = mr.commits()
+
+            response: Dict[str, Any] = {
+                "mr_id": str(mr_id),
+                "total_commits": len(commits),
+                "commits": [],
+            }
+
+            # Process each commit
+            for commit in commits:
+                commit_info = {
+                    "sha": commit.id,
+                    "message": commit.message,
+                    "author": commit.author_name,
+                    "authored_date": commit.authored_date,
+                    "committer": commit.committer_name,
+                    "committed_date": commit.committed_date,
+                    "url": commit.web_url if hasattr(commit, "web_url") else "",
+                }
+
+                # Add stats if available
+                if hasattr(commit, "stats"):
+                    commit_info["additions"] = getattr(commit.stats, "additions", 0)
+                    commit_info["deletions"] = getattr(commit.stats, "deletions", 0)
+
+                response["commits"].append(commit_info)
+
+            return response
+
+        except GitlabError as e:
+            if e.response_code == 404:
+                raise ResourceNotFoundError("merge_request", mr_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to get merge request commits {mr_id}: {e}", self.platform_name
+            )
+
+    def _get_file_status(self, change: Dict) -> str:
+        """Determine file status from GitLab change object."""
+        new_file = change.get("new_file", False)
+        deleted_file = change.get("deleted_file", False)
+        renamed_file = change.get("renamed_file", False)
+
+        if new_file:
+            return "added"
+        elif deleted_file:
+            return "deleted"
+        elif renamed_file:
+            return "renamed"
+        else:
+            return "modified"
+
     def parse_branch_reference(self, branch_ref: str) -> Dict[str, Any]:
         """Parse GitLab branch reference into components.
 
