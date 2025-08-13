@@ -316,6 +316,56 @@ async def list_my_merge_requests(
     )
 
 
+@mcp.tool()
+async def get_merge_request_diff(
+    platform: str, project_id: str, mr_id: str, **options
+) -> Dict[str, Any]:
+    """Get diff/changes for a merge request
+
+    Args:
+        platform: The platform name (e.g., 'gitlab', 'github')
+        project_id: The project identifier
+        mr_id: The merge request/pull request ID
+        **options: Optional parameters:
+            - format: Response format ('json', 'unified') - default: 'json'
+            - include_diff: Include actual diff content (bool) - default: True
+
+    Returns:
+        Dict containing:
+            - mr_id: The merge request ID
+            - total_changes: Summary of additions, deletions, files changed
+            - files: List of changed files with details
+            - diff_format: Format of the response
+            - truncated: Whether response was truncated
+    """
+    return await PlatformService.get_merge_request_diff(
+        platform, project_id, mr_id, **options
+    )
+
+
+@mcp.tool()
+async def get_merge_request_commits(
+    platform: str, project_id: str, mr_id: str, **filters
+) -> Dict[str, Any]:
+    """Get commits for a merge request
+
+    Args:
+        platform: The platform name (e.g., 'gitlab', 'github')
+        project_id: The project identifier
+        mr_id: The merge request/pull request ID
+        **filters: Optional filters for commit selection
+
+    Returns:
+        Dict containing:
+            - mr_id: The merge request ID
+            - total_commits: Number of commits
+            - commits: List of commit details with sha, message, author, dates, etc.
+    """
+    return await PlatformService.get_merge_request_commits(
+        platform, project_id, mr_id, **filters
+    )
+
+
 # Fork operations
 @mcp.tool()
 async def create_fork(platform: str, project_id: str, **kwargs) -> Dict[str, Any]:

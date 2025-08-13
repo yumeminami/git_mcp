@@ -731,6 +731,123 @@ class GitHubAdapter(PlatformAdapter):
                 f"Failed to get fork parent for {project_id}: {e}", self.platform_name
             )
 
+    async def get_merge_request_diff(
+        self, project_id: str, mr_id: str, **options
+    ) -> Dict[str, Any]:
+        """Get diff/changes for a GitHub pull request."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            pr = repo.get_pull(int(mr_id))
+
+            # Get diff format option (default: json)
+            diff_format = options.get("format", "json")
+            include_diff = options.get("include_diff", True)
+
+            # Get files changed in the PR
+            files = list(pr.get_files())
+
+            # Initialize response structure
+            response = {
+                "mr_id": str(mr_id),
+                "total_changes": {
+                    "additions": pr.additions,
+                    "deletions": pr.deletions,
+                    "files_changed": len(files),
+                },
+                "files": [],
+                "diff_format": diff_format,
+                "truncated": False,
+            }
+
+            # Process file changes
+            for file in files:
+                file_info = {
+                    "path": file.filename,
+                    "status": file.status,  # GitHub provides: added, removed, modified, renamed
+                    "additions": file.additions,
+                    "deletions": file.deletions,
+                    "binary": file.filename.endswith(
+                        (".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".exe")
+                    ),
+                }
+
+                # Include diff content if requested and file is not too large
+                if (
+                    include_diff
+                    and not file_info["binary"]
+                    and hasattr(file, "patch")
+                    and file.patch
+                ):
+                    file_info["diff"] = file.patch
+
+                response["files"].append(file_info)
+
+            return response
+
+        except GithubException as e:
+            if e.status == 404:
+                raise ResourceNotFoundError("pull_request", mr_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to get pull request diff {mr_id}: {e}", self.platform_name
+            )
+
+    async def get_merge_request_commits(
+        self, project_id: str, mr_id: str, **filters
+    ) -> Dict[str, Any]:
+        """Get commits for a GitHub pull request."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            pr = repo.get_pull(int(mr_id))
+
+            # Get commits from the pull request
+            commits = list(pr.get_commits())
+
+            response: Dict[str, Any] = {
+                "mr_id": str(mr_id),
+                "total_commits": len(commits),
+                "commits": [],
+            }
+
+            # Process each commit
+            for commit in commits:
+                commit_info = {
+                    "sha": commit.sha,
+                    "message": commit.commit.message,
+                    "author": commit.commit.author.name if commit.commit.author else "",
+                    "authored_date": commit.commit.author.date.isoformat()
+                    if commit.commit.author and commit.commit.author.date
+                    else "",
+                    "committer": commit.commit.committer.name
+                    if commit.commit.committer
+                    else "",
+                    "committed_date": commit.commit.committer.date.isoformat()
+                    if commit.commit.committer and commit.commit.committer.date
+                    else "",
+                    "url": commit.html_url,
+                }
+
+                # Add stats if available (GitHub provides these)
+                if hasattr(commit, "stats") and commit.stats:
+                    commit_info["additions"] = commit.stats.additions
+                    commit_info["deletions"] = commit.stats.deletions
+
+                response["commits"].append(commit_info)
+
+            return response
+
+        except GithubException as e:
+            if e.status == 404:
+                raise ResourceNotFoundError("pull_request", mr_id, self.platform_name)
+            raise PlatformError(
+                f"Failed to get pull request commits {mr_id}: {e}", self.platform_name
+            )
+
     def parse_branch_reference(self, branch_ref: str) -> Dict[str, Any]:
         """Parse GitHub branch reference into components.
 
