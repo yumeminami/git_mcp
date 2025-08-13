@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2025-08-13
+
+### Added
+- **MR/PR Detail Functionality**: Comprehensive merge request and pull request analysis tools
+  - **New MCP Tool**: `get_merge_request_diff()` - Retrieves file changes and diff content with configurable options
+  - **New MCP Tool**: `get_merge_request_commits()` - Gets commit history with comprehensive metadata including SHA, message, author, dates, statistics, and URLs
+  - **Cross-Platform Support**: Both tools work consistently across GitLab and GitHub with standardized response formats
+  - **Rich Options**: Configurable diff content inclusion, format selection, and filtering capabilities
+  - **Production Features**: Binary file detection, Unicode content support, proper error handling, and performance optimizations
+  - **Comprehensive Testing**: Validated on real-world scenarios including large MRs (17 files, 31 commits) and complex merges
+  - Implementation spans: `PlatformAdapter` base class, `PlatformService` layer, GitLab/GitHub adapters, and MCP server registration
+  - Closes issue #19
+
 ## [0.1.8] - 2025-08-11
 
 ### Fixed
