@@ -297,6 +297,101 @@ for cmd in mr_commands:
     mr.add_command(cmd)
 
 
+@cli.command("install-gitlab-ci")
+@click.option(
+    "--target-dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    default=".",
+    help="Target directory to install GitLab CI files (default: current directory)",
+)
+@click.option(
+    "--template",
+    type=click.Choice(["claude", "claude-code-review", "both"]),
+    default="both",
+    help="Which template to install (default: both)",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite existing files if they exist",
+)
+@click.pass_context
+def install_gitlab_ci(ctx, target_dir, template, force):
+    """Install GitLab CI configuration files for Claude Code integration."""
+    from pathlib import Path
+    import shutil
+    import importlib.resources
+
+    formatter = ctx.obj.get_formatter()
+    target_path = Path(target_dir).resolve()
+    
+    # Ensure target directory has .gitlab-ci.yml directory or can create it
+    gitlab_ci_dir = target_path / ".gitlab-ci"
+    
+    try:
+        # Templates to install
+        templates_to_install = []
+        if template in ["claude", "both"]:
+            templates_to_install.append("claude.gitlab-ci.yml")
+        if template in ["claude-code-review", "both"]:
+            templates_to_install.append("claude-code-review.gitlab-ci.yml")
+        
+        # Get templates from package data
+        gitlab_templates_ref = importlib.resources.files("git_mcp.gitlab_ci_templates")
+        
+        if not gitlab_templates_ref.is_dir():
+            formatter.print_error("GitLab CI templates not found in package")
+            return
+        
+        # Create .gitlab-ci directory if it doesn't exist
+        gitlab_ci_dir.mkdir(parents=True, exist_ok=True)
+        
+        installed_files = []
+        
+        # Install each template
+        for template_name in templates_to_install:
+            try:
+                template_file = gitlab_templates_ref / template_name
+                if template_file.is_file():
+                    target_file = gitlab_ci_dir / template_name
+                    
+                    # Check if file exists and force flag
+                    if target_file.exists() and not force:
+                        formatter.print_warning(
+                            f"File {target_file} already exists. Use --force to overwrite."
+                        )
+                        continue
+                    
+                    # Copy template content
+                    target_file.write_text(template_file.read_text())
+                    installed_files.append(str(target_file.relative_to(target_path)))
+                    formatter.print_success(f"   Installed: {template_name}")
+                else:
+                    formatter.print_warning(f"Template {template_name} not found")
+            except Exception as e:
+                formatter.print_error(f"Failed to install {template_name}: {e}")
+        
+        if installed_files:
+            formatter.print_success(f"\n✅ GitLab CI templates installed successfully!")
+            formatter.print_info("\nInstalled files:")
+            for file_path in installed_files:
+                formatter.print_info(f"   📄 {file_path}")
+            
+            formatter.print_info(f"\n📋 Next steps:")
+            formatter.print_info("1. Set up the CLAUDE_CODE_OAUTH_TOKEN secret in your GitLab project settings")
+            formatter.print_info("2. Configure GitLab webhooks if using the claude.gitlab-ci.yml template")
+            formatter.print_info("3. Include the templates in your main .gitlab-ci.yml file:")
+            formatter.print_info("   include:")
+            for file_path in installed_files:
+                formatter.print_info(f"     - local: '{file_path}'")
+        else:
+            formatter.print_warning("No templates were installed")
+            
+    except Exception as e:
+        formatter.print_error(f"Failed to install GitLab CI templates: {e}")
+        ctx.exit(1)
+
+
 def main():
     """Main entry point for the CLI."""
     try:

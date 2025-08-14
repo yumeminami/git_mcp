@@ -1,0 +1,64 @@
+# Claude Code Review
+# GitLab CI/CD pipeline for automated code review using Claude Code
+
+claude-review:
+  image: ubuntu:latest
+  stage: review
+  rules:
+    # Trigger on merge request events
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Optional: Only run on specific file changes
+    # changes:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+    #   - "src/**/*.js"
+    #   - "src/**/*.jsx"
+    
+  # Optional: Filter by MR author
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_AUTHOR_LOGIN == "external-contributor" || $CI_MERGE_REQUEST_AUTHOR_LOGIN == "new-developer")
+  
+  variables:
+    # Direct prompt for automated review (no @claude mention needed)
+    CLAUDE_DIRECT_PROMPT: |
+      Please review this merge request and provide feedback on:
+      - Code quality and best practices
+      - Potential bugs or issues
+      - Performance considerations
+      - Security concerns
+      - Test coverage
+      
+      Be constructive and helpful in your feedback.
+    
+    # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same MR
+    # CLAUDE_USE_STICKY_COMMENT: "true"
+    
+    # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
+    # CLAUDE_MODEL: "claude-opus-4-1-20250805"
+    
+  before_script:
+    # Install required dependencies
+    - apt-get update -qq && apt-get install -y -qq git curl jq
+    - curl -fsSL https://github.com/anthropics/claude-code-action/releases/latest/download/claude-code-action-linux -o /usr/local/bin/claude-code-action
+    - chmod +x /usr/local/bin/claude-code-action
+    
+  script:
+    # Run Claude Code Review
+    - |
+      claude-code-action \
+        --token "$CLAUDE_CODE_OAUTH_TOKEN" \
+        --direct-prompt "$CLAUDE_DIRECT_PROMPT" \
+        ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+        ${CLAUDE_USE_STICKY_COMMENT:+--use-sticky-comment} \
+        ${CLAUDE_ALLOWED_TOOLS:+--allowed-tools "$CLAUDE_ALLOWED_TOOLS"}
+    
+  # Optional: Add specific tools for running tests or linting
+  # variables:
+  #   CLAUDE_ALLOWED_TOOLS: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+  
+  # Optional: Skip review for certain conditions
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE !~ /\[skip-review\]/ && $CI_MERGE_REQUEST_TITLE !~ /\[WIP\]/
+
+stages:
+  - review

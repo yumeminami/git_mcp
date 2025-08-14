@@ -412,6 +412,107 @@ async def list_forks(
     return await PlatformService.list_forks(platform, project_id, limit)
 
 
+# GitLab CI Installation Tool
+@mcp.tool()
+async def install_gitlab_ci(
+    target_dir: str = ".",
+    template: str = "both",
+    force: bool = False
+) -> Dict[str, Any]:
+    """Install GitLab CI configuration files for Claude Code integration
+    
+    Args:
+        target_dir: Target directory to install GitLab CI files (default: current directory)
+        template: Which template to install - 'claude', 'claude-code-review', or 'both' (default: both)
+        force: Overwrite existing files if they exist (default: False)
+        
+    Returns:
+        Dict containing installation status and installed files
+    """
+    from pathlib import Path
+    import importlib.resources
+
+    try:
+        target_path = Path(target_dir).resolve()
+        
+        if not target_path.exists() or not target_path.is_dir():
+            return {
+                "success": False,
+                "error": f"Target directory {target_dir} does not exist or is not a directory",
+                "installed_files": []
+            }
+        
+        # Ensure target directory has .gitlab-ci directory or can create it
+        gitlab_ci_dir = target_path / ".gitlab-ci"
+        
+        # Templates to install
+        templates_to_install = []
+        if template in ["claude", "both"]:
+            templates_to_install.append("claude.gitlab-ci.yml")
+        if template in ["claude-code-review", "both"]:
+            templates_to_install.append("claude-code-review.gitlab-ci.yml")
+        
+        # Get templates from package data
+        gitlab_templates_ref = importlib.resources.files("git_mcp.gitlab_ci_templates")
+        
+        if not gitlab_templates_ref.is_dir():
+            return {
+                "success": False,
+                "error": "GitLab CI templates not found in package",
+                "installed_files": []
+            }
+        
+        # Create .gitlab-ci directory if it doesn't exist
+        gitlab_ci_dir.mkdir(parents=True, exist_ok=True)
+        
+        installed_files = []
+        warnings = []
+        
+        # Install each template
+        for template_name in templates_to_install:
+            template_file = gitlab_templates_ref / template_name
+            if template_file.is_file():
+                target_file = gitlab_ci_dir / template_name
+                
+                # Check if file exists and force flag
+                if target_file.exists() and not force:
+                    warnings.append(f"File {target_file} already exists. Use force=true to overwrite.")
+                    continue
+                
+                # Copy template content
+                target_file.write_text(template_file.read_text())
+                installed_files.append(str(target_file.relative_to(target_path)))
+            else:
+                warnings.append(f"Template {template_name} not found")
+        
+        next_steps = [
+            "Set up the CLAUDE_CODE_OAUTH_TOKEN secret in your GitLab project settings",
+            "Configure GitLab webhooks if using the claude.gitlab-ci.yml template",
+            "Include the templates in your main .gitlab-ci.yml file"
+        ]
+        
+        if installed_files:
+            include_config = []
+            for file_path in installed_files:
+                include_config.append(f"  - local: '{file_path}'")
+            next_steps.append(f"Add to your .gitlab-ci.yml:\ninclude:\n" + "\n".join(include_config))
+        
+        return {
+            "success": True,
+            "installed_files": installed_files,
+            "warnings": warnings,
+            "next_steps": next_steps,
+            "message": f"✅ GitLab CI templates installed successfully! Installed {len(installed_files)} file(s)."
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to install GitLab CI templates: {str(e)}",
+            "installed_files": []
+        }
+
+
 @mcp.resource("config://platforms")
 async def get_platforms_config() -> Dict[str, Any]:
     """Get the current platforms configuration"""

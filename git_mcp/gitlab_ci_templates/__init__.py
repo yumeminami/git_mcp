@@ -1,0 +1,1 @@
+"""GitLab CI templates for Claude Code integration."""

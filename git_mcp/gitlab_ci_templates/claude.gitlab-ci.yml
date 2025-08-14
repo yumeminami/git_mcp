@@ -1,0 +1,66 @@
+# Claude Code
+# GitLab CI/CD pipeline for Claude Code integration with @claude mentions
+
+claude:
+  image: ubuntu:latest
+  stage: claude
+  rules:
+    # Trigger on issue comments that mention @claude
+    - if: $CI_PIPELINE_SOURCE == "external" && $WEBHOOK_TYPE == "issue_comment" && $COMMENT_BODY =~ /@claude/
+    # Trigger on merge request notes that mention @claude
+    - if: $CI_PIPELINE_SOURCE == "external" && $WEBHOOK_TYPE == "merge_request_note" && $COMMENT_BODY =~ /@claude/
+    # Trigger on merge request review comments that mention @claude
+    - if: $CI_PIPELINE_SOURCE == "external" && $WEBHOOK_TYPE == "merge_request_review_note" && $COMMENT_BODY =~ /@claude/
+    # Trigger on issues that mention @claude in title or body
+    - if: $CI_PIPELINE_SOURCE == "external" && $WEBHOOK_TYPE == "issue" && ($ISSUE_TITLE =~ /@claude/ || $ISSUE_BODY =~ /@claude/)
+  
+  variables:
+    # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
+    # CLAUDE_MODEL: "claude-opus-4-1-20250805"
+    
+    # Optional: Customize the trigger phrase (default: @claude)
+    # CLAUDE_TRIGGER_PHRASE: "/claude"
+    
+    # Optional: Trigger when specific user is assigned to an issue
+    # CLAUDE_ASSIGNEE_TRIGGER: "claude-bot"
+    
+    # Optional: Add custom instructions for Claude to customize its behavior for your project
+    # CLAUDE_CUSTOM_INSTRUCTIONS: |
+    #   Follow our coding standards
+    #   Ensure all new code has tests
+    #   Use TypeScript for new files
+    
+    # Optional: Custom environment variables for Claude
+    # CLAUDE_ENV: |
+    #   NODE_ENV: test
+    
+  before_script:
+    # Install required dependencies
+    - apt-get update -qq && apt-get install -y -qq git curl jq
+    - curl -fsSL https://github.com/anthropics/claude-code-action/releases/latest/download/claude-code-action-linux -o /usr/local/bin/claude-code-action
+    - chmod +x /usr/local/bin/claude-code-action
+    
+  script:
+    # Run Claude Code
+    - |
+      claude-code-action \
+        --token "$CLAUDE_CODE_OAUTH_TOKEN" \
+        ${CLAUDE_MODEL:+--model "$CLAUDE_MODEL"} \
+        ${CLAUDE_TRIGGER_PHRASE:+--trigger-phrase "$CLAUDE_TRIGGER_PHRASE"} \
+        ${CLAUDE_ASSIGNEE_TRIGGER:+--assignee-trigger "$CLAUDE_ASSIGNEE_TRIGGER"} \
+        ${CLAUDE_ALLOWED_TOOLS:+--allowed-tools "$CLAUDE_ALLOWED_TOOLS"} \
+        ${CLAUDE_CUSTOM_INSTRUCTIONS:+--custom-instructions "$CLAUDE_CUSTOM_INSTRUCTIONS"} \
+        ${CLAUDE_ENV:+--claude-env "$CLAUDE_ENV"}
+    
+  # Optional: Allow Claude to run specific commands
+  # variables:
+  #   CLAUDE_ALLOWED_TOOLS: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
+
+stages:
+  - claude
+
+# Note: This configuration assumes you have set up GitLab webhooks to trigger the pipeline
+# when the appropriate events occur. You may need to configure:
+# 1. A webhook URL pointing to your GitLab CI/CD pipeline trigger
+# 2. Environment variables for the webhook data (WEBHOOK_TYPE, COMMENT_BODY, etc.)
+# 3. The CLAUDE_CODE_OAUTH_TOKEN secret variable in your GitLab project settings
