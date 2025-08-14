@@ -27,7 +27,7 @@ class CLIContext:
         if not self.formatter:
             self.formatter = OutputFormatter(self.output_format)
         return self.formatter
-    
+
     def get_logger(self):
         if not self.logger:
             self.logger = get_logger("git_mcp.cli")
@@ -63,7 +63,7 @@ def cli(ctx, output_format, platform, config_dir, debug, version):
         ctx.exit()
 
     ctx.ensure_object(CLIContext)
-    
+
     # Setup logging first
     if debug:
         setup_logging(debug=True)
@@ -74,7 +74,7 @@ def cli(ctx, output_format, platform, config_dir, debug, version):
     if config_dir:
         from pathlib import Path
         from .core.config import init_config
-        
+
         if ctx.obj.debug:
             logger = ctx.obj.get_logger()
             logger.debug(f"Using custom config directory: {config_dir}")
@@ -91,7 +91,7 @@ def cli(ctx, output_format, platform, config_dir, debug, version):
         ctx.obj.platform = platform
     else:
         ctx.obj.platform = ctx.obj.config.defaults.platform
-    
+
     if ctx.obj.debug:
         logger = ctx.obj.get_logger()
         logger.debug(f"Output format: {ctx.obj.output_format}")

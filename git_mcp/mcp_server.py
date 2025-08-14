@@ -30,7 +30,9 @@ async def test_platform_connection(platform: str) -> Dict[str, Any]:
     """Test connection to a configured platform"""
     logger.debug(f"MCP Tool: test_platform_connection called for platform '{platform}'")
     result = await PlatformService.test_platform_connection(platform)
-    logger.debug(f"MCP Tool: test_platform_connection result: {result.get('success', False)}")
+    logger.debug(
+        f"MCP Tool: test_platform_connection result: {result.get('success', False)}"
+    )
     return result
 
 
@@ -280,7 +282,7 @@ async def create_merge_request(
                     if k not in create_kwargs:
                         create_kwargs[k] = v
         except Exception as e:  # nosec B110 - best-effort parsing
-            print(f"Warning: Failed to parse kwargs JSON: {e}")
+            logger.warning(f"Failed to parse kwargs JSON: {e}")
 
     # Handle description from either parameter or kwargs
     final_description = description
@@ -462,7 +464,7 @@ def main():
         if "--debug" in sys.argv:
             debug_mode = True
             sys.argv.remove("--debug")  # Remove so other args processing works
-        
+
         if sys.argv[1] == "--version":
             print(f"git-mcp-server {get_version()}")
             return
@@ -486,7 +488,9 @@ def main():
             print("  --install-gemini   Install Gemini CLI integration")
             print()
             print("Environment Variables:")
-            print("  GIT_MCP_SERVER_LOG_LEVEL    Set log level (DEBUG, INFO, WARNING, ERROR)")
+            print(
+                "  GIT_MCP_SERVER_LOG_LEVEL    Set log level (DEBUG, INFO, WARNING, ERROR)"
+            )
             print("  GIT_MCP_SERVER_DEBUG        Enable debug mode (true/false)")
             print("  GIT_MCP_SERVER_LOG_FILE     Log to file path")
             print()
@@ -500,7 +504,7 @@ def main():
     else:
         # Still setup logging to respect environment variables
         setup_logging()
-    
+
     mcp.run()
 
 
