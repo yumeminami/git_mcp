@@ -110,9 +110,9 @@ class TestLoggingConfig:
             config = LoggingConfig()
 
             assert config.log_level == expected_level, f"Failed for value: {value}"
-            assert (
-                config.debug_enabled is expected_debug
-            ), f"Debug flag failed for value: {value}"
+            assert config.debug_enabled is expected_debug, (
+                f"Debug flag failed for value: {value}"
+            )
 
             if value:
                 del os.environ["GIT_MCP_SERVER_LOG_LEVEL"]
