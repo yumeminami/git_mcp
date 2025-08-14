@@ -8,6 +8,7 @@ from .commands.issue import issue_commands
 from .commands.mr import mr_commands
 from .core.config import get_config
 from .core.exceptions import GitMCPError
+from .core.logging import setup_logging, get_logger
 from .utils.output import OutputFormatter
 from . import get_version
 
@@ -19,6 +20,7 @@ class CLIContext:
         self.output_format = "table"
         self.platform = None
         self.formatter = None
+        self.logger = get_logger("cli")
 
     def get_formatter(self) -> OutputFormatter:
         if not self.formatter:
@@ -37,17 +39,25 @@ class CLIContext:
 @click.option("--platform", help="Default platform to use")
 @click.option("--config-dir", type=click.Path(), help="Configuration directory path")
 @click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable debug logging",
+)
+@click.option(
     "--version",
     is_flag=True,
     help="Show version and exit",
 )
 @click.pass_context
-def cli(ctx, output_format, platform, config_dir, version):
+def cli(ctx, output_format, platform, config_dir, debug, version):
     """Git MCP Server - Unified management for GitHub and GitLab."""
     if version:
         click.echo(f"git-mcp {get_version()}")
         ctx.exit()
 
+    # Setup logging first
+    setup_logging(debug=debug)
+    
     # If no subcommand is provided, show help
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
@@ -55,10 +65,14 @@ def cli(ctx, output_format, platform, config_dir, version):
 
     ctx.ensure_object(CLIContext)
 
+    # Log CLI configuration
+    ctx.obj.logger.debug(f"CLI started with debug={debug}, format={output_format}, platform={platform}")
+
     if config_dir:
         from pathlib import Path
         from .core.config import init_config
 
+        ctx.obj.logger.debug(f"Using custom config directory: {config_dir}")
         init_config(Path(config_dir))
         ctx.obj.config = get_config()
 
@@ -71,6 +85,8 @@ def cli(ctx, output_format, platform, config_dir, version):
         ctx.obj.platform = platform
     else:
         ctx.obj.platform = ctx.obj.config.defaults.platform
+
+    ctx.obj.logger.debug(f"CLI configured with output_format={ctx.obj.output_format}, platform={ctx.obj.platform}")
 
 
 @cli.group()
