@@ -5,23 +5,33 @@ import json
 from mcp.server.fastmcp import FastMCP
 
 from .services.platform_service import PlatformService
+from .core.logging import setup_logging, get_logger
 
 
 # Create the MCP server
 mcp = FastMCP("Git MCP Server")
+
+# Global logger for MCP server
+logger = get_logger("git_mcp.mcp_server")
 
 
 # Platform Management Tools
 @mcp.tool()
 async def list_platforms() -> List[Dict[str, str]]:
     """List all configured Git platforms (GitLab, GitHub, etc.)"""
-    return await PlatformService.list_platforms()
+    logger.debug("MCP Tool: list_platforms called")
+    result = await PlatformService.list_platforms()
+    logger.debug(f"MCP Tool: list_platforms returned {len(result)} platforms")
+    return result
 
 
 @mcp.tool()
 async def test_platform_connection(platform: str) -> Dict[str, Any]:
     """Test connection to a configured platform"""
-    return await PlatformService.test_platform_connection(platform)
+    logger.debug(f"MCP Tool: test_platform_connection called for platform '{platform}'")
+    result = await PlatformService.test_platform_connection(platform)
+    logger.debug(f"MCP Tool: test_platform_connection result: {result.get('success', False)}")
+    return result
 
 
 @mcp.tool()
@@ -284,10 +294,10 @@ async def create_merge_request(
 
     if final_description:
         create_kwargs["description"] = final_description
-        print(
-            f"Debug: MCP Server - description parameter set: {final_description[:100]}..."
+        logger.debug(
+            f"MCP Server - description parameter set: {final_description[:100]}..."
             if len(final_description) > 100
-            else f"Debug: MCP Server - description parameter set: {final_description}"
+            else f"MCP Server - description parameter set: {final_description}"
         )
 
     if assignee:
@@ -296,7 +306,7 @@ async def create_merge_request(
     if target_project_id:
         create_kwargs["target_project_id"] = target_project_id
 
-    print(f"Debug: MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
+    logger.debug(f"MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
     return await PlatformService.create_merge_request(
         platform, project_id, title, source_branch, target_branch, **create_kwargs
     )
@@ -447,7 +457,12 @@ def main():
     from . import get_version
 
     # Handle command line arguments
+    debug_mode = False
     if len(sys.argv) > 1:
+        if "--debug" in sys.argv:
+            debug_mode = True
+            sys.argv.remove("--debug")  # Remove so other args processing works
+        
         if sys.argv[1] == "--version":
             print(f"git-mcp-server {get_version()}")
             return
@@ -465,13 +480,27 @@ def main():
             print()
             print("Options:")
             print("  --version          Show version and exit")
+            print("  --debug            Enable debug logging")
             print("  --help, -h         Show this help message and exit")
             print("  --install-claude   Install Claude Code integration")
             print("  --install-gemini   Install Gemini CLI integration")
             print()
+            print("Environment Variables:")
+            print("  GIT_MCP_SERVER_LOG_LEVEL    Set log level (DEBUG, INFO, WARNING, ERROR)")
+            print("  GIT_MCP_SERVER_DEBUG        Enable debug mode (true/false)")
+            print("  GIT_MCP_SERVER_LOG_FILE     Log to file path")
+            print()
             print("Run without arguments to start the MCP server.")
             return
 
+    # Setup logging based on debug flag or environment
+    if debug_mode:
+        setup_logging(debug=True)
+        logger.info("MCP Server starting with debug logging enabled")
+    else:
+        # Still setup logging to respect environment variables
+        setup_logging()
+    
     mcp.run()
 
 
