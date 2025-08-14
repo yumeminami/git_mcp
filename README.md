@@ -348,6 +348,163 @@ uv tool install git_mcp_server --upgrade
 git-mcp-server --install-claude  # or --install-gemini
 ```
 
+## 🐛 Debug & Logging
+
+Git MCP Server includes comprehensive debugging and logging capabilities to help troubleshoot issues and understand system behavior.
+
+### Debug Mode
+
+Enable debug mode to get detailed logging output with enhanced formatting:
+
+**CLI Commands:**
+```bash
+# Enable debug mode for CLI commands
+git-mcp --debug config list
+git-mcp --debug issue list --platform github
+
+# Debug mode shows detailed operation logs
+git-mcp --debug config test my-gitlab
+```
+
+**MCP Server:**
+```bash
+# Start MCP server with debug logging
+git-mcp-server --debug
+
+# Shows detailed MCP tool calls and responses
+git-mcp-server --debug
+```
+
+### Environment Variables
+
+Configure logging behavior using environment variables:
+
+```bash
+# Set log level (DEBUG, INFO, WARNING, ERROR)
+export GIT_MCP_SERVER_LOG_LEVEL=DEBUG
+
+# Enable debug mode (alternative to --debug flag)
+export GIT_MCP_SERVER_DEBUG=true
+
+# Log to file instead of/in addition to console
+export GIT_MCP_SERVER_LOG_FILE=~/.git-mcp/debug.log
+
+# Run with environment variables
+git-mcp-server
+```
+
+### Log File Configuration
+
+Enable file logging for persistent debugging:
+
+```bash
+# Set log file path
+export GIT_MCP_SERVER_LOG_FILE=~/.git-mcp/git-mcp.log
+
+# Logs will be appended to file with timestamps
+git-mcp-server --debug
+```
+
+**Log file format:**
+```
+2025-08-15 02:05:23,123 - git_mcp.mcp_server - DEBUG - MCP Tool: list_platforms called
+2025-08-15 02:05:23,124 - git_mcp.platforms.gitlab - DEBUG - Connecting to GitLab at https://gitlab.com
+2025-08-15 02:05:23,156 - git_mcp.mcp_server - DEBUG - MCP Tool: list_platforms returned 2 platforms
+```
+
+### Rich Console Output
+
+Debug mode enables rich console formatting with:
+
+- **🎨 Colored output** for different log levels
+- **📁 File paths** shown for debug messages
+- **⏰ Timestamps** for all debug entries
+- **📊 Structured tracebacks** for errors
+- **🔍 Local variables** in error traces (debug mode only)
+
+### Troubleshooting Common Issues
+
+**Enable debug mode when experiencing:**
+
+```bash
+# Connection issues
+export GIT_MCP_SERVER_LOG_LEVEL=DEBUG
+git-mcp config test my-gitlab
+
+# MCP tool failures
+git-mcp-server --debug
+
+# Authentication problems
+export GIT_MCP_SERVER_DEBUG=true
+git-mcp issue list --platform github
+```
+
+**Debug MCP Integration:**
+
+```bash
+# Test MCP server communication
+echo '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | git-mcp-server --debug
+
+# Claude Code MCP debugging
+claude mcp logs git-mcp-server
+
+# Check MCP server status
+claude mcp status
+```
+
+### Log Levels Explained
+
+- **DEBUG**: Detailed function calls, API requests, internal operations
+- **INFO**: General information about operations and status
+- **WARNING**: Non-critical issues that may need attention
+- **ERROR**: Critical errors that prevent operation
+
+### Environment Variable Priority
+
+Configuration priority (highest to lowest):
+1. **CLI flags**: `--debug` overrides environment variables
+2. **Environment variables**: `GIT_MCP_SERVER_*` settings
+3. **Default values**: INFO level, console output only
+
+### Debug Examples
+
+**Debugging Platform Connection:**
+```bash
+# Enable debug and test connection
+export GIT_MCP_SERVER_LOG_LEVEL=DEBUG
+git-mcp config test my-gitlab
+
+# Output shows detailed connection process:
+# DEBUG - Connecting to GitLab at https://gitlab.com
+# DEBUG - Authentication successful for user: myusername
+# DEBUG - API version: v4
+# INFO - Connection to 'my-gitlab' successful
+```
+
+**Debugging MCP Tool Calls:**
+```bash
+# Start server with debug logging
+git-mcp-server --debug
+
+# Shows MCP tool invocations:
+# DEBUG - MCP Tool: list_projects called with platform='gitlab'
+# DEBUG - Found 15 projects for user
+# DEBUG - MCP Tool: list_projects returned 15 projects
+```
+
+**File + Console Logging:**
+```bash
+# Log to both console and file
+export GIT_MCP_SERVER_LOG_LEVEL=DEBUG
+export GIT_MCP_SERVER_LOG_FILE=~/.git-mcp/debug.log
+
+# Console shows rich formatted output
+# File contains timestamped plain text logs
+git-mcp-server
+```
+
+This logging system helps diagnose issues, understand system behavior, and provides detailed insights for development and troubleshooting.
+
 ## 🌟 Key Benefits
 
 - **⚡ Speed**: From issue to PR in minutes, not hours
