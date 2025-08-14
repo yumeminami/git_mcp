@@ -173,8 +173,34 @@ class GitMCPConfig:
             self.platforms[platform_name].token = token
 
     def get_token(self, platform_name: str) -> Optional[str]:
-        """Retrieve token from keyring."""
-        return keyring.get_password("git-mcp", platform_name)
+        """Retrieve token from keyring or environment variable.
+
+        For SSH sessions where keychain is inaccessible, falls back to:
+        - GIT_MCP_{PLATFORM_NAME}_TOKEN environment variable
+        - GIT_MCP_TOKEN_{PLATFORM_NAME} environment variable (alternative format)
+        """
+        import os
+
+        # Try environment variables first (useful for SSH sessions)
+        env_token = os.environ.get(
+            f"GIT_MCP_{platform_name.upper()}_TOKEN"
+        ) or os.environ.get(f"GIT_MCP_TOKEN_{platform_name.upper()}")
+        if env_token:
+            return env_token
+
+        # Fall back to keyring
+        try:
+            return keyring.get_password("git-mcp", platform_name)
+        except (keyring.errors.KeyringError, Exception):
+            # If keyring fails (common in SSH sessions), check env vars again with error message
+            if not env_token:
+                import sys
+
+                print(
+                    f"Warning: Cannot access keychain (SSH session?). Set GIT_MCP_{platform_name.upper()}_TOKEN environment variable.",
+                    file=sys.stderr,
+                )
+            return None
 
     def remove_token(self, platform_name: str) -> None:
         """Remove token from keyring."""

@@ -90,7 +90,15 @@ def config():
 )
 @click.pass_context
 def config_add(ctx, name, type, url, token, username, no_auto_username):
-    """Add a new platform configuration."""
+    """Add a new platform configuration.
+
+    After successful configuration, you'll be prompted to set up environment
+    variables for SSH sessions or CI/CD environments where keychain access
+    may not be available.
+
+    Environment variables take precedence over keychain storage and use the
+    format: GIT_MCP_{PLATFORM_NAME}_TOKEN
+    """
 
     async def add_platform():
         try:
@@ -110,6 +118,53 @@ def config_add(ctx, name, type, url, token, username, no_auto_username):
                 )
             else:
                 formatter.print_success(f"Platform '{name}' added successfully")
+
+            # Prompt for environment variable setup
+            formatter.print_info(
+                "\n💡 For SSH sessions or CI/CD environments, you can also use environment variables:"
+            )
+            formatter.print_info(
+                f"   export GIT_MCP_{name.upper()}_TOKEN='your-token-here'"
+            )
+
+            if click.confirm(
+                "\nWould you like to see how to set this as an environment variable?"
+            ):
+                import os
+
+                shell = os.environ.get("SHELL", "/bin/bash").split("/")[-1]
+
+                formatter.print_info("\n📝 To set the environment variable:")
+                formatter.print_info("\n1. For current session:")
+                formatter.print_info(
+                    f"   export GIT_MCP_{name.upper()}_TOKEN='{token}'"
+                )
+
+                formatter.print_info(
+                    "\n2. To make it permanent, add to your shell config:"
+                )
+                if shell == "zsh":
+                    formatter.print_info(
+                        f"   echo 'export GIT_MCP_{name.upper()}_TOKEN=\"your-token\"' >> ~/.zshrc"
+                    )
+                elif shell == "bash":
+                    formatter.print_info(
+                        f"   echo 'export GIT_MCP_{name.upper()}_TOKEN=\"your-token\"' >> ~/.bashrc"
+                    )
+                else:
+                    formatter.print_info(
+                        f'   Add to your shell config file: export GIT_MCP_{name.upper()}_TOKEN="your-token"'
+                    )
+
+                formatter.print_info("\n3. Then reload your shell config:")
+                if shell == "zsh":
+                    formatter.print_info("   source ~/.zshrc")
+                elif shell == "bash":
+                    formatter.print_info("   source ~/.bashrc")
+
+                formatter.print_info(
+                    "\n⚠️  Note: When using environment variables, they take precedence over keychain storage."
+                )
         except Exception as e:
             formatter = ctx.obj.get_formatter()
             formatter.print_error(f"Failed to add platform: {e}")
