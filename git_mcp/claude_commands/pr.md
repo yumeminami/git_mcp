@@ -28,9 +28,10 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 ## PR Creation Process
 
 1. **Prepare Branch**
-   !git add .
+   !git add related-resources
    !git status
    !git commit -m "Implement feature for issue #$ARGUMENTS"
+   !git push -u origin HEAD
 
 2. **Fork Detection and Repository Analysis**
    - Use `get_fork_info()` to check if current repository is a fork
