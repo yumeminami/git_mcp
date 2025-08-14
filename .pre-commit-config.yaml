@@ -2,13 +2,14 @@
 repos:
   # Ruff for linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.12.9
     hooks:
       # Run the linter
       - id: ruff
         args: [ --fix ]
       # Run the formatter
       - id: ruff-format
+        args: [.]
 
   # Basic hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
