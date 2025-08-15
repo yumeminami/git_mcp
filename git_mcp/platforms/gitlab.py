@@ -297,6 +297,31 @@ class GitLabAdapter(PlatformAdapter):
         kwargs["state_event"] = "close"
         return await self.update_issue(project_id, issue_id, **kwargs)
 
+    async def create_issue_comment(
+        self, project_id: str, issue_id: str, body: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a comment/note on a GitLab issue."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            issue = project.issues.get(issue_id)
+            note = issue.notes.create({"body": body})
+
+            return {
+                "id": str(note.id),
+                "author": getattr(note.author, "username", "Unknown")
+                if hasattr(note, "author")
+                else "Unknown",
+                "created_at": note.created_at,
+                "updated_at": note.updated_at,
+                "body": note.body,
+                "url": getattr(note, "web_url", None),
+            }
+        except GitlabError as e:
+            raise PlatformError(f"Failed to create comment: {e}", self.platform_name)
+
     # Merge Request operations
     async def list_merge_requests(
         self, project_id: str, **filters

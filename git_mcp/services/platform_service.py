@@ -579,6 +579,24 @@ class PlatformService:
         }
 
     @staticmethod
+    async def create_issue_comment(
+        platform_name: str, project_id: str, issue_id: str, body: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a comment on an issue."""
+        adapter = PlatformService.get_adapter(platform_name)
+        comment_data = await adapter.create_issue_comment(
+            project_id, issue_id, body, **kwargs
+        )
+
+        return {
+            "comment": comment_data,
+            "issue_id": issue_id,
+            "project_id": project_id,
+            "platform": platform_name,
+            "message": f"Comment created successfully on issue {issue_id}",
+        }
+
+    @staticmethod
     async def list_merge_requests(
         platform_name: str,
         project_id: str,
