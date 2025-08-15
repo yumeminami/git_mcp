@@ -273,3 +273,6 @@ create_merge_request(
 **关键区别**：
 - **GitLab**: 使用 `target_project_id` 参数指定目标项目
 - **GitHub**: 使用 `owner:branch` 格式在 `source_branch` 中指定跨仓库引用
+
+- CLAUDE.md\
+\介绍这个项目

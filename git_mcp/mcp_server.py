@@ -203,6 +203,16 @@ async def close_issue(platform: str, project_id: str, issue_id: str) -> Dict[str
     return await PlatformService.close_issue(platform, project_id, issue_id)
 
 
+@mcp.tool()
+async def create_issue_comment(
+    platform: str, project_id: str, issue_id: str, body: str, **kwargs
+) -> Dict[str, Any]:
+    """Create a comment on an issue"""
+    return await PlatformService.create_issue_comment(
+        platform, project_id, issue_id, body, **kwargs
+    )
+
+
 # Merge Request Management Tools
 @mcp.tool()
 async def list_merge_requests(

@@ -353,6 +353,33 @@ class GitHubAdapter(PlatformAdapter):
         kwargs["state_event"] = "close"
         return await self.update_issue(project_id, issue_id, **kwargs)
 
+    async def create_issue_comment(
+        self, project_id: str, issue_id: str, body: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a comment on a GitHub issue."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            issue = repo.get_issue(int(issue_id))
+            comment = issue.create_comment(body)
+
+            return {
+                "id": str(comment.id),
+                "author": comment.user.login if comment.user else "Unknown",
+                "created_at": comment.created_at.isoformat()
+                if comment.created_at
+                else None,
+                "updated_at": comment.updated_at.isoformat()
+                if comment.updated_at
+                else None,
+                "body": comment.body,
+                "url": comment.html_url if hasattr(comment, "html_url") else None,
+            }
+        except GithubException as e:
+            raise PlatformError(f"Failed to create comment: {e}", self.platform_name)
+
     # Merge Request / Pull Request operations
     async def list_merge_requests(
         self, project_id: str, **filters

@@ -195,6 +195,13 @@ class PlatformAdapter(ABC):
         """Close an issue."""
         pass
 
+    @abstractmethod
+    async def create_issue_comment(
+        self, project_id: str, issue_id: str, body: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Create a comment on an issue."""
+        pass
+
     # Merge Request / Pull Request operations
     @abstractmethod
     async def list_merge_requests(
