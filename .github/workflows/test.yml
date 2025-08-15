@@ -34,14 +34,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        uv run pytest tests/test_comment_functionality.py -v --cov=git_mcp --cov-report=xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      if: success()
-      with:
-        file: ./coverage.xml
-        fail_ci_if_error: false
+        uv run pytest tests/test_comment_functionality.py -v
 
   integration-tests:
     runs-on: ubuntu-latest
