@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-08-16
+
+### Added
+- **Release Automation**: Complete `/release` command for automated version management
+  - Automated version updates in pyproject.toml and __init__.py
+  - Changelog generation from git commits
+  - Git tag creation and push to remote
+  - Comprehensive pre-flight validation and error handling
+  - Closes issue #33
+- **Issue Comment Functionality**: Full support for issue comment management
+  - New MCP tools for creating, reading, and managing issue comments
+  - Cross-platform support for both GitLab and GitHub
+  - Rich comment threading and metadata support
+
+### Added - Workflow Enhancements
+- **Claude Code Review Workflow**: Streamlined code review process integration
+- **Claude PR Assistant Workflow**: Enhanced pull request assistance automation
+- **Environment Variable Setup**: Automatic environment variable prompts after config add
+  - Improves user experience by suggesting required environment variables
+  - Reduces configuration errors and setup time
+
+### Added - Debug & Logging
+- **Comprehensive Debug System**: Advanced logging capabilities with multiple output levels
+  - `--debug` flag for detailed operation tracing
+  - Environment variable controls (GIT_MCP_DEBUG, GIT_MCP_LOG_LEVEL)
+  - Structured logging with timestamps and component identification
+  - Extensive test coverage for logging functionality
+
+### Improved - Documentation
+- **Debug & Logging Documentation**: Comprehensive guide for troubleshooting
+  - Step-by-step debugging instructions for common issues
+  - Environment variable reference and configuration examples
+  - Integration examples for various development scenarios
+
+### Fixed
+- **CI/CD Workflow**: Removed coverage dependencies from CI workflow
+  - Eliminated build failures related to coverage tool dependencies
+  - Streamlined CI process for better reliability
+- **PR Creation Documentation**: Updated PR creation process documentation
+  - Clarified workflow steps and command usage
+  - Enhanced examples and troubleshooting guidance
+
+### Technical
+- **Pre-commit Updates**: Updated Ruff version in pre-commit configuration
+- **Test Infrastructure**: Enhanced test formatting and logging output
+- **Development Workflow**: Improved development and testing processes
+
 ## [0.1.9] - 2025-08-13
 
 ### Added
