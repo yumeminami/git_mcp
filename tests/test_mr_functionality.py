@@ -914,7 +914,12 @@ class TestPlatformServiceCreateCloseUpdate:
             )
 
             # Assert
-            assert result["id"] == "123"
+            assert result["merge_request"]["id"] == "123"
+            assert result["merge_request"]["title"] == "Test PR"
+            assert (
+                result["merge_request"]["url"]
+                == "https://github.com/owner/repo/pull/123"
+            )
             assert result["platform"] == "github"
             assert "created successfully" in result["message"]
 

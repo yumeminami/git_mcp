@@ -742,11 +742,13 @@ class PlatformService:
         )
 
         return {
-            "id": mr.id,
-            "title": mr.title,
-            "url": mr.url,
-            "source_branch": source_branch,
-            "target_branch": target_branch,
+            "merge_request": {
+                "id": mr.id,
+                "title": mr.title,
+                "url": mr.url,
+                "source_branch": source_branch,
+                "target_branch": target_branch,
+            },
             "platform": platform_name,
             "project_id": project_id,
             "message": f"Merge request '{title}' created successfully",
