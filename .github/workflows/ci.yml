@@ -130,7 +130,7 @@ jobs:
     name: "Integration Tests"
     runs-on: ubuntu-latest
     needs: env-check
-    if: secrets.GIT_MCP_GITHUB_TOKEN != '' || secrets.GIT_MCP_GITLAB_TOKEN != ''
+    if: ${{ secrets.GIT_MCP_GITHUB_TOKEN || secrets.GIT_MCP_GITLAB_TOKEN }}
     env:
       GIT_MCP_GITHUB_TOKEN: ${{ secrets.GIT_MCP_GITHUB_TOKEN }}
       GIT_MCP_GITLAB_TOKEN: ${{ secrets.GIT_MCP_GITLAB_TOKEN }}
