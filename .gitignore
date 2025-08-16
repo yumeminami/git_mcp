@@ -9,5 +9,10 @@ wheels/
 # Virtual environments
 .venv
 
-# Claude Code documentation (keep local)
-.claude/
+# Claude Code documentation (issue docs keep local, but commands should be committed)
+.claude/issue-*.md
+
+# Release artifacts and backups
+*.backup
+*.tmp
+release-notes-*.md
