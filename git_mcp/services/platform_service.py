@@ -1,5 +1,6 @@
 """Platform service - shared business logic for CLI and MCP."""
 
+import os
 import re
 from typing import List, Dict, Any, Optional, Tuple
 from urllib.parse import urlparse
@@ -12,11 +13,65 @@ class PlatformService:
 
     @staticmethod
     def get_adapter(platform_name: str):
-        """Get platform adapter based on configuration."""
+        """Get platform adapter based on configuration or environment variables."""
         config = get_config()
         platform_config = config.get_platform(platform_name)
 
+        # If no platform config found, try to create from environment variables
         if not platform_config:
+            # Try environment variable fallback for CI/testing
+            if platform_name == "github":
+                github_token = os.getenv("GIT_MCP_GITHUB_TOKEN")
+                if github_token:
+                    from ..platforms.github import GitHubAdapter
+
+                    try:
+                        # Create adapter with temporary username, then get real username
+                        github_adapter = GitHubAdapter(
+                            "https://github.com", github_token, "temp"
+                        )
+                        # Try to get username from API
+                        user_info = (
+                            github_adapter.client.get_user()
+                            if github_adapter.client
+                            else None
+                        )
+                        username = user_info.login if user_info else "ci-user"
+                        # Create new adapter with correct username
+                        return GitHubAdapter(
+                            "https://github.com", github_token, username
+                        )
+                    except Exception:
+                        # Fallback to default username if API call fails
+                        return GitHubAdapter(
+                            "https://github.com", github_token, "ci-user"
+                        )
+            elif platform_name == "gitlab":
+                gitlab_token = os.getenv("GIT_MCP_GITLAB_TOKEN")
+                if gitlab_token:
+                    from ..platforms.gitlab import GitLabAdapter
+
+                    try:
+                        # Create adapter with temporary username, then get real username
+                        gitlab_adapter = GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, "temp"
+                        )
+                        # Try to authenticate and get username from API
+                        try:
+                            user_info = gitlab_adapter.client.user  # type: ignore
+                            username = getattr(user_info, "username", "ci-user")
+                        except Exception:
+                            username = "ci-user"
+                        # Create new adapter with correct username
+                        return GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, username
+                        )
+                    except Exception:
+                        # Fallback to default username if API call fails
+                        return GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, "ci-user"
+                        )
+
             raise ValueError(f"Platform '{platform_name}' not found")
 
         if platform_config.type == "gitlab":
