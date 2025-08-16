@@ -1,5 +1,6 @@
 """Platform service - shared business logic for CLI and MCP."""
 
+import os
 import re
 from typing import List, Dict, Any, Optional, Tuple
 from urllib.parse import urlparse
@@ -12,11 +13,65 @@ class PlatformService:
 
     @staticmethod
     def get_adapter(platform_name: str):
-        """Get platform adapter based on configuration."""
+        """Get platform adapter based on configuration or environment variables."""
         config = get_config()
         platform_config = config.get_platform(platform_name)
 
+        # If no platform config found, try to create from environment variables
         if not platform_config:
+            # Try environment variable fallback for CI/testing
+            if platform_name == "github":
+                github_token = os.getenv("GIT_MCP_GITHUB_TOKEN")
+                if github_token:
+                    from ..platforms.github import GitHubAdapter
+
+                    try:
+                        # Create adapter with temporary username, then get real username
+                        github_adapter = GitHubAdapter(
+                            "https://github.com", github_token, "temp"
+                        )
+                        # Try to get username from API
+                        user_info = (
+                            github_adapter.client.get_user()
+                            if github_adapter.client
+                            else None
+                        )
+                        username = user_info.login if user_info else "ci-user"
+                        # Create new adapter with correct username
+                        return GitHubAdapter(
+                            "https://github.com", github_token, username
+                        )
+                    except Exception:
+                        # Fallback to default username if API call fails
+                        return GitHubAdapter(
+                            "https://github.com", github_token, "ci-user"
+                        )
+            elif platform_name == "gitlab":
+                gitlab_token = os.getenv("GIT_MCP_GITLAB_TOKEN")
+                if gitlab_token:
+                    from ..platforms.gitlab import GitLabAdapter
+
+                    try:
+                        # Create adapter with temporary username, then get real username
+                        gitlab_adapter = GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, "temp"
+                        )
+                        # Try to authenticate and get username from API
+                        try:
+                            user_info = gitlab_adapter.client.user  # type: ignore
+                            username = getattr(user_info, "username", "ci-user")
+                        except Exception:
+                            username = "ci-user"
+                        # Create new adapter with correct username
+                        return GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, username
+                        )
+                    except Exception:
+                        # Fallback to default username if API call fails
+                        return GitLabAdapter(
+                            "https://gitlab.com", gitlab_token, "ci-user"
+                        )
+
             raise ValueError(f"Platform '{platform_name}' not found")
 
         if platform_config.type == "gitlab":
@@ -144,14 +199,27 @@ class PlatformService:
             config = get_config()
             platform_config = config.get_platform(platform_name)
 
-            if not platform_config or not platform_config.username:
+            username = None
+            if platform_config and platform_config.username:
+                username = platform_config.username
+            else:
+                # Try to get username from adapter (works with env vars)
+                try:
+                    adapter = PlatformService.get_adapter(platform_name)
+                    user_info = await adapter.get_current_user()
+                    username = user_info.get("username") or user_info.get("login")
+                except Exception:  # nosec B110
+                    # Failed to fetch username from API, will use fallback
+                    pass
+
+            if not username:
                 raise ValueError(
                     f"No username configured for platform '{platform_name}'. "
                     f"Use 'refresh_platform_username' to fetch it automatically."
                 )
 
             # Add assignee filter for current user
-            filters["assignee"] = platform_config.username
+            filters["assignee"] = username
 
             return await PlatformService.list_issues(
                 platform_name, project_id, state, limit, **filters
@@ -172,14 +240,27 @@ class PlatformService:
             config = get_config()
             platform_config = config.get_platform(platform_name)
 
-            if not platform_config or not platform_config.username:
+            username = None
+            if platform_config and platform_config.username:
+                username = platform_config.username
+            else:
+                # Try to get username from adapter (works with env vars)
+                try:
+                    adapter = PlatformService.get_adapter(platform_name)
+                    user_info = await adapter.get_current_user()
+                    username = user_info.get("username") or user_info.get("login")
+                except Exception:  # nosec B110
+                    # Failed to fetch username from API, will use fallback
+                    pass
+
+            if not username:
                 raise ValueError(
                     f"No username configured for platform '{platform_name}'. "
                     f"Use 'refresh_platform_username' to fetch it automatically."
                 )
 
             # Add author filter for current user
-            filters["author"] = platform_config.username
+            filters["author"] = username
 
             return await PlatformService.list_merge_requests(
                 platform_name, project_id, state, limit, **filters
@@ -687,11 +768,13 @@ class PlatformService:
         )
 
         return {
-            "id": mr.id,
-            "title": mr.title,
-            "url": mr.url,
-            "source_branch": source_branch,
-            "target_branch": target_branch,
+            "merge_request": {
+                "id": mr.id,
+                "title": mr.title,
+                "url": mr.url,
+                "source_branch": source_branch,
+                "target_branch": target_branch,
+            },
             "platform": platform_name,
             "project_id": project_id,
             "message": f"Merge request '{title}' created successfully",
@@ -785,3 +868,35 @@ class PlatformService:
         )
 
         return commits_data
+
+    @staticmethod
+    async def close_merge_request(
+        platform_name: str, project_id: str, mr_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Close a merge request without merging."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr_resource = await adapter.close_merge_request(project_id, mr_id, **kwargs)
+
+        return {
+            "merge_request": mr_resource,
+            "message": f"Merge request {mr_id} closed successfully",
+            "platform": platform_name,
+            "project_id": project_id,
+            "mr_id": mr_id,
+        }
+
+    @staticmethod
+    async def update_merge_request(
+        platform_name: str, project_id: str, mr_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Update a merge request (title, description, etc.)."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr_resource = await adapter.update_merge_request(project_id, mr_id, **kwargs)
+
+        return {
+            "merge_request": mr_resource,
+            "message": f"Merge request {mr_id} updated successfully",
+            "platform": platform_name,
+            "project_id": project_id,
+            "mr_id": mr_id,
+        }

@@ -561,6 +561,60 @@ class GitHubAdapter(PlatformAdapter):
                 f"Failed to merge pull request {mr_id}: {e}", self.platform_name
             )
 
+    async def close_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Close a GitHub pull request without merging."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            pr = repo.get_pull(int(mr_id))
+
+            # Close the pull request by editing its state
+            pr.edit(state="closed")
+
+            # Refresh the PR to get updated state
+            pr = repo.get_pull(int(mr_id))
+            return self._convert_to_mr_resource(pr, project_id)
+        except GithubException as e:
+            raise PlatformError(
+                f"Failed to close pull request {mr_id}: {e}", self.platform_name
+            )
+
+    async def update_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Update a GitHub pull request (title, description, etc.)."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            pr = repo.get_pull(int(mr_id))
+
+            # Prepare update parameters
+            update_kwargs = {}
+            if "title" in kwargs:
+                update_kwargs["title"] = kwargs["title"]
+            if "description" in kwargs or "body" in kwargs:
+                update_kwargs["body"] = kwargs.get("description", kwargs.get("body"))
+            if "state" in kwargs:
+                update_kwargs["state"] = kwargs["state"]
+
+            # Apply updates if any parameters provided
+            if update_kwargs:
+                pr.edit(**update_kwargs)
+
+            # Refresh the PR to get updated state
+            pr = repo.get_pull(int(mr_id))
+            return self._convert_to_mr_resource(pr, project_id)
+        except GithubException as e:
+            raise PlatformError(
+                f"Failed to update pull request {mr_id}: {e}", self.platform_name
+            )
+
     # Repository operations
     async def list_branches(self, project_id: str, **filters) -> List[Dict[str, Any]]:
         """List branches in a GitHub repository."""

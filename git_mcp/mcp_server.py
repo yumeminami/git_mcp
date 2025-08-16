@@ -388,6 +388,56 @@ async def get_merge_request_commits(
     )
 
 
+@mcp.tool()
+async def close_merge_request(
+    platform: str, project_id: str, mr_id: str, **kwargs
+) -> Dict[str, Any]:
+    """Close a merge request without merging
+
+    Args:
+        platform: The platform name (e.g., 'gitlab', 'github')
+        project_id: The project identifier
+        mr_id: The merge request/pull request ID
+        **kwargs: Additional platform-specific parameters
+
+    Returns:
+        Dict containing:
+            - merge_request: Updated merge request details
+            - message: Success message
+            - platform: The platform name
+            - project_id: The project identifier
+            - mr_id: The merge request ID
+    """
+    return await PlatformService.close_merge_request(
+        platform, project_id, mr_id, **kwargs
+    )
+
+
+@mcp.tool()
+async def update_merge_request(
+    platform: str, project_id: str, mr_id: str, **kwargs
+) -> Dict[str, Any]:
+    """Update a merge request (title, description, etc.)
+
+    Args:
+        platform: The platform name (e.g., 'gitlab', 'github')
+        project_id: The project identifier
+        mr_id: The merge request/pull request ID
+        **kwargs: Update parameters (title, description, state, etc.)
+
+    Returns:
+        Dict containing:
+            - merge_request: Updated merge request details
+            - message: Success message
+            - platform: The platform name
+            - project_id: The project identifier
+            - mr_id: The merge request ID
+    """
+    return await PlatformService.update_merge_request(
+        platform, project_id, mr_id, **kwargs
+    )
+
+
 # Fork operations
 @mcp.tool()
 async def create_fork(platform: str, project_id: str, **kwargs) -> Dict[str, Any]:

@@ -244,6 +244,20 @@ class PlatformAdapter(ABC):
         pass
 
     @abstractmethod
+    async def close_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Close a merge request without merging."""
+        pass
+
+    @abstractmethod
+    async def update_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Update a merge request (title, description, etc.)."""
+        pass
+
+    @abstractmethod
     async def get_merge_request_diff(
         self, project_id: str, mr_id: str, **options
     ) -> Dict[str, Any]:

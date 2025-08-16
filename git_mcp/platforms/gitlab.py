@@ -542,6 +542,59 @@ class GitLabAdapter(PlatformAdapter):
                 f"Failed to merge merge request {mr_id}: {e}", self.platform_name
             )
 
+    async def close_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Close a GitLab merge request without merging."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            mr = project.mergerequests.get(mr_id)
+
+            # Close the merge request by updating its state
+            mr.state_event = "close"
+            mr.save()
+
+            # Refresh the MR to get updated state
+            mr = project.mergerequests.get(mr_id)
+            return self._convert_to_mr_resource(mr, project_id)
+        except GitlabError as e:
+            raise PlatformError(
+                f"Failed to close merge request {mr_id}: {e}", self.platform_name
+            )
+
+    async def update_merge_request(
+        self, project_id: str, mr_id: str, **kwargs
+    ) -> MergeRequestResource:
+        """Update a GitLab merge request (title, description, etc.)."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            mr = project.mergerequests.get(mr_id)
+
+            # Update fields if provided
+            if "title" in kwargs:
+                mr.title = kwargs["title"]
+            if "description" in kwargs:
+                mr.description = kwargs["description"]
+            if "state_event" in kwargs:
+                mr.state_event = kwargs["state_event"]
+
+            # Save changes
+            mr.save()
+
+            # Refresh the MR to get updated state
+            mr = project.mergerequests.get(mr_id)
+            return self._convert_to_mr_resource(mr, project_id)
+        except GitlabError as e:
+            raise PlatformError(
+                f"Failed to update merge request {mr_id}: {e}", self.platform_name
+            )
+
     # Repository operations
     async def list_branches(self, project_id: str, **filters) -> List[Dict[str, Any]]:
         """List branches in a GitLab project."""
