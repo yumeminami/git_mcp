@@ -785,3 +785,35 @@ class PlatformService:
         )
 
         return commits_data
+
+    @staticmethod
+    async def close_merge_request(
+        platform_name: str, project_id: str, mr_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Close a merge request without merging."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr_resource = await adapter.close_merge_request(project_id, mr_id, **kwargs)
+
+        return {
+            "merge_request": mr_resource,
+            "message": f"Merge request {mr_id} closed successfully",
+            "platform": platform_name,
+            "project_id": project_id,
+            "mr_id": mr_id,
+        }
+
+    @staticmethod
+    async def update_merge_request(
+        platform_name: str, project_id: str, mr_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Update a merge request (title, description, etc.)."""
+        adapter = PlatformService.get_adapter(platform_name)
+        mr_resource = await adapter.update_merge_request(project_id, mr_id, **kwargs)
+
+        return {
+            "merge_request": mr_resource,
+            "message": f"Merge request {mr_id} updated successfully",
+            "platform": platform_name,
+            "project_id": project_id,
+            "mr_id": mr_id,
+        }
