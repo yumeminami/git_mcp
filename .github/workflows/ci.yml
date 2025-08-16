@@ -66,23 +66,10 @@ jobs:
       - name: "Install dependencies"
         run: uv sync --all-extras
 
-      - name: "Run tests"
+      - name: "Run unit tests"
         run: |
-          if [ -d tests ] || [ -f test_*.py ] || find . -name "*_test.py" | grep -q .; then
-            uv run pytest -xvs
-          else
-            echo "No tests found yet. Tests directory or test files will be added later."
-            echo "Creating placeholder test to ensure test runner works..."
-            mkdir -p tests
-            cat > tests/test_placeholder.py << 'EOF'
-          """Placeholder test file until real tests are implemented."""
-          def test_placeholder():
-              """Placeholder test that always passes."""
-              assert True
-          EOF
-            uv run pytest tests/test_placeholder.py -v
-            rm -rf tests/test_placeholder.py
-          fi
+          echo "🧪 Running unit tests (mock-based, no API tokens required)..."
+          uv run pytest tests/test_comment_functionality.py tests/test_mr_functionality.py -v -m "not integration"
 
       - name: "Test CLI entry points"
         run: |

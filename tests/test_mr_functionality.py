@@ -6,6 +6,7 @@ from datetime import datetime
 
 from git_mcp.platforms.github import GitHubAdapter
 from git_mcp.platforms.gitlab import GitLabAdapter
+from git_mcp.platforms.base import ResourceState
 from git_mcp.services.platform_service import PlatformService
 from git_mcp.core.exceptions import PlatformError
 from git_mcp.mcp_server import (
@@ -45,6 +46,22 @@ class TestGitHubAdapterMROperations:
         mock_pr.updated_at = datetime(2025, 8, 16, 12, 0, 0)
         mock_pr.head.ref = "feature-branch"
         mock_pr.base.ref = "main"
+        mock_pr.labels = []
+        mock_pr.assignee = None
+        mock_pr.body = "PR description"
+        mock_pr.merged = False
+        mock_pr.merge_commit_sha = None
+        mock_pr.draft = False
+        mock_pr.id = 123456
+        mock_pr.merged_at = None
+        mock_pr.mergeable = True
+        mock_pr.mergeable_state = "clean"
+        mock_pr.comments = 0
+        mock_pr.review_comments = 0
+        mock_pr.commits = 1
+        mock_pr.additions = 10
+        mock_pr.deletions = 5
+        mock_pr.changed_files = 1
 
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_pulls.return_value = [mock_pr]
@@ -59,13 +76,13 @@ class TestGitHubAdapterMROperations:
         assert len(result) == 1
 
         pr_data = result[0]
-        assert pr_data["id"] == "123"
-        assert pr_data["title"] == "Test PR"
-        assert pr_data["state"] == "open"
-        assert pr_data["url"] == "https://github.com/owner/repo/pull/123"
-        assert pr_data["author"] == "test-author"
-        assert pr_data["source_branch"] == "feature-branch"
-        assert pr_data["target_branch"] == "main"
+        assert pr_data.id == "123"
+        assert pr_data.title == "Test PR"
+        assert str(pr_data.state) == "ResourceState.OPENED"
+        assert pr_data.url == "https://github.com/owner/repo/pull/123"
+        assert pr_data.author == "test-author"
+        assert pr_data.source_branch == "feature-branch"
+        assert pr_data.target_branch == "main"
 
     @pytest.mark.asyncio
     async def test_get_merge_request_details_success(self):
@@ -81,21 +98,37 @@ class TestGitHubAdapterMROperations:
         mock_pr.html_url = "https://github.com/owner/repo/pull/123"
         mock_pr.user.login = "test-author"
         mock_pr.created_at = datetime(2025, 8, 16, 12, 0, 0)
+        mock_pr.updated_at = datetime(2025, 8, 16, 12, 0, 0)
+        mock_pr.head.ref = "feature-branch"
+        mock_pr.base.ref = "main"
         mock_pr.assignee = None
         mock_pr.labels = []
+        mock_pr.merged = False
+        mock_pr.merge_commit_sha = None
+        mock_pr.draft = False
+        mock_pr.id = 123456
+        mock_pr.merged_at = None
+        mock_pr.mergeable = True
+        mock_pr.mergeable_state = "clean"
+        mock_pr.comments = 0
+        mock_pr.review_comments = 0
+        mock_pr.commits = 1
+        mock_pr.additions = 10
+        mock_pr.deletions = 5
+        mock_pr.changed_files = 1
 
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_pull.return_value = mock_pr
 
         # Act
-        result = await self.adapter.get_merge_request_details("owner/repo", "123")
+        result = await self.adapter.get_merge_request("owner/repo", "123")
 
         # Assert
-        assert result["id"] == "123"
-        assert result["title"] == "Test PR Details"
-        assert result["description"] == "PR description"
-        assert result["state"] == "open"
-        assert result["author"] == "test-author"
+        assert result.id == "123"
+        assert result.title == "Test PR Details"
+        assert result.description == "PR description"
+        assert result.state == ResourceState.OPENED
+        assert result.author == "test-author"
 
     @pytest.mark.asyncio
     async def test_list_merge_requests_empty_result(self):
@@ -128,6 +161,8 @@ class TestGitHubAdapterMROperations:
         mock_pr.updated_at = datetime(2025, 8, 16, 12, 0, 0)
         mock_pr.head.ref = "feature-branch"
         mock_pr.base.ref = "main"
+        mock_pr.labels = []
+        mock_pr.assignee = None
 
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_pulls.return_value = [mock_pr]
@@ -139,7 +174,7 @@ class TestGitHubAdapterMROperations:
 
         # Assert
         assert len(result) == 1
-        assert result[0]["state"] == "closed"
+        assert result[0].state == ResourceState.CLOSED
 
         # Verify that get_pulls was called with correct parameters
         mock_repo.get_pulls.assert_called_once()
@@ -185,6 +220,8 @@ class TestGitLabAdapterMROperations:
         mock_mr.updated_at = "2025-08-16T12:00:00.000Z"
         mock_mr.source_branch = "feature-branch"
         mock_mr.target_branch = "main"
+        mock_mr.labels = []
+        mock_mr.assignee = None
 
         self.adapter.client.projects.get.return_value = mock_project
         mock_project.mergerequests.list.return_value = [mock_mr]
@@ -199,13 +236,13 @@ class TestGitLabAdapterMROperations:
         assert len(result) == 1
 
         mr_data = result[0]
-        assert mr_data["id"] == "456"
-        assert mr_data["title"] == "Test MR"
-        assert mr_data["state"] == "opened"
-        assert mr_data["url"] == "https://gitlab.com/group/project/-/merge_requests/456"
-        assert mr_data["author"] == "test-author"
-        assert mr_data["source_branch"] == "feature-branch"
-        assert mr_data["target_branch"] == "main"
+        assert mr_data.id == "456"
+        assert mr_data.title == "Test MR"
+        assert mr_data.state == ResourceState.OPENED
+        assert mr_data.url == "https://gitlab.com/group/project/-/merge_requests/456"
+        assert mr_data.author == "test-author"
+        assert mr_data.source_branch == "feature-branch"
+        assert mr_data.target_branch == "main"
 
     @pytest.mark.asyncio
     async def test_get_merge_request_details_success(self):
@@ -221,6 +258,9 @@ class TestGitLabAdapterMROperations:
         mock_mr.web_url = "https://gitlab.com/group/project/-/merge_requests/456"
         mock_mr.author = {"username": "test-author"}
         mock_mr.created_at = "2025-08-16T12:00:00.000Z"
+        mock_mr.updated_at = "2025-08-16T12:00:00.000Z"
+        mock_mr.source_branch = "feature"
+        mock_mr.target_branch = "main"
         mock_mr.assignee = None
         mock_mr.labels = []
 
@@ -228,14 +268,14 @@ class TestGitLabAdapterMROperations:
         mock_project.mergerequests.get.return_value = mock_mr
 
         # Act
-        result = await self.adapter.get_merge_request_details("group/project", "456")
+        result = await self.adapter.get_merge_request("group/project", "456")
 
         # Assert
-        assert result["id"] == "456"
-        assert result["title"] == "Test MR Details"
-        assert result["description"] == "MR description"
-        assert result["state"] == "opened"
-        assert result["author"] == "test-author"
+        assert result.id == "456"
+        assert result.title == "Test MR Details"
+        assert result.description == "MR description"
+        assert result.state == ResourceState.OPENED
+        assert result.author == "test-author"
 
     @pytest.mark.asyncio
     async def test_project_not_found_error(self):
@@ -260,14 +300,15 @@ class TestPlatformServiceMRIntegration:
     @pytest.mark.asyncio
     async def test_list_merge_requests_github_routing(self):
         """Test that GitHub requests are routed correctly."""
-        with patch(
-            "git_mcp.services.platform_service.GitHubAdapter"
-        ) as mock_adapter_class:
+        with patch.object(PlatformService, "get_adapter") as mock_get_adapter:
             mock_adapter = AsyncMock()
-            mock_adapter_class.return_value = mock_adapter
-            mock_adapter.list_merge_requests.return_value = [
-                {"id": "123", "title": "Test PR", "platform": "github"}
-            ]
+            mock_get_adapter.return_value = mock_adapter
+            # Mock a MergeRequestResource-like object
+            mock_mr_resource = Mock()
+            mock_mr_resource.id = "123"
+            mock_mr_resource.title = "Test PR"
+            mock_mr_resource.platform = "github"
+            mock_adapter.list_merge_requests.return_value = [mock_mr_resource]
 
             # Act
             result = await PlatformService.list_merge_requests(
@@ -282,14 +323,15 @@ class TestPlatformServiceMRIntegration:
     @pytest.mark.asyncio
     async def test_list_merge_requests_gitlab_routing(self):
         """Test that GitLab requests are routed correctly."""
-        with patch(
-            "git_mcp.services.platform_service.GitLabAdapter"
-        ) as mock_adapter_class:
+        with patch.object(PlatformService, "get_adapter") as mock_get_adapter:
             mock_adapter = AsyncMock()
-            mock_adapter_class.return_value = mock_adapter
-            mock_adapter.list_merge_requests.return_value = [
-                {"id": "456", "title": "Test MR", "platform": "gitlab"}
-            ]
+            mock_get_adapter.return_value = mock_adapter
+            # Mock a MergeRequestResource-like object
+            mock_mr_resource = Mock()
+            mock_mr_resource.id = "456"
+            mock_mr_resource.title = "Test MR"
+            mock_mr_resource.platform = "gitlab"
+            mock_adapter.list_merge_requests.return_value = [mock_mr_resource]
 
             # Act
             result = await PlatformService.list_merge_requests(
@@ -305,12 +347,12 @@ class TestPlatformServiceMRIntegration:
     async def test_unsupported_platform_error(self):
         """Test error handling for unsupported platform."""
         # Act & Assert
-        with pytest.raises(PlatformError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             await PlatformService.list_merge_requests(
                 "unsupported", "project", state="open"
             )
 
-        assert "Unsupported platform" in str(exc_info.value)
+        assert "Platform 'unsupported' not found" in str(exc_info.value)
 
 
 class TestMCPToolMRFunctions:
@@ -468,7 +510,7 @@ class TestMRErrorHandling:
         with patch(
             "git_mcp.mcp_server.PlatformService.list_merge_requests"
         ) as mock_service:
-            mock_service.side_effect = PlatformError("API Error")
+            mock_service.side_effect = PlatformError("API Error", "test-platform")
 
             # Act & Assert
             with pytest.raises(PlatformError):
@@ -480,7 +522,7 @@ class TestMRErrorHandling:
         with patch(
             "git_mcp.mcp_server.PlatformService.get_merge_request_details"
         ) as mock_service:
-            mock_service.side_effect = PlatformError("MR not found")
+            mock_service.side_effect = PlatformError("MR not found", "test-platform")
 
             # Act & Assert
             with pytest.raises(PlatformError):
@@ -698,6 +740,8 @@ class TestGitHubAdapterCreateCloseUpdate:
         mock_pr.updated_at = datetime(2025, 8, 16, 12, 0, 0)
         mock_pr.head.ref = "feature-branch"
         mock_pr.base.ref = "main"
+        mock_pr.labels = []
+        mock_pr.assignee = None
 
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_pull.return_value = mock_pr
@@ -706,9 +750,9 @@ class TestGitHubAdapterCreateCloseUpdate:
         result = await self.adapter.close_merge_request("owner/repo", "123")
 
         # Assert
-        assert result["id"] == "123"
-        assert result["title"] == "Test PR"
-        assert result["state"] == "closed"
+        assert result.id == "123"
+        assert result.title == "Test PR"
+        assert result.state == ResourceState.CLOSED
 
         # Verify API calls
         self.mock_client.get_repo.assert_called_once_with("owner/repo")
@@ -727,6 +771,26 @@ class TestGitHubAdapterCreateCloseUpdate:
         mock_pr.state = "open"
         mock_pr.html_url = "https://github.com/owner/repo/pull/123"
         mock_pr.user.login = "test-author"
+        mock_pr.labels = []
+        mock_pr.assignee = None
+        mock_pr.body = "New description"
+        mock_pr.head.ref = "feature-branch"
+        mock_pr.base.ref = "main"
+        mock_pr.created_at = datetime(2025, 8, 16, 12, 0, 0)
+        mock_pr.updated_at = datetime(2025, 8, 16, 12, 0, 0)
+        mock_pr.merged = False
+        mock_pr.merge_commit_sha = None
+        mock_pr.draft = False
+        mock_pr.id = 123456
+        mock_pr.merged_at = None
+        mock_pr.mergeable = True
+        mock_pr.mergeable_state = "clean"
+        mock_pr.comments = 0
+        mock_pr.review_comments = 0
+        mock_pr.commits = 1
+        mock_pr.additions = 10
+        mock_pr.deletions = 5
+        mock_pr.changed_files = 1
 
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_pull.return_value = mock_pr
@@ -737,8 +801,8 @@ class TestGitHubAdapterCreateCloseUpdate:
         )
 
         # Assert
-        assert result["id"] == "123"
-        assert result["title"] == "Updated Test PR"
+        assert result.id == "123"
+        assert result.title == "Updated Test PR"
 
         # Verify API calls
         mock_pr.edit.assert_called_once_with(
@@ -771,6 +835,8 @@ class TestGitLabAdapterCreateCloseUpdate:
         mock_mr.updated_at = "2025-08-16T12:00:00.000Z"
         mock_mr.source_branch = "feature-branch"
         mock_mr.target_branch = "main"
+        mock_mr.labels = []
+        mock_mr.assignee = None
 
         self.mock_client.projects.get.return_value = mock_project
         mock_project.mergerequests.get.return_value = mock_mr
@@ -779,9 +845,9 @@ class TestGitLabAdapterCreateCloseUpdate:
         result = await self.adapter.close_merge_request("123", "456")
 
         # Assert
-        assert result["id"] == "456"
-        assert result["title"] == "Test MR"
-        assert result["state"] == "closed"
+        assert result.id == "456"
+        assert result.title == "Test MR"
+        assert result.state == ResourceState.CLOSED
 
         # Verify API calls
         self.mock_client.projects.get.assert_called_once_with("123")
@@ -799,6 +865,15 @@ class TestGitLabAdapterCreateCloseUpdate:
         mock_mr.iid = 456
         mock_mr.title = "Updated Test MR"
         mock_mr.state = "opened"
+        mock_mr.created_at = "2025-08-16T12:00:00.000Z"
+        mock_mr.updated_at = "2025-08-16T12:00:00.000Z"
+        mock_mr.web_url = "https://gitlab.com/group/project/-/merge_requests/456"
+        mock_mr.author = {"username": "test-author"}
+        mock_mr.source_branch = "feature"
+        mock_mr.target_branch = "main"
+        mock_mr.labels = []
+        mock_mr.assignee = None
+        mock_mr.description = "New description"
 
         self.mock_client.projects.get.return_value = mock_project
         mock_project.mergerequests.get.return_value = mock_mr
@@ -809,8 +884,8 @@ class TestGitLabAdapterCreateCloseUpdate:
         )
 
         # Assert
-        assert result["id"] == "456"
-        assert result["title"] == "Updated Test MR"
+        assert result.id == "456"
+        assert result.title == "Updated Test MR"
 
         # Verify API calls
         assert mock_mr.title == "Updated Test MR"
@@ -825,12 +900,12 @@ class TestPlatformServiceCreateCloseUpdate:
     async def test_create_merge_request_service_integration(self):
         """Test service layer integration for create_merge_request."""
         mock_adapter = AsyncMock()
-        mock_adapter.create_merge_request.return_value = {
-            "id": "123",
-            "title": "Test PR",
-            "state": "open",
-            "url": "https://github.com/owner/repo/pull/123",
-        }
+        # Mock a MergeRequestResource-like object
+        mock_mr_resource = Mock()
+        mock_mr_resource.id = "123"
+        mock_mr_resource.title = "Test PR"
+        mock_mr_resource.url = "https://github.com/owner/repo/pull/123"
+        mock_adapter.create_merge_request.return_value = mock_mr_resource
 
         with patch.object(PlatformService, "get_adapter", return_value=mock_adapter):
             # Act
@@ -839,7 +914,7 @@ class TestPlatformServiceCreateCloseUpdate:
             )
 
             # Assert
-            assert result["merge_request"]["id"] == "123"
+            assert result["id"] == "123"
             assert result["platform"] == "github"
             assert "created successfully" in result["message"]
 
@@ -847,11 +922,12 @@ class TestPlatformServiceCreateCloseUpdate:
     async def test_close_merge_request_service_integration(self):
         """Test service layer integration for close_merge_request."""
         mock_adapter = AsyncMock()
-        mock_adapter.close_merge_request.return_value = {
-            "id": "123",
-            "title": "Test PR",
-            "state": "closed",
-        }
+        # Mock a MergeRequestResource-like object
+        mock_mr_resource = Mock()
+        mock_mr_resource.id = "123"
+        mock_mr_resource.title = "Test PR"
+        mock_mr_resource.state = "closed"
+        mock_adapter.close_merge_request.return_value = mock_mr_resource
 
         with patch.object(PlatformService, "get_adapter", return_value=mock_adapter):
             # Act
@@ -860,7 +936,7 @@ class TestPlatformServiceCreateCloseUpdate:
             )
 
             # Assert
-            assert result["merge_request"]["state"] == "closed"
+            assert result["merge_request"].state == "closed"
             assert result["platform"] == "github"
             assert "closed successfully" in result["message"]
             mock_adapter.close_merge_request.assert_called_once_with(
