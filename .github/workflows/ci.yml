@@ -159,6 +159,39 @@ jobs:
             echo "SKIP_INTEGRATION=false" >> $GITHUB_ENV
           fi
 
+      - name: "Setup platform configuration for integration tests"
+        if: env.SKIP_INTEGRATION != 'true'
+        run: |
+          echo "🔧 Setting up platform configurations for CI environment..."
+
+          # Create git-mcp config directory
+          mkdir -p ~/.git-mcp
+
+          # Configure GitHub platform if token exists
+          if [ -n "$GIT_MCP_GITHUB_TOKEN" ]; then
+            echo "⚙️ Configuring GitHub platform..."
+            uv run git-mcp config add github github --url https://github.com || echo "GitHub config may already exist"
+          fi
+
+          # Configure GitLab platform if token exists
+          if [ -n "$GIT_MCP_GITLAB_TOKEN" ]; then
+            echo "⚙️ Configuring GitLab platform..."
+            uv run git-mcp config add gitlab gitlab --url https://gitlab.com || echo "GitLab config may already exist"
+          fi
+
+          # Test platform connections and refresh usernames
+          if [ -n "$GIT_MCP_GITHUB_TOKEN" ]; then
+            echo "🔍 Testing GitHub connection and refreshing username..."
+            uv run git-mcp config test github || echo "GitHub connection test failed"
+            uv run git-mcp config refresh-username github || echo "GitHub username refresh failed"
+          fi
+
+          if [ -n "$GIT_MCP_GITLAB_TOKEN" ]; then
+            echo "🔍 Testing GitLab connection and refreshing username..."
+            uv run git-mcp config test gitlab || echo "GitLab connection test failed"
+            uv run git-mcp config refresh-username gitlab || echo "GitLab username refresh failed"
+          fi
+
       - name: "Run integration tests"
         if: env.SKIP_INTEGRATION != 'true'
         run: |
