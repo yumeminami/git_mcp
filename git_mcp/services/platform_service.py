@@ -199,14 +199,27 @@ class PlatformService:
             config = get_config()
             platform_config = config.get_platform(platform_name)
 
-            if not platform_config or not platform_config.username:
+            username = None
+            if platform_config and platform_config.username:
+                username = platform_config.username
+            else:
+                # Try to get username from adapter (works with env vars)
+                try:
+                    adapter = PlatformService.get_adapter(platform_name)
+                    user_info = await adapter.get_current_user()
+                    username = user_info.get("username") or user_info.get("login")
+                except Exception:  # nosec B110
+                    # Failed to fetch username from API, will use fallback
+                    pass
+
+            if not username:
                 raise ValueError(
                     f"No username configured for platform '{platform_name}'. "
                     f"Use 'refresh_platform_username' to fetch it automatically."
                 )
 
             # Add assignee filter for current user
-            filters["assignee"] = platform_config.username
+            filters["assignee"] = username
 
             return await PlatformService.list_issues(
                 platform_name, project_id, state, limit, **filters
@@ -227,14 +240,27 @@ class PlatformService:
             config = get_config()
             platform_config = config.get_platform(platform_name)
 
-            if not platform_config or not platform_config.username:
+            username = None
+            if platform_config and platform_config.username:
+                username = platform_config.username
+            else:
+                # Try to get username from adapter (works with env vars)
+                try:
+                    adapter = PlatformService.get_adapter(platform_name)
+                    user_info = await adapter.get_current_user()
+                    username = user_info.get("username") or user_info.get("login")
+                except Exception:  # nosec B110
+                    # Failed to fetch username from API, will use fallback
+                    pass
+
+            if not username:
                 raise ValueError(
                     f"No username configured for platform '{platform_name}'. "
                     f"Use 'refresh_platform_username' to fetch it automatically."
                 )
 
             # Add author filter for current user
-            filters["author"] = platform_config.username
+            filters["author"] = username
 
             return await PlatformService.list_merge_requests(
                 platform_name, project_id, state, limit, **filters
