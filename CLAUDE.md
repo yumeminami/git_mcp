@@ -26,8 +26,14 @@ uv run mypy git_mcp/ --ignore-missing-imports --no-strict-optional
 # Run pre-commit hooks manually (includes ruff, bandit, mypy, yaml/json checks)
 uv run pre-commit run --all-files
 
-# Run tests (when implemented - uses placeholder test currently)
+# Run tests
 uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=git_mcp --cov-report=term-missing
+
+# Run specific test file
+uv run pytest tests/test_logging.py
 
 # Test CLI entry points
 uv run git-mcp --help
@@ -168,8 +174,11 @@ Core dependencies (from pyproject.toml):
 Development tools:
 - `ruff>=0.1.0` - Linting and code formatting
 - `bandit[toml]>=1.7.0` - Security vulnerability scanning
-- `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
+- `pytest>=8.0.0` - Testing framework with comprehensive test suite
 - `pytest-asyncio>=0.23.0` - Async testing support
+- `pytest-cov>=5.0.0` - Test coverage reporting
+- `coverage>=7.0.0` - Coverage measurement
+- `mypy>=1.17.1` - Static type checking
 - `pip-audit>=2.0.0` - Security vulnerability scanning
 
 **Pre-commit Configuration**: Includes ruff (linting/formatting), bandit (security), mypy (type checking), and standard file checks. Run with `uv run pre-commit run --all-files`.
@@ -223,31 +232,31 @@ The MCP server exposes approximately 25 tools organized into categories:
 
 **Issue Management**: `list_issues`, `list_all_issues`, `list_my_issues`, `get_issue_details`, `get_issue_by_url`, `create_issue`, `update_issue`, `close_issue`
 
-**Merge Requests**: `list_merge_requests`, `get_merge_request_details`, `create_merge_request` (支持 GitLab 跨项目 MR), `list_my_merge_requests`
+**Merge Requests**: `list_merge_requests`, `get_merge_request_details`, `create_merge_request` (supports GitLab cross-project MRs), `list_my_merge_requests`, `get_merge_request_diff`, `get_merge_request_commits`, `create_issue_comment`
 
 **Repository Operations**: `create_fork`, `get_fork_info`, `list_forks`
 
 All tools support async operations and return structured data for integration with AI assistants.
 
-## GitLab Fork MR 支持
+## GitLab Fork MR Support
 
-**GitLab 跨项目 Merge Request** 现已完全支持，使用 `target_project_id` 参数：
+**GitLab Cross-Project Merge Requests** are fully supported using the `target_project_id` parameter:
 
-### GitLab Fork MR 用法
+### GitLab Fork MR Usage
 
 ```python
-# GitLab 跨项目 MR（从 fork 到上游项目）
+# GitLab cross-project MR (from fork to upstream project)
 create_merge_request(
     platform="gitlab",
-    project_id="456",              # fork 项目 ID（源项目）
+    project_id="456",              # fork project ID (source project)
     source_branch="feature-branch",
     target_branch="main",
     title="Fix issue #123",
-    target_project_id="123",       # 上游项目 ID（目标项目）
-    description="详细描述..."
+    target_project_id="123",       # upstream project ID (target project)
+    description="Detailed description..."
 )
 
-# GitLab 同项目 MR（现有功能保持不变）
+# GitLab same-project MR (existing functionality unchanged)
 create_merge_request(
     platform="gitlab",
     project_id="123",
@@ -257,22 +266,19 @@ create_merge_request(
 )
 ```
 
-### GitHub Fork PR 对比
+### GitHub Fork PR Comparison
 
 ```python
-# GitHub 跨仓库 PR（使用分支引用格式）
+# GitHub cross-repository PR (using branch reference format)
 create_merge_request(
     platform="github",
-    project_id="upstream-owner/upstream-repo",  # 目标上游仓库
-    source_branch="fork-owner:feature-branch",  # fork 分支引用
+    project_id="upstream-owner/upstream-repo",  # target upstream repository
+    source_branch="fork-owner:feature-branch",  # fork branch reference
     target_branch="main",
     title="Fix issue #123"
 )
 ```
 
-**关键区别**：
-- **GitLab**: 使用 `target_project_id` 参数指定目标项目
-- **GitHub**: 使用 `owner:branch` 格式在 `source_branch` 中指定跨仓库引用
-
-- CLAUDE.md\
-\介绍这个项目
+**Key Differences**:
+- **GitLab**: Uses `target_project_id` parameter to specify target project
+- **GitHub**: Uses `owner:branch` format in `source_branch` to specify cross-repository reference

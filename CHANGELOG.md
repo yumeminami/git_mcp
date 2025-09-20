@@ -7,46 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Comprehensive MR Unit Tests**: Complete merge request testing infrastructure for issue #36
-  - **73 Total Tests**: 53 unit tests + 20 integration tests with full MR lifecycle coverage
-  - **New MCP Tools**: `close_merge_request()` and `update_merge_request()` for complete MR management
-  - **Platform Support**: GitHub and GitLab close/update operations with consistent interfaces
-  - **Test Branch Variables**: `GIT_MCP_GITHUB_TEST_BRANCH` and `GIT_MCP_GITLAB_TEST_BRANCH` for CI
-  - **MR Lifecycle Testing**: Complete create → get/list → close testing sequence
-  - **Automatic Cleanup**: Tests automatically close created MRs to prevent accumulation
-  - **Duplicate Handling**: Smart detection and cleanup of existing test MRs for re-runs
+## [0.2.1] - 2025-09-20
 
-### Enhanced
-- **CI/CD Workflow Improvements**: Streamlined GitHub Actions workflow
-  - **Unified Test Job**: Merged integration tests with regular tests for efficiency
-  - **Environment Secrets**: Full support for CI/CD environment secrets access
-  - **Environment Variable Fallback**: PlatformService creates adapters from env vars in CI
-  - **Username Resolution**: Auto-fetch usernames from API when config is missing
-  - **Pre-commit Compliance**: All hooks (ruff, mypy, bandit) passing
-- **Error Handling Enhancements**: Comprehensive error management
-  - **Emoji-based Logging**: Clear visual indicators for test progress and status
-  - **Detailed Context**: Enhanced error messages with platform/project/branch context
-  - **Graceful Fallbacks**: Robust handling of API failures and missing configurations
-- **Service Layer Standardization**: Consistent response structures
-  - **Response Format**: Standardized merge request response format across platforms
-  - **API Integration**: Enhanced platform adapter integration with service layer
-  - **Cross-platform Consistency**: Unified behavior between GitHub and GitLab
+### Added
+- **Code Memory Guidelines**: Added code memory integration to installation process (issue #38)
+  - Enhanced installation process with code memory context for better AI assistance
+  - Automatic guidance for Claude Code integration during setup
+
+### Fixed
+- **Code Memory Content**: Updated and refined code memory content for better accuracy
+- **Unused Statement Cleanup**: Removed unused statements to improve code quality
 
 ### Technical
-- **Test Infrastructure**: Mock-based unit tests with comprehensive coverage
-  - `tests/test_mr_functionality.py` - 53 unit tests for all MR operations
-  - `tests/test_live_mr_integration.py` - Enhanced integration tests with cleanup
-  - `tests/test_mr_lifecycle_integration.py` - Complete lifecycle validation
-  - `tests/test_comment_functionality.py` - Issue comment system tests
-- **Platform Adapters**: Extended base functionality
-  - `git_mcp/platforms/base.py` - Added close/update abstract methods
-  - `git_mcp/platforms/github.py` - GitHub close/update implementation
-  - `git_mcp/platforms/gitlab.py` - GitLab close/update implementation
-- **MCP Server Tools**: Expanded tool coverage
-  - Total MR tools: 6 → 8 (added close_merge_request, update_merge_request)
-  - Complete docstring documentation for all new tools
-  - Full parameter validation and error handling
+- **Installation Enhancement**: Improved post-installation experience with code memory setup
+- **Code Quality**: Minor code cleanup and optimization improvements
 
 ## [0.2.0] - 2025-08-16
 
