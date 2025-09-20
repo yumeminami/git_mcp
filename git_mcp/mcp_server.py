@@ -676,7 +676,7 @@ def _append_code_memory_to_file(file_path):
         # Check if content already exists (idempotency)
         if file_path.exists():
             existing_content = file_path.read_text()
-            if "Git MCP Server - Code System Prompt" in existing_content:
+            if "Simplicity-First Design Principles" in existing_content:
                 logger.debug(f"Code memory content already exists in {file_path}")
                 return False
 
