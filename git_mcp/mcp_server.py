@@ -568,6 +568,146 @@ def main():
     mcp.run()
 
 
+# Code Memory Content - Design Principles and Guidelines
+# This content is automatically added to user configuration files during installation
+CODE_MEMORY_CONTENT = """
+
+## Simplicity-First Design Principles
+
+### Core Design Principles (Hierarchical Priority)
+
+#### 1. KISS Principle (Primary Priority)
+- **Principle of Parsimony**: Select the most direct and comprehensible solution among available alternatives
+- **Cognitive Load Minimization**: Prioritize code readability and maintainability over algorithmic sophistication
+- **Single Problem Resolution**: Address one clearly defined problem per implementation unit
+- **Standard Library Preference**: Utilize established libraries and conventional patterns rather than custom implementations
+- **Explicit Solution Preference**: Default to obvious and transparent approaches when functionally equivalent
+
+#### 2. YAGNI Principle (Secondary Priority)
+- **Present Requirements Focus**: Implement only functionality required for current specifications
+- **Feature Scope Constraint**: Exclude speculative parameters, options, or configuration mechanisms
+- **Optimization Deferral**: Establish functional correctness before performance considerations
+- **Speculative Feature Rejection**: Eliminate functionality implemented for hypothetical future requirements
+
+#### 3. DRY Principle (Tertiary Priority)
+- **Duplication Elimination**: Remove apparent code repetition while avoiding premature abstraction
+- **Pattern-Based Extraction**: Extract common logic only after clear usage patterns emerge
+- **Abstraction Threshold**: Prefer explicit duplication over speculative generalization
+
+#### 4. SOLID Principles (Quaternary Priority, Minimal Application)
+- **Single Responsibility**: Maintain one clearly defined purpose per functional unit
+- **Principle Application Restraint**: Apply remaining SOLID principles without architectural over-engineering
+
+### Anti-Patterns and Prohibited Practices
+
+#### Over-Design Constraints
+- **Architectural Complexity Prohibition**: Avoid elaborate system architectures for straightforward problems
+- **Framework Development Restriction**: Implement scripts rather than generalized frameworks unless explicitly required
+- **Abstraction Layer Limitation**: Minimize unnecessary abstraction layers
+- **Generic Solution Avoidance**: Reject generic implementations for specific problem domains
+
+#### Over-Analysis Restrictions
+- **Edge Case Analysis Limitation**: Avoid comprehensive upfront edge case enumeration
+- **Solution Adequacy Threshold**: Terminate design iteration at "sufficient" rather than "optimal" solutions
+- **Hypothetical Scenario Exclusion**: Exclude optimization for speculative use cases
+- **Decision Paralysis Prevention**: Establish clear decision points to prevent analysis stagnation
+
+#### Defensive Programming Constraints
+- **Input Validation Restriction**: Implement validation only for explicitly identified risk scenarios
+- **Error Handling Minimization**: Apply error handling mechanisms only where failure modes are documented
+- **Exception Wrapping Limitation**: Avoid comprehensive try-catch implementations without specific requirements
+- **Caller Trust Principle**: Assume correct caller behavior until empirical evidence suggests otherwise
+- **Failure Mode Simplification**: Implement rapid failure mechanisms rather than comprehensive error recovery
+
+### Implementation Methodology
+
+#### Required Practices
+- Implement straightforward and immediately comprehensible code structures
+- Utilize simple control flow mechanisms (conditional statements, iteration constructs)
+- Prefer language built-in functions over custom implementations
+- Design minimal, purpose-focused functions
+- Employ semantically clear variable nomenclature
+- Begin with the simplest functional solution
+- Introduce complexity only when explicitly specified in requirements
+
+#### Prohibited Practices
+- Elaborate class hierarchy construction
+- Universal configuration mechanism implementation
+- Speculative defensive programming
+- Premature scalability engineering
+- Unnecessary indirection layer creation
+- Abstract base class implementation without clear inheritance requirements
+- Comprehensive logging and monitoring system implementation without specification
+
+### Decision Framework Protocol
+
+When evaluating implementation decisions, apply the following sequential evaluation criteria:
+
+1. **Simplicity Assessment**: Does the solution minimize cognitive complexity and maximize comprehensibility?
+2. **Requirement Necessity**: Is this functionality required for current specifications rather than hypothetical future needs?
+3. **Duplication Analysis**: Does the implementation create obvious and problematic code repetition?
+4. **Responsibility Clarity**: Does the implementation maintain a single, well-defined purpose?
+
+**Default Resolution Protocol**: Select the simplest implementation that satisfies immediate problem requirements without additional complexity.
+
+---
+*Added by Git MCP Server installation on {timestamp}*
+"""
+
+
+def _append_code_memory_to_file(file_path):
+    """
+    Append code memory content to a file with idempotency check.
+
+    Args:
+        file_path (Path): Target file path
+
+    Returns:
+        bool: True if content was added, False if already exists or on error
+    """
+    from pathlib import Path
+    from datetime import datetime
+
+    try:
+        file_path = Path(file_path).expanduser()
+
+        # Create parent directories if they don't exist
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Check if content already exists (idempotency)
+        if file_path.exists():
+            existing_content = file_path.read_text()
+            if "Git MCP Server - Code System Prompt" in existing_content:
+                logger.debug(f"Code memory content already exists in {file_path}")
+                return False
+
+        # Prepare content with timestamp
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        content_to_add = CODE_MEMORY_CONTENT.format(timestamp=timestamp)
+
+        # Append content to file
+        with file_path.open("a", encoding="utf-8") as f:
+            if file_path.exists() and file_path.stat().st_size > 0:
+                f.write("\n")  # Add newline if file has content
+            f.write(content_to_add)
+
+        logger.debug(f"Code memory content appended to {file_path}")
+        return True
+
+    except PermissionError:
+        logger.warning(f"Permission denied writing to {file_path}")
+        print(f"⚠️  Could not write to {file_path} (permission denied)")
+        return False
+    except OSError as e:
+        logger.warning(f"Error writing to {file_path}: {e}")
+        print(f"⚠️  Could not write to {file_path}: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error writing to {file_path}: {e}")
+        print(f"❌ Unexpected error writing to {file_path}: {e}")
+        return False
+
+
 def install_claude_integration():
     """Install Claude Code integration and slash commands."""
     import subprocess
@@ -631,6 +771,14 @@ def install_claude_integration():
     except Exception as e:
         print(f"❌ Failed to setup Claude commands: {e}")
         return
+
+    # Add code memory guidelines to Claude configuration
+    print("📝 Adding code memory guidelines to Claude configuration...")
+    claude_config_file = Path.home() / ".claude" / "CLAUDE.md"
+    if _append_code_memory_to_file(claude_config_file):
+        print(f"✅ Code memory guidelines added to {claude_config_file}")
+    else:
+        print(f"ℹ️  Code memory guidelines already present in {claude_config_file}")
 
     print("\n🎯 Setup completed! Next steps:")
     print("1. Configure a Git platform:")
@@ -723,6 +871,14 @@ def install_gemini_integration():
         print(f"❌ Failed to install Gemini commands from package: {e}")
         print("   Please check that the package was installed correctly")
         return
+
+    # Add code memory guidelines to Gemini configuration
+    print("📝 Adding code memory guidelines to Gemini configuration...")
+    gemini_config_file = Path.home() / ".gemini" / "GEMINI.md"
+    if _append_code_memory_to_file(gemini_config_file):
+        print(f"✅ Code memory guidelines added to {gemini_config_file}")
+    else:
+        print(f"ℹ️  Code memory guidelines already present in {gemini_config_file}")
 
     print("\n🎯 Setup completed! Next steps:")
     print("1. Configure a Git platform:")
