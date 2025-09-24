@@ -32,9 +32,6 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["git_mcp"]
 
-[tool.hatch.build.targets.wheel.sources]
-"git_mcp/codex_commands" = "git_mcp/codex_commands"
-
 [project.optional-dependencies]
 dev = [
     "pre-commit>=4.2.0",
