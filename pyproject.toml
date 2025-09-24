@@ -17,6 +17,8 @@ dependencies = [
     "mcp[cli]>=1.0.0",
     "tool>=0.8.0",
     "pre-commit>=4.2.0",
+    "tomli-w>=1.0.0",
+    "tomli>=2.0.0; python_version<'3.11'",
 ]
 
 [project.scripts]

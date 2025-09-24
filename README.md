@@ -1,12 +1,12 @@
 # Git MCP Server
 
-**A Model Context Protocol (MCP) server for Claude Code** that enables complete issue-to-code automation across GitHub and GitLab platforms.
+**A Model Context Protocol (MCP) server for Claude Code, Gemini CLI, and Codex** that enables complete issue-to-code automation across GitHub and GitLab platforms.
 
 ## 🚀 What is Git MCP Server?
 
-Git MCP Server transforms your development workflow by connecting Claude Code directly to your Git repositories. It provides:
+Git MCP Server transforms your development workflow by connecting AI assistants directly to your Git repositories. It provides:
 
-- **🤖 MCP Integration**: Full Claude Code support via Model Context Protocol
+- **🤖 MCP Integration**: Full support for Claude Code, Gemini CLI, and Codex via Model Context Protocol
 - **📋 Issue-to-Code Workflow**: Complete automation from issue analysis to PR creation
 - **🎯 Slash Commands**: Pre-built workflow commands (`/issue`, `/plan`, `/implement`, `/test`, `/doc`, `/pr`)
 - **🔧 Multi-Platform**: Unified interface for GitLab and GitHub
@@ -60,10 +60,20 @@ uv tool install git_mcp_server
 git-mcp-server --install-gemini
 ```
 
+**For Codex:**
+```bash
+# Install from PyPI
+uv tool install git_mcp_server
+
+# Setup Codex integration (adds MCP server + slash commands)
+git-mcp-server --install-codex
+```
+
 This automatically:
 - ✅ Installs Git MCP Server globally
-- ✅ Configures MCP server in Claude Code/Gemini CLI
+- ✅ Configures MCP server in Claude Code/Gemini CLI/Codex
 - ✅ Installs slash commands to respective directories
+- ✅ Adds code memory guidelines (Codex: AGENTS.md)
 - ✅ Provides setup instructions
 
 ### Alternative Installation
@@ -71,13 +81,13 @@ This automatically:
 ```bash
 # Using pip
 pip install git_mcp_server
-git-mcp-server --install-claude  # or --install-gemini
+git-mcp-server --install-claude  # or --install-gemini or --install-codex
 
 # From source (development)
 git clone <repository-url>
 cd git_mcp
 uv tool install --from . git_mcp_server
-git-mcp-server --install-claude  # or --install-gemini
+git-mcp-server --install-claude  # or --install-gemini or --install-codex
 ```
 
 ## ⚡ Quick Start
@@ -103,7 +113,7 @@ The system will automatically:
 
 ### 2. Start Using Slash Commands
 
-In Claude Code or Gemini CLI, you can now use:
+In Claude Code, Gemini CLI, or Codex, you can now use:
 
 #### **`/issue`** - Smart Issue Analysis
 ```bash
@@ -146,7 +156,7 @@ In Claude Code or Gemini CLI, you can now use:
 
 ## 🛠️ Available MCP Tools
 
-When configured, Claude Code and Gemini CLI gain access to these powerful tools:
+When configured, Claude Code, Gemini CLI, and Codex gain access to these powerful tools:
 
 ### Platform Management
 - `list_platforms()` - List configured Git platforms
@@ -225,6 +235,11 @@ uv run mcp dev git_mcp/mcp_server.py
 - **Global settings**: Configured in `~/.gemini/settings.json`
 - **Project settings**: Can override in project-specific settings
 - **Commands**: Located in `~/.gemini/commands/` (global) or `.gemini/commands/` (project)
+
+**Codex:**
+- **Global configuration**: MCP server configured in `~/.codex/config.toml`
+- **Commands**: Located in `~/.codex/prompts/` directory
+- **Memory integration**: Code guidelines in `~/.codex/AGENTS.md`
 
 ### Development Setup
 
@@ -307,6 +322,10 @@ claude mcp list
 # Verify Gemini CLI integration
 gemini /mcp
 
+# Verify Codex integration
+ls ~/.codex/prompts/  # Should show slash commands
+cat ~/.codex/config.toml  # Should show git-mcp-server
+
 # Test MCP connection
 echo '{"jsonrpc": "2.0", "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "test", "version": "1.0.0"}}, "id": 1}' | git-mcp-server
 ```
@@ -334,8 +353,11 @@ ls ~/.claude/commands/
 # Check commands directory (Gemini CLI)
 ls ~/.gemini/commands/
 
+# Check commands directory (Codex)
+ls ~/.codex/prompts/
+
 # Reinstall if missing
-git-mcp-server --install-claude  # or --install-gemini
+git-mcp-server --install-claude  # or --install-gemini or --install-codex
 ```
 
 ### Update to Latest Version
@@ -537,6 +559,9 @@ uv tool install git_mcp_server && git-mcp-server --install-claude
 
 # For Gemini CLI
 uv tool install git_mcp_server && git-mcp-server --install-gemini
+
+# For Codex
+uv tool install git_mcp_server && git-mcp-server --install-codex
 ```
 
 Then try `/issue` in your AI assistant! 🚀

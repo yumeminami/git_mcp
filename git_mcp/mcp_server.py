@@ -534,6 +534,9 @@ def main():
         elif sys.argv[1] == "--install-gemini":
             install_gemini_integration()
             return
+        elif sys.argv[1] == "--install-codex":
+            install_codex_integration()
+            return
         elif sys.argv[1] in ["--help", "-h"]:
             print("git-mcp-server - Git MCP Server")
             print(f"Version: {get_version()}")
@@ -546,6 +549,7 @@ def main():
             print("  --help, -h         Show this help message and exit")
             print("  --install-claude   Install Claude Code integration")
             print("  --install-gemini   Install Gemini CLI integration")
+            print("  --install-codex    Install Codex integration")
             print()
             print("Environment Variables:")
             print(
@@ -654,6 +658,50 @@ When evaluating implementation decisions, apply the following sequential evaluat
 """
 
 
+def _validate_config_path(path, allowed_dirs=None):
+    """
+    Validate that a path is safe for configuration file operations.
+
+    Args:
+        path: Path to validate
+        allowed_dirs: Optional list of allowed directory names (e.g., ['.codex', '.claude', '.gemini'])
+
+    Returns:
+        Path: Resolved and validated path
+
+    Raises:
+        ValueError: If path is unsafe or outside allowed directories
+    """
+    from pathlib import Path
+
+    if allowed_dirs is None:
+        allowed_dirs = [".codex", ".claude", ".gemini"]
+
+    try:
+        # Resolve the path and ensure it's absolute
+        resolved_path = Path(path).expanduser().resolve()
+
+        # Ensure it's under the user's home directory
+        home_dir = Path.home().resolve()
+        if not str(resolved_path).startswith(str(home_dir)):
+            raise ValueError(f"Path {resolved_path} is not under user home directory")
+
+        # Check if path is within allowed config directories
+        relative_path = resolved_path.relative_to(home_dir)
+        first_part = relative_path.parts[0] if relative_path.parts else ""
+
+        if first_part not in allowed_dirs:
+            raise ValueError(
+                f"Path {resolved_path} is not in allowed directories: {allowed_dirs}"
+            )
+
+        return resolved_path
+
+    except Exception as e:
+        logger.error(f"Path validation failed for {path}: {e}")
+        raise ValueError(f"Invalid or unsafe path: {path}") from e
+
+
 def _append_code_memory_to_file(file_path):
     """
     Append code memory content to a file with idempotency check.
@@ -664,11 +712,11 @@ def _append_code_memory_to_file(file_path):
     Returns:
         bool: True if content was added, False if already exists or on error
     """
-    from pathlib import Path
     from datetime import datetime
 
     try:
-        file_path = Path(file_path).expanduser()
+        # Validate path security before proceeding
+        file_path = _validate_config_path(file_path)
 
         # Create parent directories if they don't exist
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -693,6 +741,10 @@ def _append_code_memory_to_file(file_path):
         logger.debug(f"Code memory content appended to {file_path}")
         return True
 
+    except ValueError as e:
+        logger.warning(f"Invalid path for code memory file: {e}")
+        print(f"❌ Invalid path: {e}")
+        return False
     except PermissionError:
         logger.warning(f"Permission denied writing to {file_path}")
         print(f"⚠️  Could not write to {file_path} (permission denied)")
@@ -753,7 +805,7 @@ def install_claude_integration():
             claude_commands_ref = importlib.resources.files("git_mcp.claude_commands")
             if claude_commands_ref.is_dir():
                 for command_file in claude_commands_ref.iterdir():
-                    if command_file.suffix == ".md":
+                    if command_file.name.endswith(".md"):
                         target_file = commands_dir / command_file.name
                         target_file.write_text(command_file.read_text())
                         print(f"   Installed: {command_file.name}")
@@ -860,7 +912,7 @@ def install_gemini_integration():
         gemini_commands_ref = importlib.resources.files("git_mcp.gemini_commands")
         if gemini_commands_ref.is_dir():
             for command_file in gemini_commands_ref.iterdir():
-                if command_file.suffix == ".toml":
+                if command_file.name.endswith(".toml"):
                     target_file = commands_dir / command_file.name
                     target_file.write_text(command_file.read_text())
                     print(f"   Installed: {command_file.name}")
@@ -892,6 +944,263 @@ def install_gemini_integration():
     print("   /doc")
     print("   /pr <issue-id>")
     print("\n🎉 Happy issue-driven coding with Gemini!")
+
+
+def install_codex_integration() -> None:
+    """
+    Install Codex integration and slash commands.
+
+    This function sets up the complete Codex integration by:
+    1. Verifying Codex CLI is available
+    2. Configuring MCP server in ~/.codex/config.toml
+    3. Installing slash commands to ~/.codex/prompts/
+    4. Adding code memory guidelines to ~/.codex/AGENTS.md
+
+    The integration follows the same pattern as Claude Code and Gemini CLI
+    integrations but adapts to Codex's specific configuration requirements.
+    """
+    import shutil
+
+    print("🔧 Setting up Git MCP Server with Codex...")
+
+    # Check if codex command is available and warn if not found
+    if not shutil.which("codex"):
+        print("⚠️  Codex CLI not found on PATH.")
+        print(
+            "   Installation will proceed, but you'll need to install Codex to use the integration."
+        )
+        print("   Get Codex at: https://github.com/openai/codex")
+        print()
+
+    # Configure MCP server in ~/.codex/config.toml
+    print("📦 Adding MCP server to Codex configuration...")
+    if not _configure_codex_mcp_server():
+        return
+
+    # Install slash commands to ~/.codex/prompts/
+    print("📋 Installing issue-to-code workflow slash commands...")
+    if not _install_codex_commands():
+        return
+
+    # Update AGENTS.md with code memory guidelines
+    print("📝 Adding code memory guidelines to Codex configuration...")
+    _update_codex_agents_memory()
+
+    print("\n🎯 Setup completed! Next steps:")
+    print("1. Configure a Git platform:")
+    print("   git-mcp config add my-gitlab gitlab --url https://gitlab.com")
+    print("\n2. Test the connection:")
+    print("   git-mcp config test my-gitlab")
+    print("\n3. Use the issue-to-code workflow in Codex:")
+    print("   /issue <issue-url>")
+    print("   /plan")
+    print("   /implement")
+    print("   /test")
+    print("   /doc")
+    print("   /pr <issue-id>")
+    print("\n🎉 Happy issue-driven coding with Codex!")
+
+
+def _configure_codex_mcp_server() -> bool:
+    """
+    Add MCP server configuration to Codex's config.toml file.
+
+    Codex uses a TOML configuration file at ~/.codex/config.toml to define
+    MCP servers. This function:
+    1. Loads existing configuration (if any)
+    2. Adds git-mcp-server to the [mcp_servers] section
+    3. Writes the updated configuration back to the file
+
+    Returns:
+        bool: True if configuration was successful, False otherwise
+
+    The configuration format follows Codex's MCP specification:
+    [mcp_servers.git-mcp-server]
+    command = "git-mcp-server"
+    args = []
+    env = {}
+    """
+    from pathlib import Path
+
+    try:
+        # Import TOML handling libraries with graceful fallbacks
+        try:
+            # Try Python 3.11+ built-in tomllib first
+            from importlib import import_module
+
+            tomllib = import_module("tomllib")
+        except ImportError:
+            try:
+                # Fallback to tomli for older Python versions
+                tomllib = import_module("tomli")
+            except ImportError:
+                print(
+                    "❌ TOML support not available. Please install tomli: pip install tomli"
+                )
+                return False
+
+        try:
+            import tomli_w
+        except ImportError:
+            print(
+                "❌ TOML writing support not available. Please install tomli-w: pip install tomli-w"
+            )
+            return False
+
+        # Use secure path validation for config file
+        config_file = _validate_config_path(Path.home() / ".codex" / "config.toml")
+
+        # Create .codex directory if it doesn't exist
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Load existing config or create new
+        config = {}
+        if config_file.exists():
+            try:
+                config_content = config_file.read_text(encoding="utf-8")
+                config = tomllib.loads(config_content)
+                logger.debug(f"Loaded existing Codex config from {config_file}")
+            except FileNotFoundError:
+                logger.debug(f"Config file {config_file} not found, creating new")
+            except PermissionError:
+                print(f"❌ Permission denied reading {config_file}")
+                return False
+            except tomllib.TOMLDecodeError as e:
+                print(f"❌ Invalid TOML syntax in {config_file}: {e}")
+                print("   Please fix the syntax or delete the file to recreate it.")
+                return False
+            except UnicodeDecodeError as e:
+                print(f"❌ Invalid encoding in {config_file}: {e}")
+                return False
+            except Exception as e:
+                logger.warning(f"Unexpected error reading {config_file}: {e}")
+                print(f"⚠️  Could not parse existing config.toml: {e}")
+                print("   Continuing with empty configuration...")
+
+        # Ensure mcp_servers section exists
+        if "mcp_servers" not in config:
+            config["mcp_servers"] = {}
+
+        # Add our MCP server configuration
+        config["mcp_servers"]["git-mcp-server"] = {
+            "command": "git-mcp-server",
+            "args": [],
+            "env": {},
+        }
+
+        # Write updated config with proper error handling
+        try:
+            config_content = tomli_w.dumps(config)
+            config_file.write_text(config_content, encoding="utf-8")
+            logger.debug(f"Updated Codex config at {config_file}")
+        except PermissionError:
+            print(f"❌ Permission denied writing to {config_file}")
+            return False
+        except OSError as e:
+            print(f"❌ Could not write to {config_file}: {e}")
+            return False
+        print("✅ MCP server added successfully to Codex configuration")
+        return True
+
+    except ValueError as e:
+        print(f"❌ Invalid path for Codex configuration: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Failed to configure Codex MCP server: {e}")
+        return False
+
+
+def _install_codex_commands() -> bool:
+    """
+    Install slash commands to ~/.codex/prompts/ directory.
+
+    Codex looks for custom prompts in the ~/.codex/prompts/ directory.
+    Each markdown file becomes a slash command (e.g., issue.md -> /issue).
+
+    This function:
+    1. Creates the prompts directory if it doesn't exist
+    2. Copies all .md files from git_mcp.codex_commands package
+    3. Reports the number of commands installed
+
+    Returns:
+        bool: True if installation was successful, False otherwise
+
+    The command files include:
+    - issue.md: Issue analysis and documentation
+    - plan.md: Development planning
+    - implement.md: Implementation execution
+    - test.md: Testing automation
+    - doc.md: Documentation updates
+    - pr.md: Pull request creation
+    """
+    from pathlib import Path
+
+    try:
+        import importlib.resources
+
+        # Create Codex prompts directory with secure path validation
+        commands_dir = _validate_config_path(Path.home() / ".codex" / "prompts")
+        commands_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy slash command files from package
+        try:
+            codex_commands_ref = importlib.resources.files("git_mcp.codex_commands")
+            if codex_commands_ref.is_dir():
+                command_count = 0
+                for command_file in codex_commands_ref.iterdir():
+                    if command_file.name.endswith(".md"):
+                        target_file = commands_dir / command_file.name
+                        target_file.write_text(command_file.read_text())
+                        print(f"   Installed: {command_file.name}")
+                        command_count += 1
+
+                if command_count > 0:
+                    print(f"✅ {command_count} slash commands installed successfully")
+                    return True
+                else:
+                    print("⚠️  No command files found in package")
+                    return False
+            else:
+                raise FileNotFoundError("Codex commands directory not found in package")
+
+        except Exception as e:
+            print(f"❌ Failed to install Codex commands from package: {e}")
+            print("   Please check that the package was installed correctly")
+            return False
+
+    except ValueError as e:
+        print(f"❌ Invalid path for Codex commands: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Failed to setup Codex commands: {e}")
+        return False
+
+
+def _update_codex_agents_memory() -> bool:
+    """
+    Update ~/.codex/AGENTS.md with code memory guidelines.
+
+    Codex uses a hierarchical memory system with AGENTS.md files:
+    1. ~/.codex/AGENTS.md - Global personal guidance
+    2. Project root AGENTS.md - Shared project notes
+    3. Current directory AGENTS.md - Feature-specific notes
+
+    This function adds code memory guidelines from issue #38 to the global
+    AGENTS.md file, providing Codex with context about coding standards,
+    KISS principles, and simplicity-first design patterns.
+
+    The guidelines help Codex understand project conventions and generate
+    code that follows established patterns and best practices.
+    """
+    from pathlib import Path
+
+    codex_agents_file = Path.home() / ".codex" / "AGENTS.md"
+    if _append_code_memory_to_file(codex_agents_file):
+        print(f"✅ Code memory guidelines added to {codex_agents_file}")
+        return True
+    else:
+        print(f"ℹ️  Code memory guidelines already present in {codex_agents_file}")
+        return False
 
 
 if __name__ == "__main__":
