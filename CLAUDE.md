@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Git MCP Server is a Model Context Protocol (MCP) server that enables issue-to-code automation for Claude Code and Gemini CLI. It provides unified Git platform access for GitLab and GitHub (including GitHub Enterprise) through MCP tools and slash commands for complete development workflows.
+Git MCP Server is a Model Context Protocol (MCP) server that enables issue-to-code automation for Claude Code, Gemini CLI, and Codex. It provides unified Git platform access for GitLab and GitHub (including GitHub Enterprise) through MCP tools and slash commands for complete development workflows.
 
 ## Key Commands
 
@@ -26,8 +26,14 @@ uv run mypy git_mcp/ --ignore-missing-imports --no-strict-optional
 # Run pre-commit hooks manually (includes ruff, bandit, mypy, yaml/json checks)
 uv run pre-commit run --all-files
 
-# Run tests (when implemented - uses placeholder test currently)
+# Run tests
 uv run pytest
+
+# Run tests with coverage
+uv run pytest --cov=git_mcp --cov-report=term-missing
+
+# Run specific test file
+uv run pytest tests/test_logging.py
 
 # Test CLI entry points
 uv run git-mcp --help
@@ -51,6 +57,9 @@ git-mcp-server --install-claude
 
 # Install from PyPI and configure Gemini CLI integration
 git-mcp-server --install-gemini
+
+# Install from PyPI and configure Codex integration
+git-mcp-server --install-codex
 
 # Local development installation
 ./install.sh
@@ -116,6 +125,12 @@ git-mcp config refresh-username my-gitlab
 - Installed to `~/.gemini/commands/` during setup
 - Same workflow commands adapted for Gemini CLI format
 
+**Codex Commands** (`git_mcp/codex_commands/`):
+- Markdown-based command definitions for Codex integration
+- Installed to `~/.codex/prompts/` during setup
+- Same workflow commands adapted for Codex prompt format
+- Includes memory integration via `~/.codex/AGENTS.md`
+
 ### Key Design Patterns
 
 - **Async-first**: All platform operations are async for better performance
@@ -132,13 +147,14 @@ When working on this codebase:
 2. **Platform Support**: Add new adapters in `git_mcp/platforms/` following the base interface
 3. **MCP Tools**: Add new tools in `git_mcp/mcp_server.py` with proper async patterns
 4. **CLI Commands**: Extend commands in `git_mcp/commands/` using Click framework
-5. **Slash Commands**: Update both Claude and Gemini command definitions when adding new workflows
+5. **Slash Commands**: Update Claude, Gemini, and Codex command definitions when adding new workflows
 
 ## File Structure Context
 
 - `git_mcp/` - Main Python package
 - `git_mcp/claude_commands/` - Slash commands for Claude Code (.md files)
 - `git_mcp/gemini_commands/` - Slash commands for Gemini CLI (.toml files)
+- `git_mcp/codex_commands/` - Slash commands for Codex (.md files)
 - `git_mcp/commands/` - CLI command implementations
 - `git_mcp/platforms/` - Git platform adapters (GitLab, GitHub, etc.)
 - `git_mcp/services/` - Service layer for business logic
@@ -168,8 +184,11 @@ Core dependencies (from pyproject.toml):
 Development tools:
 - `ruff>=0.1.0` - Linting and code formatting
 - `bandit[toml]>=1.7.0` - Security vulnerability scanning
-- `pytest>=8.0.0` - Testing framework (configured, tests not yet implemented)
+- `pytest>=8.0.0` - Testing framework with comprehensive test suite
 - `pytest-asyncio>=0.23.0` - Async testing support
+- `pytest-cov>=5.0.0` - Test coverage reporting
+- `coverage>=7.0.0` - Coverage measurement
+- `mypy>=1.17.1` - Static type checking
 - `pip-audit>=2.0.0` - Security vulnerability scanning
 
 **Pre-commit Configuration**: Includes ruff (linting/formatting), bandit (security), mypy (type checking), and standard file checks. Run with `uv run pre-commit run --all-files`.
@@ -223,31 +242,31 @@ The MCP server exposes approximately 25 tools organized into categories:
 
 **Issue Management**: `list_issues`, `list_all_issues`, `list_my_issues`, `get_issue_details`, `get_issue_by_url`, `create_issue`, `update_issue`, `close_issue`
 
-**Merge Requests**: `list_merge_requests`, `get_merge_request_details`, `create_merge_request` (支持 GitLab 跨项目 MR), `list_my_merge_requests`
+**Merge Requests**: `list_merge_requests`, `get_merge_request_details`, `create_merge_request` (supports GitLab cross-project MRs), `list_my_merge_requests`, `get_merge_request_diff`, `get_merge_request_commits`, `create_issue_comment`
 
 **Repository Operations**: `create_fork`, `get_fork_info`, `list_forks`
 
 All tools support async operations and return structured data for integration with AI assistants.
 
-## GitLab Fork MR 支持
+## GitLab Fork MR Support
 
-**GitLab 跨项目 Merge Request** 现已完全支持，使用 `target_project_id` 参数：
+**GitLab Cross-Project Merge Requests** are fully supported using the `target_project_id` parameter:
 
-### GitLab Fork MR 用法
+### GitLab Fork MR Usage
 
 ```python
-# GitLab 跨项目 MR（从 fork 到上游项目）
+# GitLab cross-project MR (from fork to upstream project)
 create_merge_request(
     platform="gitlab",
-    project_id="456",              # fork 项目 ID（源项目）
+    project_id="456",              # fork project ID (source project)
     source_branch="feature-branch",
     target_branch="main",
     title="Fix issue #123",
-    target_project_id="123",       # 上游项目 ID（目标项目）
-    description="详细描述..."
+    target_project_id="123",       # upstream project ID (target project)
+    description="Detailed description..."
 )
 
-# GitLab 同项目 MR（现有功能保持不变）
+# GitLab same-project MR (existing functionality unchanged)
 create_merge_request(
     platform="gitlab",
     project_id="123",
@@ -257,22 +276,19 @@ create_merge_request(
 )
 ```
 
-### GitHub Fork PR 对比
+### GitHub Fork PR Comparison
 
 ```python
-# GitHub 跨仓库 PR（使用分支引用格式）
+# GitHub cross-repository PR (using branch reference format)
 create_merge_request(
     platform="github",
-    project_id="upstream-owner/upstream-repo",  # 目标上游仓库
-    source_branch="fork-owner:feature-branch",  # fork 分支引用
+    project_id="upstream-owner/upstream-repo",  # target upstream repository
+    source_branch="fork-owner:feature-branch",  # fork branch reference
     target_branch="main",
     title="Fix issue #123"
 )
 ```
 
-**关键区别**：
-- **GitLab**: 使用 `target_project_id` 参数指定目标项目
-- **GitHub**: 使用 `owner:branch` 格式在 `source_branch` 中指定跨仓库引用
-
-- CLAUDE.md\
-\介绍这个项目
+**Key Differences**:
+- **GitLab**: Uses `target_project_id` parameter to specify target project
+- **GitHub**: Uses `owner:branch` format in `source_branch` to specify cross-repository reference

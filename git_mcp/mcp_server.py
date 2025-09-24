@@ -534,6 +534,9 @@ def main():
         elif sys.argv[1] == "--install-gemini":
             install_gemini_integration()
             return
+        elif sys.argv[1] == "--install-codex":
+            install_codex_integration()
+            return
         elif sys.argv[1] in ["--help", "-h"]:
             print("git-mcp-server - Git MCP Server")
             print(f"Version: {get_version()}")
@@ -546,6 +549,7 @@ def main():
             print("  --help, -h         Show this help message and exit")
             print("  --install-claude   Install Claude Code integration")
             print("  --install-gemini   Install Gemini CLI integration")
+            print("  --install-codex    Install Codex integration")
             print()
             print("Environment Variables:")
             print(
@@ -892,6 +896,222 @@ def install_gemini_integration():
     print("   /doc")
     print("   /pr <issue-id>")
     print("\n🎉 Happy issue-driven coding with Gemini!")
+
+
+def install_codex_integration():
+    """
+    Install Codex integration and slash commands.
+
+    This function sets up the complete Codex integration by:
+    1. Verifying Codex CLI is available
+    2. Configuring MCP server in ~/.codex/config.toml
+    3. Installing slash commands to ~/.codex/prompts/
+    4. Adding code memory guidelines to ~/.codex/AGENTS.md
+
+    The integration follows the same pattern as Claude Code and Gemini CLI
+    integrations but adapts to Codex's specific configuration requirements.
+    """
+    import shutil
+
+    print("🔧 Setting up Git MCP Server with Codex...")
+
+    # Check if codex command is available (though not strictly required for configuration)
+    if not shutil.which("codex"):
+        print("❌ Codex CLI is not installed.")
+        print("   Please install Codex first: https://github.com/openai/codex")
+        return
+
+    # Configure MCP server in ~/.codex/config.toml
+    print("📦 Adding MCP server to Codex configuration...")
+    if not _configure_codex_mcp_server():
+        return
+
+    # Install slash commands to ~/.codex/prompts/
+    print("📋 Installing issue-to-code workflow slash commands...")
+    if not _install_codex_commands():
+        return
+
+    # Update AGENTS.md with code memory guidelines
+    print("📝 Adding code memory guidelines to Codex configuration...")
+    _update_codex_agents_memory()
+
+    print("\n🎯 Setup completed! Next steps:")
+    print("1. Configure a Git platform:")
+    print("   git-mcp config add my-gitlab gitlab --url https://gitlab.com")
+    print("\n2. Test the connection:")
+    print("   git-mcp config test my-gitlab")
+    print("\n3. Use the issue-to-code workflow in Codex:")
+    print("   /issue <issue-url>")
+    print("   /plan")
+    print("   /implement")
+    print("   /test")
+    print("   /doc")
+    print("   /pr <issue-id>")
+    print("\n🎉 Happy issue-driven coding with Codex!")
+
+
+def _configure_codex_mcp_server():
+    """
+    Add MCP server configuration to Codex's config.toml file.
+
+    Codex uses a TOML configuration file at ~/.codex/config.toml to define
+    MCP servers. This function:
+    1. Loads existing configuration (if any)
+    2. Adds git-mcp-server to the [mcp_servers] section
+    3. Writes the updated configuration back to the file
+
+    Returns:
+        bool: True if configuration was successful, False otherwise
+
+    The configuration format follows Codex's MCP specification:
+    [mcp_servers.git-mcp-server]
+    command = "git-mcp-server"
+    args = []
+    env = {}
+    """
+    from pathlib import Path
+
+    try:
+        # Import TOML handling libraries with graceful fallbacks
+        try:
+            import tomllib  # Python 3.11+ built-in
+        except ImportError:
+            try:
+                import tomli as tomllib  # Fallback for older Python versions
+            except ImportError:
+                print(
+                    "❌ TOML support not available. Please install tomli: pip install tomli"
+                )
+                return False
+
+        try:
+            import tomli_w
+        except ImportError:
+            print(
+                "❌ TOML writing support not available. Please install tomli-w: pip install tomli-w"
+            )
+            return False
+
+        config_file = Path.home() / ".codex" / "config.toml"
+
+        # Create .codex directory if it doesn't exist
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Load existing config or create new
+        config = {}
+        if config_file.exists():
+            try:
+                config = tomllib.loads(config_file.read_text())
+            except Exception as e:
+                print(f"⚠️  Could not parse existing config.toml: {e}")
+
+        # Ensure mcp_servers section exists
+        if "mcp_servers" not in config:
+            config["mcp_servers"] = {}
+
+        # Add our MCP server configuration
+        config["mcp_servers"]["git-mcp-server"] = {
+            "command": "git-mcp-server",
+            "args": [],
+            "env": {},
+        }
+
+        # Write updated config
+        config_file.write_text(tomli_w.dumps(config))
+        print("✅ MCP server added successfully to Codex configuration")
+        return True
+
+    except Exception as e:
+        print(f"❌ Failed to configure Codex MCP server: {e}")
+        return False
+
+
+def _install_codex_commands():
+    """
+    Install slash commands to ~/.codex/prompts/ directory.
+
+    Codex looks for custom prompts in the ~/.codex/prompts/ directory.
+    Each markdown file becomes a slash command (e.g., issue.md -> /issue).
+
+    This function:
+    1. Creates the prompts directory if it doesn't exist
+    2. Copies all .md files from git_mcp.codex_commands package
+    3. Reports the number of commands installed
+
+    Returns:
+        bool: True if installation was successful, False otherwise
+
+    The command files include:
+    - issue.md: Issue analysis and documentation
+    - plan.md: Development planning
+    - implement.md: Implementation execution
+    - test.md: Testing automation
+    - doc.md: Documentation updates
+    - pr.md: Pull request creation
+    """
+    from pathlib import Path
+
+    try:
+        import importlib.resources
+
+        # Create Codex prompts directory
+        commands_dir = Path.home() / ".codex" / "prompts"
+        commands_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy slash command files from package
+        try:
+            codex_commands_ref = importlib.resources.files("git_mcp.codex_commands")
+            if codex_commands_ref.is_dir():
+                command_count = 0
+                for command_file in codex_commands_ref.iterdir():
+                    if command_file.suffix == ".md":
+                        target_file = commands_dir / command_file.name
+                        target_file.write_text(command_file.read_text())
+                        print(f"   Installed: {command_file.name}")
+                        command_count += 1
+
+                if command_count > 0:
+                    print(f"✅ {command_count} slash commands installed successfully")
+                    return True
+                else:
+                    print("⚠️  No command files found in package")
+                    return False
+            else:
+                raise FileNotFoundError("Codex commands directory not found in package")
+
+        except Exception as e:
+            print(f"❌ Failed to install Codex commands from package: {e}")
+            print("   Please check that the package was installed correctly")
+            return False
+
+    except Exception as e:
+        print(f"❌ Failed to setup Codex commands: {e}")
+        return False
+
+
+def _update_codex_agents_memory():
+    """
+    Update ~/.codex/AGENTS.md with code memory guidelines.
+
+    Codex uses a hierarchical memory system with AGENTS.md files:
+    1. ~/.codex/AGENTS.md - Global personal guidance
+    2. Project root AGENTS.md - Shared project notes
+    3. Current directory AGENTS.md - Feature-specific notes
+
+    This function adds code memory guidelines from issue #38 to the global
+    AGENTS.md file, providing Codex with context about coding standards,
+    KISS principles, and simplicity-first design patterns.
+
+    The guidelines help Codex understand project conventions and generate
+    code that follows established patterns and best practices.
+    """
+    from pathlib import Path
+
+    codex_agents_file = Path.home() / ".codex" / "AGENTS.md"
+    if _append_code_memory_to_file(codex_agents_file):
+        print(f"✅ Code memory guidelines added to {codex_agents_file}")
+    else:
+        print(f"ℹ️  Code memory guidelines already present in {codex_agents_file}")
 
 
 if __name__ == "__main__":
