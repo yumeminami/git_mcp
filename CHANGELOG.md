@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-09-25
+
+### Added
+- **Codex Integration**: Complete Codex support for issue-to-code workflow automation
+  - Added `--install-codex` flag for seamless Codex setup and configuration
+  - Created comprehensive Codex command definitions in `git_mcp/codex_commands/` (.md format)
+  - Automatic MCP server configuration in Codex settings
+  - AGENTS.md memory integration for enhanced AI assistance context
+  - Full workflow support: `/issue`, `/plan`, `/implement`, `/test`, `/doc`, `/pr` commands
+  - Closes issue #40
+
+### Improved
+- **Code Quality**: Enhanced Codex integration implementation with security improvements
+  - Improved code quality and security in Codex command definitions
+  - Better error handling and configuration management
+  - Enhanced documentation and user experience for Codex workflow
+
+### Technical
+- **Package Structure**: Added Codex command files to package distribution
+- **Installation Process**: Extended MCP server integration to support Codex alongside Claude Code and Gemini CLI
+- **Configuration Management**: Enhanced platform configuration system for multi-client support
+
 ## [0.2.1] - 2025-09-20
 
 ### Added
