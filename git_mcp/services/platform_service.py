@@ -53,8 +53,9 @@ class PlatformService:
 
                     try:
                         # Create adapter with temporary username, then get real username
+                        # Default to ssl_verify=True for environment variable configurations
                         gitlab_adapter = GitLabAdapter(
-                            "https://gitlab.com", gitlab_token, "temp"
+                            "https://gitlab.com", gitlab_token, "temp", ssl_verify=True
                         )
                         # Try to authenticate and get username from API
                         try:
@@ -64,12 +65,18 @@ class PlatformService:
                             username = "ci-user"
                         # Create new adapter with correct username
                         return GitLabAdapter(
-                            "https://gitlab.com", gitlab_token, username
+                            "https://gitlab.com",
+                            gitlab_token,
+                            username,
+                            ssl_verify=True,
                         )
                     except Exception:
                         # Fallback to default username if API call fails
                         return GitLabAdapter(
-                            "https://gitlab.com", gitlab_token, "ci-user"
+                            "https://gitlab.com",
+                            gitlab_token,
+                            "ci-user",
+                            ssl_verify=True,
                         )
 
             raise ValueError(f"Platform '{platform_name}' not found")
@@ -78,7 +85,10 @@ class PlatformService:
             from ..platforms.gitlab import GitLabAdapter
 
             return GitLabAdapter(
-                platform_config.url, platform_config.token, platform_config.username
+                platform_config.url,
+                platform_config.token,
+                platform_config.username,
+                platform_config.ssl_verify,
             )
         elif platform_config.type == "github":
             from ..platforms.github import GitHubAdapter

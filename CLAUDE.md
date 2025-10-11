@@ -178,6 +178,8 @@ Core dependencies (from pyproject.toml):
 - `httpx>=0.26.0` - HTTP client for async requests
 - `gitpython>=3.1.0` - Git repository interaction
 - `pyyaml>=6.0.0` - YAML configuration parsing
+- `tomli-w>=1.0.0` - TOML writing for configuration files
+- `tomli>=2.0.0` - TOML parsing (Python <3.11)
 - `tool>=0.8.0` - Tool utilities
 - `pre-commit>=4.2.0` - Git hooks for code quality
 
@@ -224,6 +226,37 @@ Development tools:
 **Additional Resources:**
 - **GitHub REST API Docs**: https://docs.github.com/en/rest
 - **GitLab REST API Docs**: https://docs.gitlab.com/ee/api/
+
+## Debugging and Logging
+
+The system includes comprehensive logging capabilities for troubleshooting:
+
+**Debug Mode:**
+```bash
+# Enable debug mode for CLI commands
+git-mcp --debug config list
+
+# Start MCP server with debug logging
+git-mcp-server --debug
+```
+
+**Environment Variables:**
+```bash
+# Set log level (DEBUG, INFO, WARNING, ERROR)
+export GIT_MCP_SERVER_LOG_LEVEL=DEBUG
+
+# Enable debug mode
+export GIT_MCP_SERVER_DEBUG=true
+
+# Log to file
+export GIT_MCP_SERVER_LOG_FILE=~/.git-mcp/debug.log
+```
+
+**Features:**
+- Rich console formatting with colored output and timestamps
+- File logging with persistent debug traces
+- Detailed MCP tool call tracking
+- Structured error tracebacks with local variables (debug mode)
 
 ## Security Notes
 
