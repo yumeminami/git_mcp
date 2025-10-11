@@ -17,6 +17,7 @@ class PlatformConfig:
     url: str
     token: Optional[str] = None
     username: Optional[str] = None
+    ssl_verify: bool = True  # SSL verification (default: True for security)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary, excluding sensitive data."""
@@ -116,6 +117,7 @@ class GitMCPConfig:
         token: Optional[str] = None,
         username: Optional[str] = None,
         auto_fetch_username: bool = True,
+        ssl_verify: bool = True,
     ) -> None:
         """Add a new platform configuration.
 
@@ -126,18 +128,24 @@ class GitMCPConfig:
             token: Access token
             username: Username (if not provided and token is given, will try to fetch automatically)
             auto_fetch_username: Whether to automatically fetch username from token
+            ssl_verify: SSL verification (default: True, set False for self-signed certs)
         """
         # If username not provided and token is available, try to fetch it automatically
         if auto_fetch_username and token and not username:
             try:
                 username = await self._fetch_username_from_token(
-                    platform_type, url, token
+                    platform_type, url, token, ssl_verify
                 )
             except Exception as e:
                 print(f"Warning: Could not fetch username automatically: {e}")
 
         platform_config = PlatformConfig(
-            name=name, type=platform_type, url=url, token=token, username=username
+            name=name,
+            type=platform_type,
+            url=url,
+            token=token,
+            username=username,
+            ssl_verify=ssl_verify,
         )
 
         self.platforms[name] = platform_config
@@ -238,14 +246,14 @@ class GitMCPConfig:
         return None
 
     async def _fetch_username_from_token(
-        self, platform_type: str, url: str, token: str
+        self, platform_type: str, url: str, token: str, ssl_verify: bool = True
     ) -> Optional[str]:
         """Fetch username from platform using token."""
         try:
             if platform_type.lower() == "gitlab":
                 from ..platforms.gitlab import GitLabAdapter
 
-                gitlab_adapter = GitLabAdapter(url, token)
+                gitlab_adapter = GitLabAdapter(url, token, ssl_verify=ssl_verify)
                 user_info = await gitlab_adapter.get_current_user()
                 return user_info.get("username")
             elif platform_type.lower() == "github":
@@ -277,7 +285,10 @@ class GitMCPConfig:
 
         try:
             username = await self._fetch_username_from_token(
-                platform_config.type, platform_config.url, platform_config.token
+                platform_config.type,
+                platform_config.url,
+                platform_config.token,
+                platform_config.ssl_verify,
             )
             if username:
                 platform_config.username = username

@@ -1,9 +1,11 @@
 """GitLab platform adapter for git-mcp."""
 
 import gitlab
+import logging
 from gitlab.exceptions import GitlabError, GitlabAuthenticationError
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+from urllib.parse import urlparse
 
 from .base import (
     PlatformAdapter,
@@ -20,6 +22,8 @@ from ..core.exceptions import (
     NetworkError,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class GitLabAdapter(PlatformAdapter):
     """GitLab platform adapter using python-gitlab."""
@@ -29,9 +33,24 @@ class GitLabAdapter(PlatformAdapter):
         url: str = "https://gitlab.com",
         token: Optional[str] = None,
         username: Optional[str] = None,
+        ssl_verify: bool = True,
     ):
+        # Validate URL scheme
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ["http", "https"]:
+            raise ValueError(
+                f"Invalid URL scheme: {parsed_url.scheme}. Must be 'http' or 'https'."
+            )
+
+        # Warn about HTTP connections
+        if parsed_url.scheme == "http":
+            logger.warning(
+                f"Using insecure HTTP connection to {url}. Consider using HTTPS for production."
+            )
+
         super().__init__(url, token, username)
         self.client: Optional[gitlab.Gitlab] = None
+        self._ssl_verify = ssl_verify
 
     @property
     def platform_name(self) -> str:
@@ -43,7 +62,14 @@ class GitLabAdapter(PlatformAdapter):
             raise AuthenticationError("GitLab token is required")
 
         try:
-            self.client = gitlab.Gitlab(self.url, private_token=self.token)
+            # Auto-disable SSL verification for HTTP URLs
+            parsed_url = urlparse(self.url)
+            ssl_verify = False if parsed_url.scheme == "http" else self._ssl_verify
+
+            # Create GitLab client with SSL configuration
+            self.client = gitlab.Gitlab(
+                self.url, private_token=self.token, ssl_verify=ssl_verify
+            )
             self.client.auth()
             self._authenticated = True
             return True
