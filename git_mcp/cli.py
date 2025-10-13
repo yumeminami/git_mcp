@@ -114,8 +114,13 @@ def config():
 @click.option(
     "--no-auto-username", is_flag=True, help="Disable automatic username fetching"
 )
+@click.option(
+    "--ssl-verify/--no-ssl-verify",
+    default=True,
+    help="Enable/disable SSL verification (default: enabled)",
+)
 @click.pass_context
-def config_add(ctx, name, type, url, token, username, no_auto_username):
+def config_add(ctx, name, type, url, token, username, no_auto_username, ssl_verify):
     """Add a new platform configuration.
 
     After successful configuration, you'll be prompted to set up environment
@@ -135,6 +140,7 @@ def config_add(ctx, name, type, url, token, username, no_auto_username):
                 token,
                 username,
                 auto_fetch_username=not no_auto_username,
+                ssl_verify=ssl_verify,
             )
             formatter = ctx.obj.get_formatter()
             platform_config = ctx.obj.config.get_platform(name)

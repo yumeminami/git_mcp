@@ -175,8 +175,27 @@ class GitMCPConfig:
         return list(self.platforms.keys())
 
     def set_token(self, platform_name: str, token: str) -> None:
-        """Store token securely in keyring."""
-        keyring.set_password("git-mcp", platform_name, token)
+        """Store token securely in keyring.
+
+        If keyring is unavailable (e.g., SSH session, no keyring backend),
+        silently fail and rely on environment variables instead.
+        """
+        try:
+            keyring.set_password("git-mcp", platform_name, token)
+        except (keyring.errors.KeyringError, Exception) as e:
+            # Keyring unavailable (common in SSH sessions or containers)
+            # Token can still be used via environment variables
+            import sys
+
+            print(
+                f"Warning: Cannot store token in keyring: {e}",
+                file=sys.stderr,
+            )
+            print(
+                f"Tip: Use environment variable GIT_MCP_{platform_name.upper()}_TOKEN instead",
+                file=sys.stderr,
+            )
+
         if platform_name in self.platforms:
             self.platforms[platform_name].token = token
 
