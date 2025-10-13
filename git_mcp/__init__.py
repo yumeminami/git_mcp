@@ -9,7 +9,7 @@ try:
     __version__ = importlib.metadata.version("git_mcp_server")
 except importlib.metadata.PackageNotFoundError:
     # Fallback for development/source installations
-    __version__ = "0.2.3"
+    __version__ = "0.2.4"
 
 __author__ = "Git MCP Team"
 

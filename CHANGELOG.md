@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2025-10-13
+
+### Fixed
+- **Keyring Fallback**: Graceful handling of keyring failures in SSH sessions and containerized environments
+  - Added try-catch error handling in `set_token()` method
+  - Display helpful warning messages when keyring is unavailable
+  - Automatic fallback to environment variable storage (GIT_MCP_{PLATFORM}_TOKEN)
+  - Fixes "Failed to unlock the collection!" error in restricted environments
+  - Resolves configuration failures when GNOME Keyring or KWallet are not available
+
+### Added
+- **SSL Verification Control**: New `--ssl-verify/--no-ssl-verify` CLI option for `config add` command
+  - Explicit control over SSL certificate verification
+  - Particularly useful for HTTP GitLab instances and self-signed certificates
+  - Maintains backward compatibility (SSL verification enabled by default)
+  - Parameter properly passed through CLI → config → platform adapters
+
+### Improved
+- **Environment Compatibility**: Better support for SSH sessions, containers, and headless environments
+- **User Experience**: Clear error messages and actionable guidance when keyring is unavailable
+- **Configuration Flexibility**: Users can now choose between keyring storage and environment variables
+
+### Technical
+- Enhanced `set_token()` with exception handling for KeyringError
+- Added `ssl_verify` parameter to CLI `config_add` function
+- Updated platform configuration flow to support SSL verification control
+
 ## [0.2.3] - 2025-10-13
 
 ### Added
