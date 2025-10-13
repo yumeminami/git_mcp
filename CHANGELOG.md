@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2025-10-13
+
+### Added
+- **HTTP GitLab Support**: Full support for HTTP-based private/self-hosted GitLab instances
+  - URL scheme validation (http/https only) in GitLabAdapter
+  - Automatic SSL verification detection based on URL scheme
+  - `ssl_verify` parameter with auto-detection for HTTP URLs
+  - Security warnings for insecure HTTP connections
+  - Support for self-signed certificates via ssl_verify=False
+  - Configuration schema updated to support SSL verification settings
+  - Service layer enhanced to pass SSL configuration to adapters
+  - Closes issue #42
+
+### Improved
+- **Security**: Enhanced connection security with explicit SSL configuration controls
+- **Backward Compatibility**: All changes maintain backward compatibility with existing configurations
+- **User Experience**: Clear security warnings when connecting to HTTP endpoints
+
+### Technical
+- **GitLab Adapter**: Enhanced with SSL verification logic and HTTP URL support
+- **Configuration System**: Extended platform configuration to include SSL settings
+- **Platform Service**: Updated to handle SSL verification parameters throughout the request chain
+
 ## [0.2.2] - 2025-09-25
 
 ### Added
