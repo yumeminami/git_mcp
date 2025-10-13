@@ -109,7 +109,7 @@ def config():
 @click.argument("name")
 @click.argument("type", type=click.Choice(["gitlab", "github"]))
 @click.option("--url", required=True, help="Platform URL")
-@click.option("--token", prompt=True, hide_input=True, help="Access token")
+@click.option("--token", default=None, help="Access token (or use GIT_MCP_{PLATFORM}_TOKEN env var)")
 @click.option("--username", help="Username (optional, will auto-fetch if not provided)")
 @click.option(
     "--no-auto-username", is_flag=True, help="Disable automatic username fetching"
@@ -130,6 +130,19 @@ def config_add(ctx, name, type, url, token, username, no_auto_username, ssl_veri
     Environment variables take precedence over keychain storage and use the
     format: GIT_MCP_{PLATFORM_NAME}_TOKEN
     """
+    import os
+
+    # Check for token in environment variable first
+    if not token:
+        env_token = os.environ.get(f"GIT_MCP_{name.upper()}_TOKEN") or os.environ.get(
+            f"GIT_MCP_TOKEN_{name.upper()}"
+        )
+        if env_token:
+            token = env_token
+            click.echo(f"Using token from environment variable GIT_MCP_{name.upper()}_TOKEN")
+        else:
+            # Prompt for token if not provided and not in environment
+            token = click.prompt("Token", hide_input=True, type=str)
 
     async def add_platform():
         try:
