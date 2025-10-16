@@ -6,6 +6,7 @@ import click
 from .commands.project import project_commands
 from .commands.issue import issue_commands
 from .commands.mr import mr_commands
+from .commands.agent import agent
 from .core.config import get_config
 from .core.exceptions import GitMCPError
 from .core.logging import setup_logging, get_logger
@@ -395,6 +396,10 @@ def mr():
 # Add MR commands
 for cmd in mr_commands:
     mr.add_command(cmd)
+
+
+# Add agent command group
+cli.add_command(agent)
 
 
 def main():

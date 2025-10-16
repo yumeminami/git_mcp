@@ -267,7 +267,7 @@ export GIT_MCP_SERVER_LOG_FILE=~/.git-mcp/debug.log
 
 ## MCP Tools Reference
 
-The MCP server exposes approximately 25 tools organized into categories:
+The MCP server exposes approximately 35 tools organized into categories:
 
 **Platform Management**: `list_platforms`, `test_platform_connection`, `refresh_platform_username`, `get_platform_config`, `get_current_user_info`
 
@@ -279,7 +279,59 @@ The MCP server exposes approximately 25 tools organized into categories:
 
 **Repository Operations**: `create_fork`, `get_fork_info`, `list_forks`
 
+**Agent Management**: `list_agents`, `get_agent_details`, `execute_agent`, `execute_agent_workflow`, `discover_agents_from_repository`, `add_external_agent_repository`, `get_agents_by_trigger`, `register_custom_agent`, `unregister_agent`
+
 All tools support async operations and return structured data for integration with AI assistants.
+
+## Agent Support
+
+The Git MCP Server includes comprehensive agent support for external workflow automation:
+
+### Agent Discovery and Management
+- **External Repository Integration**: Automatically discover agents from repositories like https://github.com/wshobson/agents
+- **Agent Registration**: Register custom agents with configurable execution parameters
+- **Trigger-based Execution**: Agents can be configured to respond to specific workflow triggers
+- **Dependency Management**: Automatic validation of agent dependencies
+
+### Agent Execution
+- **Single Agent Execution**: Execute individual agents with custom input and configuration
+- **Workflow Orchestration**: Chain multiple agents together in sequential workflows
+- **Input/Output Formats**: Support for JSON, YAML, and text input/output formats
+- **Timeout Management**: Configurable execution timeouts for reliable operations
+
+### CLI Integration
+The agent system is fully integrated with the CLI:
+
+```bash
+# List all registered agents
+git-mcp agent list
+
+# Discover agents from external repository
+git-mcp agent discover https://github.com/wshobson/agents
+
+# Add external repository and register agents
+git-mcp agent add-repo https://github.com/wshobson/agents
+
+# Execute a single agent
+git-mcp agent execute code-reviewer --input '{"code": "def hello(): pass"}'
+
+# Execute agent workflow
+git-mcp agent workflow linter formatter tester --input '{"file": "main.py"}'
+
+# Register custom agent
+git-mcp agent register my-agent "Custom agent description" python --args script.py --triggers code_review
+
+# Find agents by trigger
+git-mcp agent by-trigger testing
+```
+
+### Memory Integration
+Agent configuration includes enhanced memory systems:
+- **Claude Code**: Memory via `~/.claude/claude_config.md`
+- **Gemini CLI**: Memory via `~/.gemini/GEMINI.md`
+- **Codex**: Hierarchical memory via `~/.codex/AGENTS.md` (global, project, directory levels)
+
+All memory systems include sophisticated coding principles (KISS, YAGNI, DRY, SOLID) to guide AI assistants.
 
 ## GitLab Fork MR Support
 

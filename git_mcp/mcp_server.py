@@ -513,6 +513,243 @@ async def get_project_resource(platform: str, project_id: str) -> Dict[str, Any]
     return await PlatformService.get_project_details(platform, project_id)
 
 
+# Agent Management Tools
+@mcp.tool()
+async def list_agents() -> Dict[str, Any]:
+    """List all registered agents"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    agents = agent_service.list_agents()
+    
+    return {
+        "agents": {
+            name: {
+                "description": agent.description,
+                "version": agent.version,
+                "author": agent.author,
+                "triggers": agent.triggers,
+                "dependencies": agent.dependencies,
+                "command": agent.command
+            }
+            for name, agent in agents.items()
+        },
+        "count": len(agents)
+    }
+
+
+@mcp.tool()
+async def get_agent_details(agent_name: str) -> Dict[str, Any]:
+    """Get detailed information about a specific agent"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    agent = agent_service.get_agent(agent_name)
+    
+    if not agent:
+        return {"error": f"Agent not found: {agent_name}"}
+    
+    return {
+        "agent": agent.model_dump(),
+        "dependencies_status": agent_service.validate_agent_dependencies(agent_name)
+    }
+
+
+@mcp.tool()
+async def execute_agent(
+    agent_name: str,
+    input_data: Optional[Any] = None,
+    config: Optional[Dict[str, Any]] = None,
+    timeout: float = 30.0
+) -> Dict[str, Any]:
+    """Execute an agent with given input and configuration"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    
+    try:
+        result = await agent_service.execute_agent(agent_name, input_data, config, timeout)
+        return result.model_dump()
+    except Exception as e:
+        logger.error(f"Failed to execute agent {agent_name}: {e}")
+        return {
+            "agent_name": agent_name,
+            "success": False,
+            "output": None,
+            "error": str(e),
+            "execution_time": 0.0,
+            "metadata": {"exception": type(e).__name__}
+        }
+
+
+@mcp.tool()
+async def execute_agent_workflow(
+    agent_names: List[str],
+    initial_input: Optional[Any] = None,
+    config: Optional[Dict[str, Any]] = None
+) -> List[Dict[str, Any]]:
+    """Execute a workflow of multiple agents in sequence"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    
+    try:
+        results = await agent_service.execute_agent_workflow(agent_names, initial_input, config)
+        return [result.model_dump() for result in results]
+    except Exception as e:
+        logger.error(f"Failed to execute agent workflow: {e}")
+        return [{
+            "agent_name": "workflow",
+            "success": False,
+            "output": None,
+            "error": str(e),
+            "execution_time": 0.0,
+            "metadata": {"exception": type(e).__name__}
+        }]
+
+
+@mcp.tool()
+async def discover_agents_from_repository(repo_url: str) -> Dict[str, Any]:
+    """Discover agents from an external repository (e.g., https://github.com/wshobson/agents)"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    
+    try:
+        discovered_agents = await agent_service.discover_agents_from_repo(repo_url)
+        return {
+            "repository": repo_url,
+            "discovered_agents": [agent.model_dump() for agent in discovered_agents],
+            "count": len(discovered_agents)
+        }
+    except Exception as e:
+        logger.error(f"Failed to discover agents from {repo_url}: {e}")
+        return {
+            "repository": repo_url,
+            "error": str(e),
+            "discovered_agents": [],
+            "count": 0
+        }
+
+
+@mcp.tool()
+async def add_external_agent_repository(repo_url: str) -> Dict[str, Any]:
+    """Add an external agent repository and register discovered agents"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    
+    try:
+        new_agents = await agent_service.add_external_repository(repo_url)
+        return {
+            "repository": repo_url,
+            "new_agents": new_agents,
+            "count": len(new_agents),
+            "success": True
+        }
+    except Exception as e:
+        logger.error(f"Failed to add external repository {repo_url}: {e}")
+        return {
+            "repository": repo_url,
+            "error": str(e),
+            "new_agents": [],
+            "count": 0,
+            "success": False
+        }
+
+
+@mcp.tool()
+async def get_agents_by_trigger(trigger: str) -> Dict[str, Any]:
+    """Get agents that respond to a specific trigger (e.g., 'code_review', 'testing', 'documentation')"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    matching_agents = agent_service.get_agents_by_trigger(trigger)
+    
+    return {
+        "trigger": trigger,
+        "matching_agents": matching_agents,
+        "count": len(matching_agents)
+    }
+
+
+@mcp.tool()
+async def register_custom_agent(
+    name: str,
+    description: str,
+    command: str,
+    args: Optional[List[str]] = None,
+    triggers: Optional[List[str]] = None,
+    dependencies: Optional[List[str]] = None,
+    input_format: str = "json",
+    output_format: str = "json",
+    version: str = "1.0.0",
+    author: Optional[str] = None,
+    env: Optional[Dict[str, str]] = None,
+    config_schema: Optional[Dict[str, Any]] = None,
+    default_config: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Register a custom agent manually"""
+    from .services.agent_service import get_agent_service, AgentDefinition
+    
+    agent_service = get_agent_service()
+    
+    try:
+        agent = AgentDefinition(
+            name=name,
+            description=description,
+            command=command,
+            args=args or [],
+            triggers=triggers or [],
+            dependencies=dependencies or [],
+            input_format=input_format,
+            output_format=output_format,
+            version=version,
+            author=author,
+            env=env or {},
+            config_schema=config_schema,
+            default_config=default_config or {}
+        )
+        
+        agent_service.register_agent(agent)
+        
+        return {
+            "agent_name": name,
+            "success": True,
+            "message": f"Agent '{name}' registered successfully"
+        }
+    except Exception as e:
+        logger.error(f"Failed to register agent {name}: {e}")
+        return {
+            "agent_name": name,
+            "success": False,
+            "error": str(e)
+        }
+
+
+@mcp.tool()
+async def unregister_agent(agent_name: str) -> Dict[str, Any]:
+    """Unregister an agent"""
+    from .services.agent_service import get_agent_service
+    
+    agent_service = get_agent_service()
+    
+    try:
+        success = agent_service.unregister_agent(agent_name)
+        return {
+            "agent_name": agent_name,
+            "success": success,
+            "message": f"Agent '{agent_name}' {'unregistered' if success else 'not found'}"
+        }
+    except Exception as e:
+        logger.error(f"Failed to unregister agent {agent_name}: {e}")
+        return {
+            "agent_name": agent_name,
+            "success": False,
+            "error": str(e)
+        }
+
+
 def main():
     """Run the MCP server with stdio transport"""
     import sys
