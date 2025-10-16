@@ -8,15 +8,8 @@ Update project documentation, README files, and inline code comments to reflect 
 
 **First, update issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
-   - Read existing implementation and testing progress
-   - If no issue doc exists, suggest running `/issue` and `/plan` first
-
-2. **Track Documentation Progress** in the issue document:
-   - Update `## 📚 Documentation Updates (Updated: <timestamp>)` section
-   - Document what files were updated
-   - Record documentation decisions and approach
-   - Note any new user guides or API docs created
+1. **Review Changes** - Identify what documentation needs updating
+2. **Plan Documentation Updates** - Determine scope and priorities
 
 ## Documentation Strategy
 

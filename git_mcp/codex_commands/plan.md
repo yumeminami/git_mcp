@@ -8,14 +8,8 @@ Consider multiple architectural approaches and evaluate their tradeoffs deeply b
 
 **First, update issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
-   - If multiple exist, prompt user to specify which issue this plan is for
-   - If none exist, suggest running `/issue <issue-url>` first for proper documentation
-
-2. **Update Plan Section** in the issue document:
-   - Replace/append to `## 📋 Development Plan (Updated: <timestamp>)` section
-   - Include full plan details with timestamp
-   - Preserve other sections (analysis, implementation, testing, etc.)
+1. **Review Issue Requirements** - Understand what needs to be built
+2. **Create Development Strategy** - Outline approach and key steps
 
 ## Plan Generation
 

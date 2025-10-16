@@ -14,16 +14,8 @@ Show your complete reasoning when designing comprehensive test suites, consideri
 
 **First, update issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
-   - Review implementation progress to understand what needs testing
-   - If no issue doc exists, suggest running `/issue`, `/plan`, `/implement` first
-
-2. **Update Testing Section** in the issue document:
-   - Update `## 🧪 Testing Status (Updated: <timestamp>)` section
-   - Document test strategy and approach
-   - Record test files created and test coverage achieved
-   - Note any testing challenges or edge cases discovered
-   - Track testing completion status
+1. **Review Implementation** - Identify what was built and needs testing
+2. **Plan Test Coverage** - Determine test scope and approach
 
 ## Test Strategy
 
@@ -42,7 +34,5 @@ Show your complete reasoning when designing comprehensive test suites, consideri
 - **Performance Tests** - if applicable
 
 Use `get_project_details()` to understand testing frameworks and `list_merge_requests()` to review existing test patterns in the codebase.
-
-**After testing, update the issue documentation with test results and coverage details.**
 
 Use `/doc` after testing to update documentation.

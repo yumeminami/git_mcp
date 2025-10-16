@@ -14,23 +14,15 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 
 **First, finalize issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-$ARGUMENTS-*.md` in current project
-   - Use the provided issue ID to find the correct documentation file
-   - If no issue doc exists, create a summary from available git history
-
-2. **Final Update** to the issue document:
-   - Update `## 🚀 Pull Request (Updated: <timestamp>)` section
-   - Include PR/MR URL, title, and description
-   - Summarize all work completed (analysis → plan → implementation → testing → docs → PR)
-   - Mark issue as completed
-   - Archive or mark for cleanup
+1. **Check Git Status** - Review changes to be committed
+2. **Prepare Summary** - Create brief description of changes
 
 ## PR Creation Process
 
 1. **Prepare Branch**
    !git add related-resources
    !git status
-   !git commit -m "Implement feature for issue #$ARGUMENTS"
+   !git commit -m "Fix issue #$ARGUMENTS"
    !git push -u origin HEAD
 
 2. **Fork Detection and Repository Analysis**
@@ -57,8 +49,7 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    **PR Parameters:**
    - Craft a descriptive title linking to issue
    - Create comprehensive description that clearly explains the solution
-   - **IMPORTANT**: In the description, use the full issue URL from `.claude/issue-$ARGUMENTS-*.md` instead of just `#$ARGUMENTS`
-   - Extract the URL using: `grep "URL:" .claude/issue-$ARGUMENTS-*.md | head -1 | cut -d' ' -f2`
+   - Keep description brief and focused
    - Consider appropriate labels and reviewers
 
 5. **Fork Workflow Examples**
@@ -110,19 +101,9 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 
 6. **PR Description Template**
    ```
-   ## Summary
-   Implements [feature description] as requested in issue #$ARGUMENTS
-
-   ## Changes Made
-   - [List of changes]
-
-   ## Testing
-   - [Test coverage details]
-
-   ## Documentation
-   - [Documentation updates]
-
-   Closes #$ARGUMENTS
+   Fixes #$ARGUMENTS
+   
+   [Brief summary of changes]
    ```
 
 7. **Available Fork MCP Tools**
@@ -142,9 +123,8 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    - Monitor CI/CD pipeline
    - Address review feedback
 
-9. **Complete Issue Documentation**
-   - Save final PR details to `.claude/issue-$ARGUMENTS-*.md`
-   - Mark workflow as completed in the documentation
-   - Issue document now serves as complete project history for this feature
+9. **Complete Workflow**
+   - Verify PR was created successfully
+   - Monitor for any CI/CD pipeline status
 
 **Workflow Complete!** From issue analysis to PR creation with full documentation trail.
