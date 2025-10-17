@@ -8,15 +8,8 @@ Create and manage pull requests for completed feature development, ensuring prop
 
 **First, update issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
-   - Read complete implementation history and progress
-   - If no issue doc exists, suggest running `/issue` first
-
-2. **Complete PR Section** in the issue document:
-   - Update `## 🚀 Pull Request (Updated: <timestamp>)` section
-   - Document PR creation and details
-   - Include PR URL and status
-   - Record review process and feedback
+1. **Review Changes** - Check what was implemented and needs to be merged
+2. **Prepare PR Details** - Create simple summary of changes
 
 ## Pull Request Strategy
 
@@ -75,34 +68,9 @@ Before creating PR, validate:
 ## PR Template
 
 ```markdown
-## Summary
-Brief description of the feature/fix and its purpose.
+Fixes #<issue-number>
 
-## Changes Made
-- Detailed list of changes
-- New files created
-- Modified functionality
-- Dependencies added
-
-## Testing
-- Test coverage added
-- All tests passing
-- Manual testing performed
-- Quality checks completed
-
-## Documentation
-- README updated
-- API docs added
-- User guides created
-- Code comments added
-
-## Review Notes
-- Specific areas needing attention
-- Design decisions made
-- Potential concerns
-- Future improvements
-
-Closes #<issue-number>
+[Brief summary of changes]
 ```
 
 ## Post-PR Management
@@ -119,7 +87,7 @@ Closes #<issue-number>
 - Update issue status
 - Communicate completion
 
-**After PR creation, update issue documentation with PR details and URL.**
+**Verify PR was created successfully.**
 
 ## Available MCP Tools
 

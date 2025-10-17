@@ -24,11 +24,10 @@ If arguments provided, analyze **Specific Issue**:
    - For GitLab URLs: extract from `/-/issues/123` or `/-/merge_requests/456`
    - For direct ID: use as-is
 
-2. **Check for Existing Documentation**
-   - Look for `.claude/issue-<ISSUE_ID>-<sanitized-title>.md` in current project
-   - If exists: Read existing analysis and show summary of previous work
-   - If not exists: Will create new documentation file
-   - **Note:** Add `.claude/issue-*.md` to `.gitignore` to keep docs local, or commit them for team sharing
+2. **Analyze Issue Content**
+   - Read issue description and requirements
+   - Identify key components that need work
+   - Understand scope and constraints
 
 3. **Create/Update Issue Document** with structure:
    ```markdown

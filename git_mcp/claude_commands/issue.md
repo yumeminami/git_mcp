@@ -28,40 +28,10 @@ If arguments provided, analyze **Specific Issue**:
    - For GitLab URLs: extract from `/-/issues/123` or `/-/merge_requests/456`
    - For direct ID: use as-is
 
-2. **Check for Existing Documentation**
-   - Look for `.claude/issue-<ISSUE_ID>-<sanitized-title>.md` in current project
-   - If exists: Read existing analysis and show summary of previous work
-   - If not exists: Will create new documentation file
-   - **Note:** Add `.claude/issue-*.md` to `.gitignore` to keep docs local, or commit them for team sharing
-
-3. **Create/Update Issue Document** with structure:
-   ```markdown
-   # Issue #<ID>: <Title>
-
-   **URL:** <issue_url>
-   **Status:** <status>
-   **File:** issue-<ID>-<sanitized-title>.md
-   **Created:** <timestamp>
-   **Last Updated:** <timestamp>
-
-   ## 🎯 Issue Analysis (Updated: <timestamp>)
-   [Analysis content]
-
-   ## 📋 Development Plan (Updated: <timestamp>)
-   [Plan content - added by /plan]
-
-   ## 🔨 Implementation Progress (Updated: <timestamp>)
-   [Implementation notes - added by /implement]
-
-   ## 🧪 Testing Status (Updated: <timestamp>)
-   [Test results - added by /test]
-
-   ## 📚 Documentation Updates (Updated: <timestamp>)
-   [Doc changes - added by /doc]
-
-   ## 🚀 Pull Request (Updated: <timestamp>)
-   [PR details - added by /pr]
-   ```
+2. **Analyze Issue Content**
+   - Read issue description and requirements
+   - Identify key components that need work
+   - Understand scope and constraints
 
 **Then perform issue analysis:**
 - Fetch issue details from URL or platform/project/issue-id
