@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-03-27
+
+### Added
+- **Full Milestone Support**: Complete milestone management for GitLab and GitHub
+  - New MCP tools: `list_milestones`, `create_milestone`, `update_milestone`, `close_milestone`
+  - `milestone` parameter added to `create_issue`, `update_issue`, `create_merge_request` MCP tools
+  - Milestone CRUD operations in both GitLab and GitHub platform adapters
+  - Milestone title-to-ID resolution: users specify milestones by title, adapters resolve to platform IDs internally
+  - Fix milestone assignment in `create_issue`/`update_issue` (previously broken — GitLab requires `milestone_id`, GitHub requires a `Milestone` object)
+  - Fix milestone assignment in `create_merge_request`/`update_merge_request` for both platforms
+  - `milestone` field added to `MergeRequestResource` (previously missing)
+  - `MilestoneResource` dataclass added to base platform layer
+  - Support for removing milestone by passing empty string
+  - Closes #46
+
+### Technical
+- `_resolve_milestone_id()` helper in GitLab adapter (title → integer ID via `project.milestones.list`)
+- `_resolve_milestone()` helper in GitHub adapter (title → PyGithub `Milestone` object)
+- 31 unit tests added covering CRUD, ID resolution, and MCP tool integration
+
 ## [0.2.4] - 2025-10-13
 
 ### Fixed
