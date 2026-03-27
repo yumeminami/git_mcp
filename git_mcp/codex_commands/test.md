@@ -8,15 +8,8 @@ Generate comprehensive tests and validate implementation quality through automat
 
 **First, update issue documentation:**
 
-1. **Find Issue Document** - Look for `.claude/issue-*.md` files in current project
-   - Read existing implementation progress to understand what was built
-   - If no issue doc exists, suggest running `/issue` and `/plan` first
-
-2. **Track Testing Progress** in the issue document:
-   - Update `## 🧪 Testing Status (Updated: <timestamp>)` section
-   - Document test coverage and results
-   - Record any test failures and fixes applied
-   - Note testing strategy and validation approach
+1. **Review Implementation** - Identify what was built and needs testing
+2. **Plan Test Coverage** - Determine test scope and approach
 
 ## Testing Strategy
 

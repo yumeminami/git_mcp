@@ -9,7 +9,7 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 ## PR Creation Process
 
 1. **Prepare Branch**
-   Run git commands to add, check status, and commit changes
+   Run git commands: git add, git commit -m "Fix issue #[issue-id]"
 
 2. **Fork Detection and Repository Analysis**
    - Use `get_fork_info()` to check if current repository is a fork
@@ -38,10 +38,9 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
    - Target branch: As specified or default
 
    **PR Parameters:**
-   - Craft a descriptive title linking to issue
-   - Create comprehensive description that clearly explains the solution
+   - Simple title linking to issue
+   - Brief description
    - Closes #[issue-id] in description
-   - Consider appropriate labels and reviewers
 
 5. **Available Fork MCP Tools**
    - `create_fork(platform, project_id, **kwargs)` - Create a fork
@@ -51,19 +50,9 @@ Analyze the changes made thoroughly and consider multiple ways to present them c
 
 6. **PR Description Template**
    ```
-   ## Summary
-   Implements [feature description] as requested in issue #[issue-id]
-
-   ## Changes Made
-   - [List of changes]
-
-   ## Testing
-   - [Test coverage details]
-
-   ## Documentation
-   - [Documentation updates]
-
-   Closes #[issue-id]
+   Fixes #[issue-id]
+   
+   [Brief summary of changes]
    ```
 
 7. **Final Steps**
