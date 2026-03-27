@@ -109,7 +109,11 @@ def config():
 @click.argument("name")
 @click.argument("type", type=click.Choice(["gitlab", "github"]))
 @click.option("--url", required=True, help="Platform URL")
-@click.option("--token", default=None, help="Access token (or use GIT_MCP_{PLATFORM}_TOKEN env var)")
+@click.option(
+    "--token",
+    default=None,
+    help="Access token (or use GIT_MCP_{PLATFORM}_TOKEN env var)",
+)
 @click.option("--username", help="Username (optional, will auto-fetch if not provided)")
 @click.option(
     "--no-auto-username", is_flag=True, help="Disable automatic username fetching"
@@ -139,7 +143,9 @@ def config_add(ctx, name, type, url, token, username, no_auto_username, ssl_veri
         )
         if env_token:
             token = env_token
-            click.echo(f"Using token from environment variable GIT_MCP_{name.upper()}_TOKEN")
+            click.echo(
+                f"Using token from environment variable GIT_MCP_{name.upper()}_TOKEN"
+            )
         else:
             # Prompt for token if not provided and not in environment
             token = click.prompt("Token", hide_input=True, type=str)

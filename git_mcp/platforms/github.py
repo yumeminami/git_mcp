@@ -9,6 +9,7 @@ from .base import (
     ProjectResource,
     IssueResource,
     MergeRequestResource,
+    MilestoneResource,
     ResourceType,
     ResourceState,
 )
@@ -292,7 +293,7 @@ class GitHubAdapter(PlatformAdapter):
 
         try:
             repo = self.client.get_repo(project_id)
-            issue_kwargs = {"title": title}
+            issue_kwargs: Dict[str, Any] = {"title": title}
 
             if "description" in kwargs:
                 issue_kwargs["body"] = kwargs["description"]
@@ -303,6 +304,10 @@ class GitHubAdapter(PlatformAdapter):
                 issue_kwargs["labels"] = labels
             if "assignee" in kwargs:
                 issue_kwargs["assignee"] = kwargs["assignee"]
+            if "milestone" in kwargs:
+                ms = self._resolve_milestone(repo, kwargs["milestone"])
+                if ms is not None:
+                    issue_kwargs["milestone"] = ms
 
             issue = repo.create_issue(**issue_kwargs)
             return self._convert_to_issue_resource(issue, project_id)
@@ -320,7 +325,7 @@ class GitHubAdapter(PlatformAdapter):
             repo = self.client.get_repo(project_id)
             issue = repo.get_issue(int(issue_id))
 
-            update_kwargs = {}
+            update_kwargs: Dict[str, Any] = {}
             if "title" in kwargs:
                 update_kwargs["title"] = kwargs["title"]
             if "description" in kwargs:
@@ -338,6 +343,14 @@ class GitHubAdapter(PlatformAdapter):
                     update_kwargs["state"] = "closed"
                 elif state_event == "reopen":
                     update_kwargs["state"] = "open"
+            if "milestone" in kwargs:
+                milestone_title = kwargs["milestone"]
+                if milestone_title == "":
+                    update_kwargs["milestone"] = None
+                else:
+                    ms = self._resolve_milestone(repo, milestone_title)
+                    if ms is not None:
+                        update_kwargs["milestone"] = ms
 
             issue.edit(**update_kwargs)
             return self._convert_to_issue_resource(issue, project_id)
@@ -483,8 +496,13 @@ class GitHubAdapter(PlatformAdapter):
             if "assignee_username" in kwargs:
                 # GitHub accepts username directly for assignees
                 pr_kwargs["assignee"] = kwargs.pop("assignee_username")
+            if "milestone" in kwargs:
+                ms = self._resolve_milestone(target_repo, kwargs.pop("milestone"))
+                if ms is not None:
+                    pr_kwargs["milestone"] = ms
 
-            # Add remaining kwargs
+            # Add remaining kwargs (excluding milestone which was already handled)
+            kwargs.pop("milestone", None)
             pr_kwargs.update(kwargs)
 
             # Debug: Print pull request data
@@ -595,13 +613,21 @@ class GitHubAdapter(PlatformAdapter):
             pr = repo.get_pull(int(mr_id))
 
             # Prepare update parameters
-            update_kwargs = {}
+            update_kwargs: Dict[str, Any] = {}
             if "title" in kwargs:
                 update_kwargs["title"] = kwargs["title"]
             if "description" in kwargs or "body" in kwargs:
                 update_kwargs["body"] = kwargs.get("description", kwargs.get("body"))
             if "state" in kwargs:
                 update_kwargs["state"] = kwargs["state"]
+            if "milestone" in kwargs:
+                milestone_title = kwargs["milestone"]
+                if milestone_title == "":
+                    update_kwargs["milestone"] = None
+                else:
+                    ms = self._resolve_milestone(repo, milestone_title)
+                    if ms is not None:
+                        update_kwargs["milestone"] = ms
 
             # Apply updates if any parameters provided
             if update_kwargs:
@@ -614,6 +640,117 @@ class GitHubAdapter(PlatformAdapter):
             raise PlatformError(
                 f"Failed to update pull request {mr_id}: {e}", self.platform_name
             )
+
+    # Milestone operations
+    def _resolve_milestone(self, repo, title: str):
+        """Resolve a milestone title to its PyGithub Milestone object."""
+        try:
+            for ms in repo.get_milestones(state="all"):
+                if ms.title == title:
+                    return ms
+        except GithubException:
+            pass
+        return None
+
+    async def list_milestones(
+        self, project_id: str, state: str = "active"
+    ) -> List[MilestoneResource]:
+        """List milestones for a GitHub repository."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            # GitHub uses "open"/"closed"/"all"; map "active" → "open"
+            gh_state = "open" if state == "active" else state
+            milestones = repo.get_milestones(state=gh_state)
+            return [
+                self._convert_to_milestone_resource(ms, project_id) for ms in milestones
+            ]
+        except GithubException as e:
+            raise PlatformError(f"Failed to list milestones: {e}", self.platform_name)
+
+    async def create_milestone(
+        self,
+        project_id: str,
+        title: str,
+        description: Optional[str] = None,
+        due_date: Optional[str] = None,
+    ) -> MilestoneResource:
+        """Create a new GitHub milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            kwargs: Dict[str, Any] = {}
+            if description:
+                kwargs["description"] = description
+            if due_date:
+                from datetime import datetime as dt
+
+                kwargs["due_on"] = dt.strptime(due_date, "%Y-%m-%d")
+            ms = repo.create_milestone(title, **kwargs)
+            return self._convert_to_milestone_resource(ms, project_id)
+        except GithubException as e:
+            raise PlatformError(f"Failed to create milestone: {e}", self.platform_name)
+
+    async def update_milestone(
+        self, project_id: str, milestone_id: str, **kwargs
+    ) -> MilestoneResource:
+        """Update a GitHub milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            ms = repo.get_milestone(int(milestone_id))
+            edit_kwargs: Dict[str, Any] = {}
+            if "title" in kwargs:
+                edit_kwargs["title"] = kwargs["title"]
+            if "description" in kwargs:
+                edit_kwargs["description"] = kwargs["description"]
+            if "state" in kwargs:
+                edit_kwargs["state"] = kwargs["state"]
+            if "due_date" in kwargs:
+                from datetime import datetime as dt
+
+                edit_kwargs["due_on"] = dt.strptime(kwargs["due_date"], "%Y-%m-%d")
+            ms.edit(**edit_kwargs)
+            return self._convert_to_milestone_resource(ms, project_id)
+        except GithubException as e:
+            raise PlatformError(
+                f"Failed to update milestone {milestone_id}: {e}", self.platform_name
+            )
+
+    async def close_milestone(self, project_id: str, milestone_id: str) -> bool:
+        """Close a GitHub milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            repo = self.client.get_repo(project_id)
+            ms = repo.get_milestone(int(milestone_id))
+            ms.edit(state="closed")
+            return True
+        except GithubException as e:
+            raise PlatformError(
+                f"Failed to close milestone {milestone_id}: {e}", self.platform_name
+            )
+
+    def _convert_to_milestone_resource(self, ms, project_id: str) -> MilestoneResource:
+        """Convert PyGithub Milestone to MilestoneResource."""
+        return MilestoneResource(
+            id=str(ms.number),
+            title=ms.title,
+            platform=self.platform_name,
+            project_id=project_id,
+            state="active" if ms.state == "open" else "closed",
+            description=ms.description or None,
+            due_date=ms.due_on,
+            created_at=ms.created_at,
+            updated_at=ms.updated_at,
+        )
 
     # Repository operations
     async def list_branches(self, project_id: str, **filters) -> List[Dict[str, Any]]:
@@ -1046,6 +1183,7 @@ class GitHubAdapter(PlatformAdapter):
             updated_at=pr.updated_at,
             merge_commit_sha=pr.merge_commit_sha,
             draft=pr.draft,
+            milestone=pr.milestone.title if pr.milestone else None,
             metadata={
                 "id": pr.id,
                 "number": pr.number,

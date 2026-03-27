@@ -94,6 +94,21 @@ class IssueResource(Resource):
 
 
 @dataclass
+class MilestoneResource:
+    """Milestone resource representation."""
+
+    id: str
+    title: str
+    platform: str
+    project_id: str
+    state: str = "active"
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass
 class MergeRequestResource(Resource):
     """Merge request/Pull request specific resource representation."""
 
@@ -102,6 +117,7 @@ class MergeRequestResource(Resource):
     target_branch: Optional[str] = None
     merge_commit_sha: Optional[str] = None
     draft: Optional[bool] = None
+    milestone: Optional[str] = None
 
     def __post_init__(self):
         super().__post_init__()
@@ -294,6 +310,37 @@ class PlatformAdapter(ABC):
         pass
 
     # Fork operations
+    # Milestone operations
+    @abstractmethod
+    async def list_milestones(
+        self, project_id: str, state: str = "active"
+    ) -> List["MilestoneResource"]:
+        """List milestones for a project."""
+        pass
+
+    @abstractmethod
+    async def create_milestone(
+        self,
+        project_id: str,
+        title: str,
+        description: Optional[str] = None,
+        due_date: Optional[str] = None,
+    ) -> "MilestoneResource":
+        """Create a new milestone."""
+        pass
+
+    @abstractmethod
+    async def update_milestone(
+        self, project_id: str, milestone_id: str, **kwargs
+    ) -> "MilestoneResource":
+        """Update an existing milestone."""
+        pass
+
+    @abstractmethod
+    async def close_milestone(self, project_id: str, milestone_id: str) -> bool:
+        """Close a milestone."""
+        pass
+
     @abstractmethod
     async def create_fork(self, project_id: str, **kwargs) -> ProjectResource:
         """Create a fork of a repository."""

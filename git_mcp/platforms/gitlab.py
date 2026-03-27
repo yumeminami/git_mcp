@@ -12,6 +12,7 @@ from .base import (
     ProjectResource,
     IssueResource,
     MergeRequestResource,
+    MilestoneResource,
     ResourceType,
     ResourceState,
 )
@@ -289,7 +290,14 @@ class GitLabAdapter(PlatformAdapter):
 
         try:
             project = self.client.projects.get(project_id)
-            issue_data = {"title": title, **kwargs}
+            issue_data: Dict[str, Any] = {"title": title}
+            if "milestone" in kwargs:
+                milestone_id = self._resolve_milestone_id(
+                    project, kwargs.pop("milestone")
+                )
+                if milestone_id is not None:
+                    issue_data["milestone_id"] = milestone_id
+            issue_data.update(kwargs)
             issue = project.issues.create(issue_data)
             return self._convert_to_issue_resource(issue, project_id)
         except GitlabError as e:
@@ -305,6 +313,15 @@ class GitLabAdapter(PlatformAdapter):
         try:
             project = self.client.projects.get(project_id)
             issue = project.issues.get(issue_id)
+
+            if "milestone" in kwargs:
+                milestone_title = kwargs.pop("milestone")
+                if milestone_title == "":
+                    setattr(issue, "milestone_id", 0)
+                else:
+                    milestone_id = self._resolve_milestone_id(project, milestone_title)
+                    if milestone_id is not None:
+                        setattr(issue, "milestone_id", milestone_id)
 
             for key, value in kwargs.items():
                 setattr(issue, key, value)
@@ -487,6 +504,14 @@ class GitLabAdapter(PlatformAdapter):
             if target_project_id:
                 mr_data["target_project_id"] = int(target_project_id)
 
+            # Resolve milestone title to ID
+            if "milestone" in kwargs:
+                milestone_id = self._resolve_milestone_id(
+                    project, kwargs.pop("milestone")
+                )
+                if milestone_id is not None:
+                    mr_data["milestone_id"] = milestone_id
+
             # Handle assignee parameter conversion
             if "assignee_username" in kwargs:
                 assignee_username = kwargs.pop("assignee_username")
@@ -609,6 +634,14 @@ class GitLabAdapter(PlatformAdapter):
                 mr.description = kwargs["description"]
             if "state_event" in kwargs:
                 mr.state_event = kwargs["state_event"]
+            if "milestone" in kwargs:
+                milestone_title = kwargs["milestone"]
+                if milestone_title == "":
+                    mr.milestone_id = 0
+                else:
+                    milestone_id = self._resolve_milestone_id(project, milestone_title)
+                    if milestone_id is not None:
+                        mr.milestone_id = milestone_id
 
             # Save changes
             mr.save()
@@ -951,7 +984,108 @@ class GitLabAdapter(PlatformAdapter):
             updated_at=self._parse_datetime(mr.updated_at),
             merge_commit_sha=getattr(mr, "merge_commit_sha", None),
             draft=getattr(mr, "draft", False),
+            milestone=mr.milestone.get("title") if mr.milestone else None,
             metadata=mr.asdict() if hasattr(mr, "asdict") else dict(mr),
+        )
+
+    # Milestone operations
+    def _resolve_milestone_id(self, project, title: str) -> Optional[int]:
+        """Resolve a milestone title to its integer ID."""
+        try:
+            milestones = project.milestones.list(search=title)
+            for ms in milestones:
+                if ms.title == title:
+                    return ms.id
+        except GitlabError:
+            pass
+        return None
+
+    async def list_milestones(
+        self, project_id: str, state: str = "active"
+    ) -> List[MilestoneResource]:
+        """List milestones for a GitLab project."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            milestones = project.milestones.list(state=state, all=True)
+            return [
+                self._convert_to_milestone_resource(ms, project_id) for ms in milestones
+            ]
+        except GitlabError as e:
+            raise PlatformError(f"Failed to list milestones: {e}", self.platform_name)
+
+    async def create_milestone(
+        self,
+        project_id: str,
+        title: str,
+        description: Optional[str] = None,
+        due_date: Optional[str] = None,
+    ) -> MilestoneResource:
+        """Create a new GitLab milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            data: Dict[str, Any] = {"title": title}
+            if description:
+                data["description"] = description
+            if due_date:
+                data["due_date"] = due_date
+            ms = project.milestones.create(data)
+            return self._convert_to_milestone_resource(ms, project_id)
+        except GitlabError as e:
+            raise PlatformError(f"Failed to create milestone: {e}", self.platform_name)
+
+    async def update_milestone(
+        self, project_id: str, milestone_id: str, **kwargs
+    ) -> MilestoneResource:
+        """Update a GitLab milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            ms = project.milestones.get(milestone_id)
+            for key, value in kwargs.items():
+                setattr(ms, key, value)
+            ms.save()
+            return self._convert_to_milestone_resource(ms, project_id)
+        except GitlabError as e:
+            raise PlatformError(
+                f"Failed to update milestone {milestone_id}: {e}", self.platform_name
+            )
+
+    async def close_milestone(self, project_id: str, milestone_id: str) -> bool:
+        """Close a GitLab milestone."""
+        if not self.client:
+            await self.authenticate()
+
+        try:
+            project = self.client.projects.get(project_id)
+            ms = project.milestones.get(milestone_id)
+            ms.state_event = "close"
+            ms.save()
+            return True
+        except GitlabError as e:
+            raise PlatformError(
+                f"Failed to close milestone {milestone_id}: {e}", self.platform_name
+            )
+
+    def _convert_to_milestone_resource(self, ms, project_id: str) -> MilestoneResource:
+        """Convert GitLab milestone to MilestoneResource."""
+        return MilestoneResource(
+            id=str(ms.id),
+            title=ms.title,
+            platform=self.platform_name,
+            project_id=project_id,
+            state=getattr(ms, "state", "active"),
+            description=getattr(ms, "description", None),
+            due_date=self._parse_datetime(getattr(ms, "due_date", None)),
+            created_at=self._parse_datetime(getattr(ms, "created_at", None)),
+            updated_at=self._parse_datetime(getattr(ms, "updated_at", None)),
         )
 
     def _normalize_project_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
