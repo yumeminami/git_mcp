@@ -664,7 +664,9 @@ class GitHubAdapter(PlatformAdapter):
             # GitHub uses "open"/"closed"/"all"; map "active" → "open"
             gh_state = "open" if state == "active" else state
             milestones = repo.get_milestones(state=gh_state)
-            return [self._convert_to_milestone_resource(ms, project_id) for ms in milestones]
+            return [
+                self._convert_to_milestone_resource(ms, project_id) for ms in milestones
+            ]
         except GithubException as e:
             raise PlatformError(f"Failed to list milestones: {e}", self.platform_name)
 
@@ -686,6 +688,7 @@ class GitHubAdapter(PlatformAdapter):
                 kwargs["description"] = description
             if due_date:
                 from datetime import datetime as dt
+
                 kwargs["due_on"] = dt.strptime(due_date, "%Y-%m-%d")
             ms = repo.create_milestone(title, **kwargs)
             return self._convert_to_milestone_resource(ms, project_id)
@@ -711,6 +714,7 @@ class GitHubAdapter(PlatformAdapter):
                 edit_kwargs["state"] = kwargs["state"]
             if "due_date" in kwargs:
                 from datetime import datetime as dt
+
                 edit_kwargs["due_on"] = dt.strptime(kwargs["due_date"], "%Y-%m-%d")
             ms.edit(**edit_kwargs)
             return self._convert_to_milestone_resource(ms, project_id)

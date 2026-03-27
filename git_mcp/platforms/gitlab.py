@@ -292,7 +292,9 @@ class GitLabAdapter(PlatformAdapter):
             project = self.client.projects.get(project_id)
             issue_data: Dict[str, Any] = {"title": title}
             if "milestone" in kwargs:
-                milestone_id = self._resolve_milestone_id(project, kwargs.pop("milestone"))
+                milestone_id = self._resolve_milestone_id(
+                    project, kwargs.pop("milestone")
+                )
                 if milestone_id is not None:
                     issue_data["milestone_id"] = milestone_id
             issue_data.update(kwargs)
@@ -504,7 +506,9 @@ class GitLabAdapter(PlatformAdapter):
 
             # Resolve milestone title to ID
             if "milestone" in kwargs:
-                milestone_id = self._resolve_milestone_id(project, kwargs.pop("milestone"))
+                milestone_id = self._resolve_milestone_id(
+                    project, kwargs.pop("milestone")
+                )
                 if milestone_id is not None:
                     mr_data["milestone_id"] = milestone_id
 
@@ -1006,7 +1010,9 @@ class GitLabAdapter(PlatformAdapter):
         try:
             project = self.client.projects.get(project_id)
             milestones = project.milestones.list(state=state, all=True)
-            return [self._convert_to_milestone_resource(ms, project_id) for ms in milestones]
+            return [
+                self._convert_to_milestone_resource(ms, project_id) for ms in milestones
+            ]
         except GitlabError as e:
             raise PlatformError(f"Failed to list milestones: {e}", self.platform_name)
 

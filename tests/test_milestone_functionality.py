@@ -1,13 +1,12 @@
 """Unit tests for milestone functionality."""
 
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from datetime import datetime
 
 from git_mcp.platforms.github import GitHubAdapter
 from git_mcp.platforms.gitlab import GitLabAdapter
 from git_mcp.platforms.base import MilestoneResource
-from git_mcp.core.exceptions import PlatformError
 
 
 # ---------------------------------------------------------------------------
@@ -360,9 +359,7 @@ class TestGitHubMilestones:
         self.mock_client.get_repo.return_value = mock_repo
         mock_repo.get_milestone.return_value = mock_ms
 
-        result = await self.adapter.update_milestone(
-            "owner/repo", "1", title="v1.1"
-        )
+        result = await self.adapter.update_milestone("owner/repo", "1", title="v1.1")
 
         assert result.title == "v1.1"
         mock_ms.edit.assert_called_once_with(title="v1.1")
@@ -558,7 +555,9 @@ class TestMilestoneMCPTools:
     async def test_list_milestones_mcp_tool(self):
         from git_mcp.mcp_server import list_milestones
 
-        with patch("git_mcp.services.platform_service.PlatformService.list_milestones") as mock_svc:
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.list_milestones"
+        ) as mock_svc:
             mock_svc.return_value = [
                 {
                     "id": "1",
@@ -577,21 +576,29 @@ class TestMilestoneMCPTools:
     async def test_create_milestone_mcp_tool(self):
         from git_mcp.mcp_server import create_milestone
 
-        with patch("git_mcp.services.platform_service.PlatformService.create_milestone") as mock_svc:
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.create_milestone"
+        ) as mock_svc:
             mock_svc.return_value = {
                 "id": "1",
                 "title": "v1.0",
                 "message": "Milestone 'v1.0' created successfully",
             }
-            result = await create_milestone("gitlab", "123", "v1.0", due_date="2026-04-01")
+            result = await create_milestone(
+                "gitlab", "123", "v1.0", due_date="2026-04-01"
+            )
             assert result["title"] == "v1.0"
-            mock_svc.assert_called_once_with("gitlab", "123", "v1.0", None, "2026-04-01")
+            mock_svc.assert_called_once_with(
+                "gitlab", "123", "v1.0", None, "2026-04-01"
+            )
 
     @pytest.mark.asyncio
     async def test_update_milestone_mcp_tool(self):
         from git_mcp.mcp_server import update_milestone
 
-        with patch("git_mcp.services.platform_service.PlatformService.update_milestone") as mock_svc:
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.update_milestone"
+        ) as mock_svc:
             mock_svc.return_value = {"id": "1", "title": "v1.1"}
             result = await update_milestone("gitlab", "123", "1", title="v1.1")
             assert result["title"] == "v1.1"
@@ -601,8 +608,13 @@ class TestMilestoneMCPTools:
     async def test_close_milestone_mcp_tool(self):
         from git_mcp.mcp_server import close_milestone
 
-        with patch("git_mcp.services.platform_service.PlatformService.close_milestone") as mock_svc:
-            mock_svc.return_value = {"milestone_id": "1", "message": "Milestone '1' closed successfully"}
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.close_milestone"
+        ) as mock_svc:
+            mock_svc.return_value = {
+                "milestone_id": "1",
+                "message": "Milestone '1' closed successfully",
+            }
             result = await close_milestone("gitlab", "123", "1")
             assert "closed successfully" in result["message"]
             mock_svc.assert_called_once_with("gitlab", "123", "1")
@@ -611,14 +623,16 @@ class TestMilestoneMCPTools:
     async def test_create_issue_with_milestone_mcp_tool(self):
         from git_mcp.mcp_server import create_issue
 
-        with patch("git_mcp.services.platform_service.PlatformService.create_issue") as mock_svc:
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.create_issue"
+        ) as mock_svc:
             mock_svc.return_value = {
                 "id": "1",
                 "title": "My issue",
                 "state": "opened",
                 "url": "https://gitlab.com/test/repo/-/issues/1",
             }
-            result = await create_issue("gitlab", "123", "My issue", milestone="v1.0")
+            await create_issue("gitlab", "123", "My issue", milestone="v1.0")
             mock_svc.assert_called_once_with(
                 "gitlab", "123", "My issue", None, None, None, "v1.0"
             )
@@ -627,7 +641,9 @@ class TestMilestoneMCPTools:
     async def test_update_issue_with_milestone_mcp_tool(self):
         from git_mcp.mcp_server import update_issue
 
-        with patch("git_mcp.services.platform_service.PlatformService.update_issue") as mock_svc:
+        with patch(
+            "git_mcp.services.platform_service.PlatformService.update_issue"
+        ) as mock_svc:
             mock_svc.return_value = {"id": "1", "title": "My issue", "state": "opened"}
             await update_issue("gitlab", "123", "1", milestone="v1.0")
             call_kwargs = mock_svc.call_args[1]
