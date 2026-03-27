@@ -159,11 +159,12 @@ async def create_issue(
     description: Optional[str] = None,
     labels: Optional[List[str]] = None,
     assignee: Optional[str] = None,
+    milestone: Optional[str] = None,
     **kwargs,
 ) -> Dict[str, Any]:
     """Create a new issue in a project"""
     return await PlatformService.create_issue(
-        platform, project_id, title, description, labels, assignee, **kwargs
+        platform, project_id, title, description, labels, assignee, milestone, **kwargs
     )
 
 
@@ -177,6 +178,7 @@ async def update_issue(
     labels: Optional[List[str]] = None,
     assignee: Optional[str] = None,
     state: Optional[str] = None,
+    milestone: Optional[str] = None,
     **kwargs,
 ) -> Dict[str, Any]:
     """Update an existing issue"""
@@ -191,6 +193,8 @@ async def update_issue(
         update_kwargs["assignee_username"] = assignee
     if state:
         update_kwargs["state_event"] = state
+    if milestone is not None:
+        update_kwargs["milestone"] = milestone
 
     return await PlatformService.update_issue(
         platform, project_id, issue_id, **update_kwargs
@@ -246,6 +250,7 @@ async def create_merge_request(
     description: Optional[str] = None,
     assignee: Optional[str] = None,
     target_project_id: Optional[str] = None,
+    milestone: Optional[str] = None,
     **kwargs,
 ) -> Dict[str, Any]:
     """Create a new merge request with cross-project support
@@ -317,6 +322,9 @@ async def create_merge_request(
 
     if target_project_id:
         create_kwargs["target_project_id"] = target_project_id
+
+    if milestone:
+        create_kwargs["milestone"] = milestone
 
     logger.debug(f"MCP Server - kwargs being passed: {list(create_kwargs.keys())}")
     return await PlatformService.create_merge_request(
@@ -436,6 +444,64 @@ async def update_merge_request(
     return await PlatformService.update_merge_request(
         platform, project_id, mr_id, **kwargs
     )
+
+
+# Milestone Management Tools
+@mcp.tool()
+async def list_milestones(
+    platform: str,
+    project_id: str,
+    state: str = "active",
+) -> List[Dict[str, Any]]:
+    """List milestones for a project. State can be 'active', 'closed', or 'all'"""
+    return await PlatformService.list_milestones(platform, project_id, state)
+
+
+@mcp.tool()
+async def create_milestone(
+    platform: str,
+    project_id: str,
+    title: str,
+    description: Optional[str] = None,
+    due_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a new milestone in a project. due_date format: YYYY-MM-DD"""
+    return await PlatformService.create_milestone(
+        platform, project_id, title, description, due_date
+    )
+
+
+@mcp.tool()
+async def update_milestone(
+    platform: str,
+    project_id: str,
+    milestone_id: str,
+    title: Optional[str] = None,
+    description: Optional[str] = None,
+    due_date: Optional[str] = None,
+    state: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update an existing milestone. due_date format: YYYY-MM-DD"""
+    update_kwargs = {}
+    if title:
+        update_kwargs["title"] = title
+    if description is not None:
+        update_kwargs["description"] = description
+    if due_date:
+        update_kwargs["due_date"] = due_date
+    if state:
+        update_kwargs["state"] = state
+    return await PlatformService.update_milestone(
+        platform, project_id, milestone_id, **update_kwargs
+    )
+
+
+@mcp.tool()
+async def close_milestone(
+    platform: str, project_id: str, milestone_id: str
+) -> Dict[str, Any]:
+    """Close a milestone"""
+    return await PlatformService.close_milestone(platform, project_id, milestone_id)
 
 
 # Fork operations

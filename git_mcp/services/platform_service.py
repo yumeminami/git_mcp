@@ -604,6 +604,7 @@ class PlatformService:
         description: Optional[str] = None,
         labels: Optional[List[str]] = None,
         assignee: Optional[str] = None,
+        milestone: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         """Create a new issue."""
@@ -616,6 +617,8 @@ class PlatformService:
             kwargs["labels"] = ",".join(labels)
         if assignee:
             kwargs["assignee_username"] = assignee
+        if milestone:
+            kwargs["milestone"] = milestone
 
         issue = await adapter.create_issue(project_id, title, **kwargs)
 
@@ -848,6 +851,83 @@ class PlatformService:
                 "note": "Use GitHub/GitLab web interface to view forks for now",
             }
         ]
+
+    # Milestone operations
+    @staticmethod
+    async def list_milestones(
+        platform_name: str, project_id: str, state: str = "active"
+    ) -> List[Dict[str, Any]]:
+        """List milestones for a project."""
+        adapter = PlatformService.get_adapter(platform_name)
+        milestones = await adapter.list_milestones(project_id, state)
+        return [
+            {
+                "id": ms.id,
+                "title": ms.title,
+                "description": ms.description,
+                "state": ms.state,
+                "due_date": ms.due_date.isoformat() if ms.due_date else None,
+                "created_at": ms.created_at.isoformat() if ms.created_at else None,
+                "updated_at": ms.updated_at.isoformat() if ms.updated_at else None,
+                "platform": platform_name,
+                "project_id": project_id,
+            }
+            for ms in milestones
+        ]
+
+    @staticmethod
+    async def create_milestone(
+        platform_name: str,
+        project_id: str,
+        title: str,
+        description: Optional[str] = None,
+        due_date: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a new milestone."""
+        adapter = PlatformService.get_adapter(platform_name)
+        ms = await adapter.create_milestone(project_id, title, description, due_date)
+        return {
+            "id": ms.id,
+            "title": ms.title,
+            "description": ms.description,
+            "state": ms.state,
+            "due_date": ms.due_date.isoformat() if ms.due_date else None,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Milestone '{title}' created successfully",
+        }
+
+    @staticmethod
+    async def update_milestone(
+        platform_name: str, project_id: str, milestone_id: str, **kwargs
+    ) -> Dict[str, Any]:
+        """Update a milestone."""
+        adapter = PlatformService.get_adapter(platform_name)
+        ms = await adapter.update_milestone(project_id, milestone_id, **kwargs)
+        return {
+            "id": ms.id,
+            "title": ms.title,
+            "description": ms.description,
+            "state": ms.state,
+            "due_date": ms.due_date.isoformat() if ms.due_date else None,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Milestone '{milestone_id}' updated successfully",
+        }
+
+    @staticmethod
+    async def close_milestone(
+        platform_name: str, project_id: str, milestone_id: str
+    ) -> Dict[str, Any]:
+        """Close a milestone."""
+        adapter = PlatformService.get_adapter(platform_name)
+        await adapter.close_milestone(project_id, milestone_id)
+        return {
+            "milestone_id": milestone_id,
+            "platform": platform_name,
+            "project_id": project_id,
+            "message": f"Milestone '{milestone_id}' closed successfully",
+        }
 
     @staticmethod
     async def get_merge_request_diff(
